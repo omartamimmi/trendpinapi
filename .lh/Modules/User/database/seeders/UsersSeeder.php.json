@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/User/database/seeders/UsersSeeder.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1759825428460,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759825445598,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,9 +10,10 @@\n      * Run the database seeds.\n      */\n     public function run(): void\n     {\n-         $this->call(PermissionSeeder::class);\n+        dd(132);\n+        $this->call(PermissionSeeder::class);\n         $this->call(RolesSeeder::class);\n         $this->call(RolePermissionsSeeder::class);\n         $this->call(UsersTableSeeder::class);\n     }\n"
+                }
+            ],
+            "date": 1759825428460,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\Database\\Seeders;\n\nuse Illuminate\\Database\\Seeder;\n\nclass UsersSeeder extends Seeder\n{\n    /**\n     * Run the database seeds.\n     */\n    public function run(): void\n    {\n         $this->call(PermissionSeeder::class);\n        $this->call(RolesSeeder::class);\n        $this->call(RolePermissionsSeeder::class);\n        $this->call(UsersTableSeeder::class);\n    }\n}\n"
+        }
+    ]
+}

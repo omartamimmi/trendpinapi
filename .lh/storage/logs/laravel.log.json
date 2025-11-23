@@ -1,0 +1,18 @@
+{
+    "sourceFile": "storage/logs/laravel.log",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1758210959522,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1758210959522,
+            "name": "Commit-0",
+            "content": ""
+        }
+    ]
+}

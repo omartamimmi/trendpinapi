@@ -1,0 +1,138 @@
+{
+    "sourceFile": "Modules/Category/routes/api.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 30,
+            "patches": [
+                {
+                    "date": 1759746886846,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1760281000863,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,7 +2,7 @@\n \n use Illuminate\\Support\\Facades\\Route;\n // use Modules\\Category\\Http\\Controllers\\CategoryController;\n \n-// Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-//     Route::apiResource('categories', CategoryController::class)->names('category');\n-// });\n+Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n+    Route::apiResource('categories', CategoryController::class)->names('category');\n+});\n"
+                },
+                {
+                    "date": 1760281010173,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,8 @@\n <?php\n \n use Illuminate\\Support\\Facades\\Route;\n-// use Modules\\Category\\Http\\Controllers\\CategoryController;\n+use Modules\\Category\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n });\n"
+                },
+                {
+                    "date": 1760281021773,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,7 @@\n <?php\n \n use Illuminate\\Support\\Facades\\Route;\n-use Modules\\Category\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n });\n"
+                },
+                {
+                    "date": 1760281028522,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,6 +2,6 @@\n \n use Illuminate\\Support\\Facades\\Route;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::apiResource('categories', CategoryController::class)->names('category');\n+    Route::apiResource('categories', Modules/Category/app/Http/Controllers/CategoryController.php::class)->names('category');\n });\n"
+                },
+                {
+                    "date": 1760281036555,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,6 +2,6 @@\n \n use Illuminate\\Support\\Facades\\Route;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::apiResource('categories', Modules/Category/app/Http/Controllers/CategoryController.php::class)->names('category');\n+    Route::apiResource('categories', CategoryController::class)->names('category');\n });\n"
+                },
+                {
+                    "date": 1760281051174,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,10 @@\n <?php\n \n use Illuminate\\Support\\Facades\\Route;\n+use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n+        Route::apiResource('categories', CategoryController::class)->names('category');\n+\n });\n"
+                },
+                {
+                    "date": 1760281059604,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,7 +4,7 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n-        Route::apiResource('categories', CategoryController::class)->names('category');\n+    Route::get('categ', CategoryController::class)->names('category');\n \n });\n"
+                },
+                {
+                    "date": 1760281072302,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,7 +4,7 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n-    Route::get('categ', CategoryController::class)->names('category');\n+    Route::get('index', )->names('category');\n \n });\n"
+                },
+                {
+                    "date": 1760281080945,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,7 +4,7 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n-    Route::get('index', )->names('category');\n+    Route::get('index', [''=>CategoryController::class])->names('category');\n \n });\n"
+                },
+                {
+                    "date": 1760281290258,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,7 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::apiResource('categories', CategoryController::class)->names('category');\n-    Route::get('index', [''=>CategoryController::class])->names('category');\n+    Route::get('index', ['index'=>CategoryController::class])->names('category');\n+    Route::get('index', ['index'=>CategoryController::class])->names('category');\n \n });\n"
+                },
+                {
+                    "date": 1760281297232,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,8 +3,10 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n+    Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n+\n     Route::apiResource('categories', CategoryController::class)->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n \n"
+                },
+                {
+                    "date": 1760281305431,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,9 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n+    Route::prefix('categ')->group(function () {\n \n     Route::apiResource('categories', CategoryController::class)->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n"
+                },
+                {
+                    "date": 1760281312120,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,9 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::prefix('categ')->group(function () {\n+    Route::prefix('catego')->group(function () {\n \n     Route::apiResource('categories', CategoryController::class)->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n"
+                },
+                {
+                    "date": 1760281320627,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,11 +3,12 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::prefix('catego')->group(function () {\n+    Route::prefix('category')->group(function () {\n \n     Route::apiResource('categories', CategoryController::class)->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n     Route::get('index', ['index'=>CategoryController::class])->names('category');\n+    });\n \n });\n"
+                },
+                {
+                    "date": 1760281325790,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,10 +5,9 @@\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n \n-    Route::apiResource('categories', CategoryController::class)->names('category');\n-    Route::get('index', ['index'=>CategoryController::class])->names('category');\n-    Route::get('index', ['index'=>CategoryController::class])->names('category');\n+        Route::get('index', ['index'=>CategoryController::class])->names('category');\n+        Route::get('index', ['index'=>CategoryController::class])->names('category');\n     });\n \n });\n"
+                },
+                {
+                    "date": 1760281331271,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,10 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n-\n+        Route::get('/', ['index'=>CategoryController::class])->names('category');\n         Route::get('index', ['index'=>CategoryController::class])->names('category');\n-        Route::get('index', ['index'=>CategoryController::class])->names('category');\n     });\n-\n });\n"
+                },
+                {
+                    "date": 1760281337061,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,7 +5,7 @@\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->names('category');\n-        Route::get('index', ['index'=>CategoryController::class])->names('category');\n+        Route::get('/', ['index'=>CategoryController::class])->names('category');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281344189,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,7 +5,7 @@\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->names('category');\n-        Route::get('/', ['index'=>CategoryController::class])->names('category');\n+        Route::get('/{}', ['index'=>CategoryController::class])->names('category');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281349665,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,7 +5,7 @@\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->names('category');\n-        Route::get('/{}', ['index'=>CategoryController::class])->names('category');\n+        Route::get('/{id}', ['details'=>CategoryController::class])->names('category');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281360059,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n-        Route::get('/', ['index'=>CategoryController::class])->names('category');\n-        Route::get('/{id}', ['details'=>CategoryController::class])->names('category');\n+        Route::get('/', ['index'=>CategoryController::class])->name('inde');\n+        Route::get('/{id}', ['details'=>CategoryController::class])->name('category');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281367640,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n-        Route::get('/', ['index'=>CategoryController::class])->name('inde');\n-        Route::get('/{id}', ['details'=>CategoryController::class])->name('category');\n+        Route::get('/', ['index'=>CategoryController::class])->name('index');\n+        Route::get('/{id}', ['details'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281379817,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,7 +5,7 @@\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->name('index');\n-        Route::get('/{id}', ['details'=>CategoryController::class])->name('detail');\n+        Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281393345,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,9 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::prefix('category')->group(function () {\n+    Route::prefix('category')->as(->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->name('index');\n         Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281400723,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,9 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::prefix('category')->as(->group(function () {\n+    Route::prefix('category')->as('.category')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->name('index');\n         Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281559176,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,9 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::prefix('category')->as('.category')->group(function () {\n+    Route::prefix('category')->as('category')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->name('index');\n         Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281571071,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,9 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::prefix('category')->as('category')->group(function () {\n+    Route::prefix('category')->as('category.')->group(function () {\n         Route::get('/', ['index'=>CategoryController::class])->name('index');\n         Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281627371,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->as('category.')->group(function () {\n-        Route::get('/', ['index'=>CategoryController::class])->name('index');\n+        Route::get('/', ['index'=>])->name('index');\n         Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281634534,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->as('category.')->group(function () {\n-        Route::get('/', ['index'=>])->name('index');\n+        Route::get('/', [CategoryController::class => 'index'])->name('index');\n         Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281645263,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,7 +5,7 @@\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->as('category.')->group(function () {\n         Route::get('/', [CategoryController::class => 'index'])->name('index');\n-        Route::get('/{id}', ['detail'=>CategoryController::class])->name('detail');\n+        Route::get('/{id}', [CategoryController::class => 'detail'])->name('detail');\n     });\n });\n"
+                },
+                {
+                    "date": 1760281925160,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n use Modules\\Category\\app\\Http\\Controllers\\CategoryController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n     Route::prefix('category')->as('category.')->group(function () {\n-        Route::get('/', [CategoryController::class => 'index'])->name('index');\n-        Route::get('/{id}', [CategoryController::class => 'detail'])->name('detail');\n+        Route::get('/', [CategoryController::class, 'index'])->name('index');\n+        Route::get('/{id}', [CategoryController::class, 'detail'])->name('detail');\n     });\n });\n"
+                }
+            ],
+            "date": 1759746886846,
+            "name": "Commit-0",
+            "content": "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n// use Modules\\Category\\Http\\Controllers\\CategoryController;\n\n// Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n//     Route::apiResource('categories', CategoryController::class)->names('category');\n// });\n"
+        }
+    ]
+}

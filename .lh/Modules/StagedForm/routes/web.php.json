@@ -1,0 +1,18 @@
+{
+    "sourceFile": "Modules/StagedForm/routes/web.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1758615997718,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1758615997718,
+            "name": "Commit-0",
+            "content": "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\nuse Modules\\StagedForm\\app\\Http\\Controllers\\StagedFormController;\n\nRoute::middleware(['auth', 'verified'])->group(function () {\n    Route::resource('stagedforms', StagedFormController::class)->names('stagedform');\n});\n"
+        }
+    ]
+}

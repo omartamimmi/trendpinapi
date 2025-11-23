@@ -1,0 +1,18 @@
+{
+    "sourceFile": "Modules/StagedForm/Services/StagedFormPersistenceByUserIdService.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1758612413824,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1758612413824,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\StagedForm\\Services;\n\nuse App\\Abstractions\\Service;\nuse Illuminate\\Support\\Facades\\Auth;\nuse Modules\\Core\\Services\\BitrixService;\nuse Modules\\StagedForm\\Exceptions\\StagedFormDoesNotExists;\nuse Modules\\StagedForm\\Models\\StagedForm;\nuse Modules\\StagedForm\\Repositories\\StagedFormRepository;\nuse Ramsey\\Uuid\\Uuid;\n\nclass StagedFormPersistenceByUserIdService extends Service\n{\n    public $userId;\n\n    public function __construct(protected StagedFormRepository $stagedFormRepository)\n    {}\n\n    public function saveForm(): static\n    {\n        $data = $this->getStagedFormObject();\n        $stagedForm = $this->stagedFormRepository->updateOrCreate($data['step'], $data['stage_type'], $data['user_id'], $data);\n        $this->setOutput('stagedForm', $stagedForm);\n        return $this;\n    }\n\n    private function getStagedFormObject(): array\n    {\n        $stageId = $this->getInput('stage_id');\n        $stageType = $this->getInput('stage_type');\n        $step = $this->getInput('step');\n        $userId = $this->getInput('user_id');\n        $submittedForm = $this->getInput('submitted_form', []);\n\n        $stagedForm = $this->stagedFormRepository->getByUserId($userId);\n        if ($stagedForm) {\n            $stageId = $stagedForm->stage_id;\n        }\n\n        $doesStageIdExist = $this->stagedFormRepository->validateStageIdExists($stageId, $userId, $stageType);\n        if (!$doesStageIdExist) {\n            $stageId = Uuid::uuid4();\n        }\n\n        return  [\n            'stage_id' => $stageId,\n            'stage_type' => $stageType,\n            'step' => $step,\n            'user_id' => $userId,\n            'submitted_form' => $submittedForm\n        ];\n    }\n}\n"
+        }
+    ]
+}

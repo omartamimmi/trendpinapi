@@ -1,0 +1,26 @@
+{
+    "sourceFile": "Modules/User/app/Http/Controllers/CustomerController.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1743122457275,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1743122464372,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,5 +1,5 @@\n <?php\n \n namespace Modules\\User\\Http\\Controllers;\n \n-class \n\\ No newline at end of file\n+class CustomerController extends Cont\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1743122469709,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,5 +1,10 @@\n <?php\n \n namespace Modules\\User\\Http\\Controllers;\n \n-class CustomerController extends Cont\n\\ No newline at end of file\n+use App\\Http\\Controllers\\Controller;\n+\n+class CustomerController extends Controller\n+{\n+    \n+}\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1743122457275,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\Http\\Controllers;\n\nclass "
+        }
+    ]
+}

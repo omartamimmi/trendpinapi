@@ -1,0 +1,18 @@
+{
+    "sourceFile": "Modules/User/Providers/UserServiceProvider.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1758211894502,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1758211894502,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\Providers;\n\nuse Illuminate\\Support\\ServiceProvider;\nuse Illuminate\\Database\\Eloquent\\Factory;\n\nclass \\UserServiceProvider extends ServiceProvider\n{\n    /**\n     * @var string $moduleName\n     */\n    protected $moduleName = 'User';\n\n    /**\n     * @var string $moduleNameLower\n     */\n    protected $moduleNameLower = 'user';\n\n    /**\n     * Boot the application events.\n     *\n     * @return void\n     */\n    public function boot()\n    {\n        $this->registerTranslations();\n        $this->registerConfig();\n        $this->registerViews();\n        $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));\n    }\n\n    /**\n     * Register the service provider.\n     *\n     * @return void\n     */\n    public function register()\n    {\n        $this->app->register(RouteServiceProvider::class);\n    }\n\n    /**\n     * Register config.\n     *\n     * @return void\n     */\n    protected function registerConfig()\n    {\n        $this->publishes([\n            module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),\n        ], 'config');\n        $this->mergeConfigFrom(\n            module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower\n        );\n    }\n\n    /**\n     * Register views.\n     *\n     * @return void\n     */\n    public function registerViews()\n    {\n        $viewPath = resource_path('views/modules/' . $this->moduleNameLower);\n\n        $sourcePath = module_path($this->moduleName, 'Resources/views');\n\n        $this->publishes([\n            $sourcePath => $viewPath\n        ], ['views', $this->moduleNameLower . '-module-views']);\n\n        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);\n    }\n\n    /**\n     * Register translations.\n     *\n     * @return void\n     */\n    public function registerTranslations()\n    {\n        $langPath = resource_path('lang/modules/' . $this->moduleNameLower);\n\n        if (is_dir($langPath)) {\n            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);\n        } else {\n            $this->loadTranslationsFrom(module_path($this->moduleName, 'Resources/lang'), $this->moduleNameLower);\n        }\n    }\n\n    /**\n     * Get the services provided by the provider.\n     *\n     * @return array\n     */\n    public function provides()\n    {\n        return [];\n    }\n\n    private function getPublishableViewPaths(): array\n    {\n        $paths = [];\n        foreach (\\Config::get('view.paths') as $path) {\n            if (is_dir($path . '/modules/' . $this->moduleNameLower)) {\n                $paths[] = $path . '/modules/' . $this->moduleNameLower;\n            }\n        }\n        return $paths;\n    }\n}\n"
+        }
+    ]
+}

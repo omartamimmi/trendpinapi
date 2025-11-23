@@ -1,0 +1,58 @@
+{
+    "sourceFile": "Modules/StagedForm/app/Http/Requests/StepStoreRequest.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 10,
+            "patches": [
+                {
+                    "date": 1758619264060,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758625509457,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,7 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n+        dd($step);\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758625519214,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd($step);\n+        dd(config(\"staged_forms.steps.$step\", []));\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758625582275,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd(config(\"staged_forms.steps.$step\", []));\n+        dd(config(\"staged_forms.steps.$step\")\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758625597154,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd(config(\"staged_forms.steps.$step\")\n+        dd(config(\"staged_forms\"));\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758625835171,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd(config(\"staged_forms\"));\n+        dd(config(\"StagedFormstaged_forms\"));\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758625849244,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd(config(\"StagedFormstaged_forms\"));\n+        dd(config(\"Stagedform.staged_forms\"));\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758626080785,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,8 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd(config(\"Stagedform.staged_forms\"));\n+        dd(config(\"stagedform.staged_forms.steps\"));\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758626091508,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,7 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        dd(config(\"stagedform.staged_forms.steps\"));\n         return config(\"staged_forms.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758631215180,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,7 +7,7 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        return config(\"staged_forms.steps.$step\", []);\n+        return config(\"stagedform.staged_forms_retailer_onboarding.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758631279654,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,7 +7,7 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-        return config(\"stagedform.staged_forms_retailer_onboarding.steps.$step\", []);\n+        return config(\"stagedform.retailer_onboarding.steps.$step\", []);\n     }\n }\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1758619264060,
+            "name": "Commit-0",
+            "content": "<?php\nnamespace Modules\\StagedForm\\app\\Http\\Requests;\n\nuse Illuminate\\Foundation\\Http\\FormRequest;\n\nclass StepStoreRequest extends FormRequest\n{\n    public function rules()\n    {\n        $step = $this->get('step');\n        return config(\"staged_forms.steps.$step\", []);\n    }\n}"
+        }
+    ]
+}

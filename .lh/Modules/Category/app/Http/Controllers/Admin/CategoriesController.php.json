@@ -1,0 +1,30 @@
+{
+    "sourceFile": "Modules/Category/app/Http/Controllers/Admin/CategoriesController.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 3,
+            "patches": [
+                {
+                    "date": 1760280836251,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1760281828411,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\Category\\Http\\AdminControllers;\n+namespace Modules\\Category\\Http\\Ad;\n \n use Illuminate\\Http\\Request;\n use Illuminate\\Routing\\Controller;\n use Modules\\Category\\Http\\Requests\\AdminDeleteCategoryRequest;\n"
+                },
+                {
+                    "date": 1760281838937,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\Category\\Http\\Ad;\n+namespace Modules\\Category\\Http\\Controllers\\Admin;\n \n use Illuminate\\Http\\Request;\n use Illuminate\\Routing\\Controller;\n use Modules\\Category\\Http\\Requests\\AdminDeleteCategoryRequest;\n"
+                },
+                {
+                    "date": 1760281847115,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\Category\\Http\\Controllers\\Admin;\n+namespace Modules\\Category\\app]Http\\Controllers\\Admin;\n \n use Illuminate\\Http\\Request;\n use Illuminate\\Routing\\Controller;\n use Modules\\Category\\Http\\Requests\\AdminDeleteCategoryRequest;\n"
+                }
+            ],
+            "date": 1760280836251,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Category\\Http\\AdminControllers;\n\nuse Illuminate\\Http\\Request;\nuse Illuminate\\Routing\\Controller;\nuse Modules\\Category\\Http\\Requests\\AdminDeleteCategoryRequest;\nuse RealRashid\\SweetAlert\\Facades\\Alert;\nuse Illuminate\\Contracts\\Support\\Renderable;\nuse Modules\\Category\\Services\\AdminCategoryService;\nuse Modules\\Category\\Http\\Requests\\StoreCategoryRequest;\n\nclass CategoriesController extends Controller\n{\n    /**\n     * Display a listing of the resource.\n     * @return Renderable\n     */\n    public function index(AdminCategoryService $categoryService)\n    {\n        $categoryService->getAllCategories()->collectOutputs($categories);\n        return view('category::admin.list', $categories);\n    }\n\n    /**\n     * Show the form for creating a new resource.\n     * @return Renderable\n     */\n    public function create()\n    {\n        return view('category::admin.create');\n    }\n\n    /**\n     * Store a newly created resource in storage.\n     * @param Request $request\n     * @return Renderable\n     */\n    public function store(StoreCategoryRequest $request, AdminCategoryService $adminCategoryService)\n    {\n        $adminCategoryService\n        ->setInputs($request->validated())\n        ->createCategory()\n        ->collectOutputs($category);\n        Alert::success('Congrats', 'Create Category Successfully');\n\n        return redirect()->route('admin.category.category-list');\n    }\n\n    /**\n     * Show the specified resource.\n     * @param int $id\n     * @return Renderable\n     */\n    public function show($id)\n    {\n        return view('category::admin.show');\n    }\n\n    /**\n     * Show the form for editing the specified resource.\n     * @param int $id\n     * @return Renderable\n     */\n    public function edit($id, AdminCategoryService $adminCategoryService)\n    {\n        $adminCategoryService\n        ->setInput('id', $id)\n        ->getCategory()\n        ->collectOutputs($category);\n        return view('category::admin.edit', $category);\n    }\n\n    /**\n     * Update the specified resource in storage.\n     * @param Request $request\n     * @param int $id\n     * @return Renderable\n     */\n    public function update(StoreCategoryRequest $request, $id, AdminCategoryService $adminCategoryService)\n    {\n        $adminCategoryService\n        ->setInputs($request->validated())\n        ->setInput('id', $id)\n        ->updateCategory()\n        ->collectOutputs($category);\n        Alert::success('Congrats', 'Update Category Successfully');\n\n        return redirect()->route('admin.category.category-list');\n\n    }\n\n    /**\n     * Remove the specified resource from storage.\n     * @param int $id\n     * @return Renderable\n     */\n    public function destroy(AdminDeleteCategoryRequest $request, AdminCategoryService $adminCategoryService , $id)\n    {\n        $adminCategoryService\n        ->setInput('ids',  ['ids'=>[$request->id]])\n        ->bulkDeleteCategories();\n        return redirect()->back()->with('message', 'category deleted successfully');\n    }\n}\n"
+        }
+    ]
+}

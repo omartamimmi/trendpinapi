@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/StagedForm/app/Providers/RouteServiceProvider.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1758609830860,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758609854470,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,50 @@\n+<?php\n+\n+namespace Modules\\StagedForm\\app\\Providers;\n+\n+use Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider as ServiceProvider;\n+use Illuminate\\Support\\Facades\\Route;\n+\n+class RouteServiceProvider extends ServiceProvider\n+{\n+    protected string $name = 'StagedForm';\n+\n+    /**\n+     * Called before routes are registered.\n+     *\n+     * Register any model bindings or pattern based filters.\n+     */\n+    public function boot(): void\n+    {\n+        parent::boot();\n+    }\n+\n+    /**\n+     * Define the routes for the application.\n+     */\n+    public function map(): void\n+    {\n+        $this->mapApiRoutes();\n+        $this->mapWebRoutes();\n+    }\n+\n+    /**\n+     * Define the \"web\" routes for the application.\n+     *\n+     * These routes all receive session state, CSRF protection, etc.\n+     */\n+    protected function mapWebRoutes(): void\n+    {\n+        Route::middleware('web')->group(module_path($this->name, '/routes/web.php'));\n+    }\n+\n+    /**\n+     * Define the \"api\" routes for the application.\n+     *\n+     * These routes are typically stateless.\n+     */\n+    protected function mapApiRoutes(): void\n+    {\n+        Route::middleware('api')->prefix('api')->name('api.')->group(module_path($this->name, '/routes/api.php'));\n+    }\n+}\n"
+                }
+            ],
+            "date": 1758609830860,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\StagedForm\\app\\Providers;\n\nuse Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider as ServiceProvider;\nuse Illuminate\\Support\\Facades\\Route;\n\nclass RouteServiceProvider extends ServiceProvider\n{\n    protected string $name = 'StagedForm';\n\n    /**\n     * Called before routes are registered.\n     *\n     * Register any model bindings or pattern based filters.\n     */\n    public function boot(): void\n    {\n        parent::boot();\n    }\n\n    /**\n     * Define the routes for the application.\n     */\n    public function map(): void\n    {\n        $this->mapApiRoutes();\n        $this->mapWebRoutes();\n    }\n\n    /**\n     * Define the \"web\" routes for the application.\n     *\n     * These routes all receive session state, CSRF protection, etc.\n     */\n    protected function mapWebRoutes(): void\n    {\n        Route::middleware('web')->group(module_path($this->name, '/routes/web.php'));\n    }\n\n    /**\n     * Define the \"api\" routes for the application.\n     *\n     * These routes are typically stateless.\n     */\n    protected function mapApiRoutes(): void\n    {\n        Route::middleware('api')->prefix('api')->name('api.')->group(module_path($this->name, '/routes/api.php'));\n    }\n}\n"
+        }
+    ]
+}

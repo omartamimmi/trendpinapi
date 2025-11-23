@@ -1,0 +1,26 @@
+{
+    "sourceFile": "Modules/Category/Repositories/CategoryRepository.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1760281969783,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1760281976380,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,9 +1,9 @@\n <?php\n \n-namespace Modules\\Category\\aRepositories;\n+namespace Modules\\Category\\Repositories;\n \n-use Modules\\Category\\Models\\Category;\n+use Modules\\Category\\app\\Models\\Category;\n use Modules\\Shop\\Models\\Shop;\n \n class CategoryRepository\n {\n"
+                },
+                {
+                    "date": 1760281983575,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,9 +1,8 @@\n <?php\n \n namespace Modules\\Category\\Repositories;\n \n-use Modules\\Category\\app\\Models\\Category;\n use Modules\\Shop\\Models\\Shop;\n \n class CategoryRepository\n {\n"
+                }
+            ],
+            "date": 1760281969783,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Category\\aRepositories;\n\nuse Modules\\Category\\Models\\Category;\nuse Modules\\Shop\\Models\\Shop;\n\nclass CategoryRepository\n{\n\n    public function getAllCategories()\n    {\n        return Category::all();\n    }\n\n    public function getCategoryById($id)\n    {\n        return Category::find($id);\n    }\n\n    public function create($data)\n    {\n        return Category::create($data);\n    }\n\n    public function update($id, $data): bool\n    {\n        $category = Category::find($id);\n        $category->fill($data);\n        return $category->save($data);\n    }\n\n    public function delete($ids)\n    {\n        return Category::whereIn('id', $ids['ids'])->delete();\n    }\n}\n"
+        }
+    ]
+}

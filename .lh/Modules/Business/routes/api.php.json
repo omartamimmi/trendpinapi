@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/Business/routes/api.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1743124052224,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759856446597,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,6 +3,6 @@\n use Illuminate\\Support\\Facades\\Route;\n use Modules\\Business\\app\\Http\\Controllers\\BusinessController;\n \n Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n-    Route::apiResource('businesses', BusinessController::class)->names('business');\n+    Route::apiResource('business', BusinessController::class)->names('business');\n });\n"
+                }
+            ],
+            "date": 1743124052224,
+            "name": "Commit-0",
+            "content": "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\nuse Modules\\Business\\app\\Http\\Controllers\\BusinessController;\n\nRoute::middleware(['auth:sanctum'])->prefix('v1')->group(function () {\n    Route::apiResource('businesses', BusinessController::class)->names('business');\n});\n"
+        }
+    ]
+}

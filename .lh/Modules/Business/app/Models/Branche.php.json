@@ -1,0 +1,18 @@
+{
+    "sourceFile": "Modules/Business/app/Models/Branche.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1759660615503,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1759660615503,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Business\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n// use Modules\\Business\\Database\\Factories\\BrancheFactory;\n\nclass Branche extends Model\n{\n    use HasFactory;\n\n    /**\n     * The attributes that are mass assignable.\n     */\n    protected $fillable = ['brand_id'];\n\n    // protected static function newFactory(): BrancheFactory\n    // {\n    //     // return BrancheFactory::new();\n    // }\n}\n"
+        }
+    ]
+}

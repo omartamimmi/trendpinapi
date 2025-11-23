@@ -1,0 +1,11 @@
+{
+    "name": "StagedForm",
+    "alias": "stagedform",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\StagedForm\\app\\Providers\\StagedFormServiceProvider"
+    ],
+    "files": []
+}

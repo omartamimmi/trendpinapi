@@ -1,0 +1,46 @@
+{
+    "sourceFile": "Modules/User/database/seeders/DatabaseSeeder.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 7,
+            "patches": [
+                {
+                    "date": 1759827565729,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759827598288,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,9 +4,9 @@\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n-// use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n+use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n use Modules\\User\\Database\\Seeders\\RolePermissionsSeeder;\n use Modules\\User\\Database\\Seeders\\RolesSeeder;\n use Modules\\User\\Database\\Seeders\\UsersTableSeeder;\n \n"
+                },
+                {
+                    "date": 1759827711438,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Database\\Seeders;\n+namespace Modules\\User\\Database\\Seeders;\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n"
+                },
+                {
+                    "date": 1759827723442,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\User\\Database\\Seeders;\n+namespace Modules\\User\\app\\Database\\Seeders;\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n"
+                },
+                {
+                    "date": 1759827750166,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\User\\app\\Database\\Seeders;\n+namespace Modules\\User\\Database\\Seeders;\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n"
+                },
+                {
+                    "date": 1759827826292,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\User\\Database\\Seeders;\n+namespace Modules\\User\\database/seeders;\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n"
+                },
+                {
+                    "date": 1759827834299,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\User\\database/seeders;\n+namespace Modules\\User\\database\\Seeders;\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n"
+                },
+                {
+                    "date": 1759827969663,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,15 +1,15 @@\n <?php\n \n-namespace Modules\\User\\database\\Seeders;\n+namespace Modules\\User\\database\\seeders;\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n-use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n-use Modules\\User\\Database\\Seeders\\RolePermissionsSeeder;\n-use Modules\\User\\Database\\Seeders\\RolesSeeder;\n-use Modules\\User\\Database\\Seeders\\UsersTableSeeder;\n+use Modules\\User\\database\\Seeders\\PermissionSeeder;\n+use Modules\\User\\database\\Seeders\\RolePermissionsSeeder;\n+use Modules\\User\\database\\Seeders\\RolesSeeder;\n+use Modules\\User\\database\\Seeders\\UsersTableSeeder;\n \n class DatabaseSeeder extends Seeder\n {\n     /**\n"
+                }
+            ],
+            "date": 1759827565729,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Database\\Seeders;\n\nuse App\\Models\\User;\n// use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\nuse Illuminate\\Database\\Seeder;\n// use Modules\\User\\Database\\Seeders\\PermissionSeeder;\nuse Modules\\User\\Database\\Seeders\\RolePermissionsSeeder;\nuse Modules\\User\\Database\\Seeders\\RolesSeeder;\nuse Modules\\User\\Database\\Seeders\\UsersTableSeeder;\n\nclass DatabaseSeeder extends Seeder\n{\n    /**\n     * Seed the application's database.\n     */\n    public function run(): void\n    {\n        $this->call(PermissionSeeder::class);\n        $this->call(RolesSeeder::class);\n        $this->call(RolePermissionsSeeder::class);\n        $this->call(UsersTableSeeder::class);\n    }\n}\n"
+        }
+    ]
+}

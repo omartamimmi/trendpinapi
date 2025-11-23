@@ -1,0 +1,26 @@
+{
+    "sourceFile": "Modules/Business/database/migrations/2025_09_26_154048_create_brands_table.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1758901553186,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758901558642,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,13 @@\n     public function up(): void\n     {\n         Schema::create('brands', function (Blueprint $table) {\n             $table->id();\n-            \n+            $table->foreignId('business_id')->constrained()->cascadeOnDelete(); // Belongs to retailer\n+            $table->foreignId('brand_group_id')->nullable()->constrained()->cascadeOnDelete(); // Optional group\n+            $table->string('name');\n+            $table->string('logo')->nullable();\n+            $table->string('location')->nullable();\n             $table->timestamps();\n         });\n     }\n \n"
+                },
+                {
+                    "date": 1759691220059,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,54 @@\n+<?php\n+\n+use Illuminate\\Database\\Migrations\\Migration;\n+use Illuminate\\Database\\Schema\\Blueprint;\n+use Illuminate\\Support\\Facades\\Schema;\n+\n+return new class extends Migration\n+{\n+    /**\n+     * Run the migrations.\n+     */\n+    public function up(): void\n+    {\n+        Schema::create('brands', function (Blueprint $table) {\n+            $table->id();\n+            // $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // Owner of the business\n+            $table->foreignId('business_id')->constrained()->cascadeOnDelete(); // Belongs to retailer\n+            $table->string('name');\n+            $table->string('logo')->nullable();\n+            $table->string('location')->nullable();\n+            $table->timestamps();\n+            $table->text('gallery')->nullable();\n+            // moved here\n+            $table->string('website_link')->nullable();\n+            $table->string('insta_link')->nullable();\n+            $table->string('facebook_link')->nullable();\n+            $table->bigInteger('create_user')->nullable();\n+            $table->bigInteger('update_user')->nullable();\n+\n+            $table->softDeletes();\n+\n+             $table->id();\n+    $table->foreignId('business_id')->constrained('businesses')->onDelete('cascade');\n+    $table->foreignId('group_id')->nullable()->constrained('groups')->onDelete('cascade');\n+    $table->string('name');\n+    $table->string('logo')->nullable();\n+    $table->text('gallery')->nullable();\n+    $table->string('website_link')->nullable();\n+    $table->string('insta_link')->nullable();\n+    $table->string('facebook_link')->nullable();\n+    $table->timestamps();\n+    $table->softDeletes();\n+\n+        });\n+    }\n+\n+    /**\n+     * Reverse the migrations.\n+     */\n+    public function down(): void\n+    {\n+        Schema::dropIfExists('brands');\n+    }\n+};\n"
+                }
+            ],
+            "date": 1758901553186,
+            "name": "Commit-0",
+            "content": "<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration\n{\n    /**\n     * Run the migrations.\n     */\n    public function up(): void\n    {\n        Schema::create('brands', function (Blueprint $table) {\n          $table->id();\n    $table->foreignId('business_id')->constrained()->cascadeOnDelete(); // Belongs to retailer\n    $table->foreignId('brand_group_id')->nullable()->constrained()->cascadeOnDelete(); // Optional group\n    $table->string('name');\n    $table->string('logo')->nullable();\n    $table->string('location')->nullable();\n    $table->timestamps();\n        });\n    }\n\n    /**\n     * Reverse the migrations.\n     */\n    public function down(): void\n    {\n        Schema::dropIfExists('brands');\n    }\n};\n"
+        }
+    ]
+}

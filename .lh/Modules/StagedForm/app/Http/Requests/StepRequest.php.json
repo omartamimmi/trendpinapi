@@ -1,0 +1,38 @@
+{
+    "sourceFile": "Modules/StagedForm/app/Http/Requests/StepRequest.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 5,
+            "patches": [
+                {
+                    "date": 1758615584898,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758615596895,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,2 +1,4 @@\n <?php\n-namespace \n\\ No newline at end of file\n+namespace Modules\\StagedForm\\app\\Http\\Requests;\n+\n+class StepRequest extends\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758615605126,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,4 +1,6 @@\n <?php\n namespace Modules\\StagedForm\\app\\Http\\Requests;\n \n-class StepRequest extends\n\\ No newline at end of file\n+use Illuminate\\Foundation\\Http\\FormRequest;\n+\n+class StepRequest extends FormRequest\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758615617222,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,5 +2,52 @@\n namespace Modules\\StagedForm\\app\\Http\\Requests;\n \n use Illuminate\\Foundation\\Http\\FormRequest;\n \n-class StepRequest extends FormRequest\n\\ No newline at end of file\n+class StepRequest extends FormRequest\n+{\n+    public function rules()\n+    {\n+        return [\n+            'email' => [\n+                'required',\n+                'string',\n+                'email',\n+                'max:255',\n+                Rule::unique('users', 'email')\n+                    ->where(function ($query) {\n+                        $query->where('saas_account_id', 0);\n+                    })\n+            ],\n+            'utm' => [],\n+            'social_id' => [],\n+            'social_email' => [],\n+            'social_name' => [],\n+            'social_avatar' => [],\n+            'social_provider' => []\n+        ];\n+    }\n+\n+    public function bodyParameters()\n+    {\n+        return [\n+            'tracking_uuid' => [\n+                'description' => 'Visitor tracking UUID',\n+                'example' => '765e9dd9-ceac-4a36-8006-9df7568ff5ec'\n+            ],\n+            'email' => [\n+                'description' => 'Email Address',\n+                'example' => 'john@example.com'\n+            ]\n+        ];\n+    }\n+\n+    public function messages()\n+    {\n+        return [\n+            'email.required' => __('The Email is required.'),\n+            'email.string' => __('The Email must be a valid input.'),\n+            'email.email' => __('The Email must be a valid email.'),\n+            'email.unique' => __('This Email has been already taken.'),\n+        ];\n+    }\n+}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1758615845889,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,26 +6,10 @@\n class StepRequest extends FormRequest\n {\n     public function rules()\n     {\n-        return [\n-            'email' => [\n-                'required',\n-                'string',\n-                'email',\n-                'max:255',\n-                Rule::unique('users', 'email')\n-                    ->where(function ($query) {\n-                        $query->where('saas_account_id', 0);\n-                    })\n-            ],\n-            'utm' => [],\n-            'social_id' => [],\n-            'social_email' => [],\n-            'social_name' => [],\n-            'social_avatar' => [],\n-            'social_provider' => []\n-        ];\n+        $step = $this->get('step');\n+    return config(\"staged_forms.steps.$step\", []);\n     }\n \n     public function bodyParameters()\n     {\n"
+                },
+                {
+                    "date": 1758615901662,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,25 +7,11 @@\n {\n     public function rules()\n     {\n         $step = $this->get('step');\n-    return config(\"staged_forms.steps.$step\", []);\n+        return config(\"staged_forms.steps.$step\", []);\n     }\n \n-    public function bodyParameters()\n-    {\n-        return [\n-            'tracking_uuid' => [\n-                'description' => 'Visitor tracking UUID',\n-                'example' => '765e9dd9-ceac-4a36-8006-9df7568ff5ec'\n-            ],\n-            'email' => [\n-                'description' => 'Email Address',\n-                'example' => 'john@example.com'\n-            ]\n-        ];\n-    }\n-\n     public function messages()\n     {\n         return [\n             'email.required' => __('The Email is required.'),\n"
+                }
+            ],
+            "date": 1758615584898,
+            "name": "Commit-0",
+            "content": "<?php\nnamespace "
+        }
+    ]
+}
