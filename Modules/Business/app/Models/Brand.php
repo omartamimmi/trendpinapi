@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\Category\app\Models\Category;
+use Modules\Category\Models\Category;
 use LamaLama\Wishlist\Wishlistable;
 use Modules\Media\Helpers\FileHelper;
 

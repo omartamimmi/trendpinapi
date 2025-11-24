@@ -87,4 +87,9 @@ class User extends Authenticatable
     {
         return $this->fcm_token;
     }
+
+    public function retailerOnboarding()
+    {
+        return $this->hasOne(\Modules\RetailerOnboarding\app\Models\RetailerOnboarding::class);
+    }
 }
