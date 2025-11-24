@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\RetailerOnboarding\Database\Seeders;
+namespace Modules\RetailerOnboarding\database\seeders;
 
 use Illuminate\Database\Seeder;
 use Modules\RetailerOnboarding\app\Models\SubscriptionPlan;

@@ -3,18 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Admin\app\Http\Controllers\AdminPageController;
 
-// Default login route for auth middleware redirect
-Route::get('/login', fn() => redirect('/admin/login'))->name('login');
-
-// Guest routes (login page)
+// Redirect old admin login to unified login
 Route::prefix('admin')->middleware('guest')->group(function () {
-    Route::get('/login', [AdminPageController::class, 'loginPage'])->name('admin.login.page');
-    Route::post('/login', [AdminPageController::class, 'login'])->name('admin.login.submit');
+    Route::get('/login', fn() => redirect('/login'));
 });
 
 // Protected admin routes
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
-    Route::post('/logout', [AdminPageController::class, 'logout'])->name('admin.logout.web');
 
     // Dashboard
     Route::get('/dashboard', [AdminPageController::class, 'dashboard'])->name('admin.dashboard');
@@ -67,4 +62,20 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/onboarding-approvals/{id}/approve', [AdminPageController::class, 'approveOnboarding'])->name('admin.onboarding-approvals.approve');
     Route::post('/onboarding-approvals/{id}/request-changes', [AdminPageController::class, 'requestOnboardingChanges'])->name('admin.onboarding-approvals.request-changes');
     Route::post('/onboarding-approvals/{id}/reject', [AdminPageController::class, 'rejectOnboarding'])->name('admin.onboarding-approvals.reject');
+
+    // Categories
+    Route::get('/categories', [AdminPageController::class, 'categories'])->name('admin.categories');
+    Route::get('/categories/create', [AdminPageController::class, 'createCategory'])->name('admin.categories.create');
+    Route::post('/categories', [AdminPageController::class, 'storeCategory'])->name('admin.categories.store');
+    Route::get('/categories/{id}/edit', [AdminPageController::class, 'editCategory'])->name('admin.categories.edit');
+    Route::put('/categories/{id}', [AdminPageController::class, 'updateCategory'])->name('admin.categories.update');
+    Route::delete('/categories/{id}', [AdminPageController::class, 'destroyCategory'])->name('admin.categories.destroy');
+
+    // Interests
+    Route::get('/interests', [AdminPageController::class, 'interests'])->name('admin.interests');
+    Route::get('/interests/create', [AdminPageController::class, 'createInterest'])->name('admin.interests.create');
+    Route::post('/interests', [AdminPageController::class, 'storeInterest'])->name('admin.interests.store');
+    Route::get('/interests/{id}/edit', [AdminPageController::class, 'editInterest'])->name('admin.interests.edit');
+    Route::put('/interests/{id}', [AdminPageController::class, 'updateInterest'])->name('admin.interests.update');
+    Route::delete('/interests/{id}', [AdminPageController::class, 'destroyInterest'])->name('admin.interests.destroy');
 });

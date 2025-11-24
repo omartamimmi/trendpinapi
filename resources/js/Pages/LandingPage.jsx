@@ -88,7 +88,7 @@ export default function LandingPage() {
                         <span className="text-xl font-semibold text-gray-900">Trendpin</span>
                     </div>
                     <Link
-                        href="/retailer/login"
+                        href="/login"
                         className="px-6 py-2.5 rounded-full text-sm font-medium text-white"
                         style={{ backgroundColor: '#E91E8C' }}
                     >

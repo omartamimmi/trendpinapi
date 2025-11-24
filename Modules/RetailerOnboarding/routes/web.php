@@ -4,17 +4,18 @@ use Illuminate\Support\Facades\Route;
 use Modules\RetailerOnboarding\app\Http\Controllers\RetailerPageController;
 use Modules\RetailerOnboarding\app\Http\Controllers\OnboardingController;
 
-// Guest routes (login/register)
+// Guest routes (register only - login is unified)
 Route::prefix('retailer')->middleware('guest')->group(function () {
-    Route::get('/login', [RetailerPageController::class, 'loginPage'])->name('retailer.login.page');
-    Route::post('/login', [RetailerPageController::class, 'login'])->name('retailer.login.submit');
+    // Redirect old login to unified login
+    Route::get('/login', fn() => redirect('/login'));
+
+    // Keep retailer registration separate
     Route::get('/register', [RetailerPageController::class, 'registerPage'])->name('retailer.register.page');
     Route::post('/register', [RetailerPageController::class, 'register'])->name('retailer.register.submit');
 });
 
 // Protected retailer routes
 Route::prefix('retailer')->middleware(['auth', 'role:retailer'])->group(function () {
-    Route::post('/logout', [RetailerPageController::class, 'logout'])->name('retailer.logout');
 
     // Onboarding page (accessible without completion)
     Route::get('/onboarding', [RetailerPageController::class, 'onboarding'])->name('retailer.onboarding');

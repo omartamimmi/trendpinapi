@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function Users({ users }) {
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [search, setSearch] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -45,6 +47,11 @@ export default function Users({ users }) {
         setShowModal(false);
     };
 
+    const handleSearch = (e) => {
+        e.preventDefault();
+        router.get('/admin/users', { search }, { preserveState: true });
+    };
+
     return (
         <AdminLayout>
             <div className="px-4 py-6 sm:px-0">
@@ -52,10 +59,29 @@ export default function Users({ users }) {
                     <h1 className="text-2xl font-semibold text-gray-900">Users</h1>
                     <button
                         onClick={handleCreate}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                        className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
                     >
                         Add User
                     </button>
+                </div>
+
+                {/* Search */}
+                <div className="mb-4">
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                        />
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                        >
+                            Search
+                        </button>
+                    </form>
                 </div>
 
                 <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -70,7 +96,7 @@ export default function Users({ users }) {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {users?.map((user) => (
+                            {users.data && users.data.length > 0 ? users.data.map((user) => (
                                 <tr key={user.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
@@ -83,7 +109,7 @@ export default function Users({ users }) {
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button
                                             onClick={() => handleEdit(user)}
-                                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                            className="text-pink-600 hover:text-pink-900 mr-4"
                                         >
                                             Edit
                                         </button>
@@ -95,9 +121,18 @@ export default function Users({ users }) {
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                                        No users found
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
+
+                    {/* Pagination */}
+                    <Pagination data={users} />
                 </div>
 
                 {showModal && (
@@ -163,7 +198,7 @@ export default function Users({ users }) {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                                        className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700"
                                     >
                                         {editingUser ? 'Update' : 'Create'}
                                     </button>

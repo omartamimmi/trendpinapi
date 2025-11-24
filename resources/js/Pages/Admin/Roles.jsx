@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function Roles({ roles, permissions }) {
     const [showModal, setShowModal] = useState(false);
     const [editingRole, setEditingRole] = useState(null);
+    const [search, setSearch] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         permissions: [],
@@ -50,6 +52,11 @@ export default function Roles({ roles, permissions }) {
         setShowModal(false);
     };
 
+    const handleSearch = (e) => {
+        e.preventDefault();
+        router.get('/admin/roles', { search }, { preserveState: true });
+    };
+
     return (
         <AdminLayout>
             <div className="px-4 py-6 sm:px-0">
@@ -57,10 +64,29 @@ export default function Roles({ roles, permissions }) {
                     <h1 className="text-2xl font-semibold text-gray-900">Roles & Permissions</h1>
                     <button
                         onClick={handleCreate}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                        className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
                     >
                         Add Role
                     </button>
+                </div>
+
+                {/* Search */}
+                <div className="mb-4">
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Search roles..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                        />
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                        >
+                            Search
+                        </button>
+                    </form>
                 </div>
 
                 <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -73,13 +99,13 @@ export default function Roles({ roles, permissions }) {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {roles?.map((role) => (
+                            {roles.data && roles.data.length > 0 ? roles.data.map((role) => (
                                 <tr key={role.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{role.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">
                                         <div className="flex flex-wrap gap-1">
                                             {role.permissions?.map(p => (
-                                                <span key={p.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                <span key={p.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800">
                                                     {p.name}
                                                 </span>
                                             ))}
@@ -91,7 +117,7 @@ export default function Roles({ roles, permissions }) {
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button
                                             onClick={() => handleEdit(role)}
-                                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                            className="text-pink-600 hover:text-pink-900 mr-4"
                                         >
                                             Edit
                                         </button>
@@ -103,9 +129,18 @@ export default function Roles({ roles, permissions }) {
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
+                                        No roles found
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
+
+                    {/* Pagination */}
+                    <Pagination data={roles} />
                 </div>
 
                 {showModal && (
@@ -135,7 +170,7 @@ export default function Roles({ roles, permissions }) {
                                                         type="checkbox"
                                                         checked={formData.permissions.includes(perm.name)}
                                                         onChange={() => handlePermissionToggle(perm.name)}
-                                                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-pink-600 border-gray-300 rounded"
                                                     />
                                                     <span className="ml-2 text-sm text-gray-700">{perm.name}</span>
                                                 </label>
@@ -156,7 +191,7 @@ export default function Roles({ roles, permissions }) {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                                        className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700"
                                     >
                                         {editingRole ? 'Update' : 'Create'}
                                     </button>

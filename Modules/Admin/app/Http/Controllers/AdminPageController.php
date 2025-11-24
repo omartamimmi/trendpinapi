@@ -19,6 +19,8 @@ use Modules\Business\app\Models\Branch;
 use Modules\Business\app\Models\Business;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Modules\Category\Models\Category;
+use App\Models\Interest;
 
 class AdminPageController extends Controller
 {
@@ -110,9 +112,18 @@ class AdminPageController extends Controller
     /**
      * Show users page
      */
-    public function users(): Response
+    public function users(Request $request): Response
     {
-        $users = User::with('roles')->get();
+        $search = $request->get('search');
+
+        $query = User::with('roles');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+        }
+
+        $users = $query->latest()->paginate(20);
 
         return Inertia::render('Admin/Users', [
             'users' => $users,
@@ -181,9 +192,17 @@ class AdminPageController extends Controller
     /**
      * Show roles page
      */
-    public function roles(): Response
+    public function roles(Request $request): Response
     {
-        $roles = Role::with('permissions')->get();
+        $search = $request->get('search');
+
+        $query = Role::with('permissions');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $roles = $query->latest()->paginate(20);
         $permissions = Permission::all();
 
         return Inertia::render('Admin/Roles', [
@@ -246,7 +265,15 @@ class AdminPageController extends Controller
     public function plans(Request $request): Response
     {
         $type = $request->get('type', 'retailer');
-        $plans = SubscriptionPlan::where('type', $type)->get();
+        $search = $request->get('search');
+
+        $query = SubscriptionPlan::where('type', $type);
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $plans = $query->latest()->paginate(20);
 
         return Inertia::render('Admin/Plans', [
             'plans' => $plans,
@@ -318,11 +345,20 @@ class AdminPageController extends Controller
     /**
      * Show payments page
      */
-    public function payments(): Response
+    public function payments(Request $request): Response
     {
-        $payments = SubscriptionPayment::with(['user', 'subscription.plan'])
-            ->latest()
-            ->get();
+        $search = $request->get('search');
+
+        $query = SubscriptionPayment::with(['user', 'subscription.plan']);
+
+        if ($search) {
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $payments = $query->latest()->paginate(20);
 
         return Inertia::render('Admin/Payments', [
             'payments' => $payments,
@@ -335,7 +371,6 @@ class AdminPageController extends Controller
     public function retailers(Request $request): Response
     {
         $search = $request->get('search');
-        $perPage = $request->get('per_page', 10);
 
         $query = User::role('retailer')->with(['retailerOnboarding']);
 
@@ -346,20 +381,10 @@ class AdminPageController extends Controller
             });
         }
 
-        $retailers = $query->paginate($perPage);
+        $retailers = $query->latest()->paginate(20);
 
         return Inertia::render('Admin/Retailers', [
-            'retailers' => $retailers->items(),
-            'pagination' => [
-                'total' => $retailers->total(),
-                'per_page' => $retailers->perPage(),
-                'current_page' => $retailers->currentPage(),
-                'last_page' => $retailers->lastPage(),
-                'from' => $retailers->firstItem(),
-                'to' => $retailers->lastItem(),
-                'prev_page_url' => $retailers->previousPageUrl(),
-                'next_page_url' => $retailers->nextPageUrl(),
-            ],
+            'retailers' => $retailers,
         ]);
     }
 
@@ -748,5 +773,207 @@ class AdminPageController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Onboarding rejected');
+    }
+
+    // ==================== CATEGORIES ====================
+
+    /**
+     * Show categories list
+     */
+    public function categories(Request $request): Response
+    {
+        $search = $request->get('search');
+
+        $query = Category::query();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+        }
+
+        $categories = $query->latest()->paginate(20);
+
+        return Inertia::render('Admin/Categories', [
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Show create category page
+     */
+    public function createCategory(): Response
+    {
+        return Inertia::render('Admin/CategoryCreate');
+    }
+
+    /**
+     * Store category
+     */
+    public function storeCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'name_ar' => 'nullable|string|max:255',
+            'description' => 'required|string',
+            'description_ar' => 'nullable|string',
+            'status' => 'required|in:draft,published',
+        ]);
+
+        Category::create($validated);
+
+        return redirect('/admin/categories')->with('success', 'Category created successfully');
+    }
+
+    /**
+     * Show edit category page
+     */
+    public function editCategory(int $id): Response
+    {
+        $category = Category::findOrFail($id);
+
+        return Inertia::render('Admin/CategoryEdit', [
+            'category' => $category,
+        ]);
+    }
+
+    /**
+     * Update category
+     */
+    public function updateCategory(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'name_ar' => 'nullable|string|max:255',
+            'description' => 'required|string',
+            'description_ar' => 'nullable|string',
+            'status' => 'required|in:draft,published',
+        ]);
+
+        Category::findOrFail($id)->update($validated);
+
+        return redirect('/admin/categories')->with('success', 'Category updated successfully');
+    }
+
+    /**
+     * Delete category
+     */
+    public function destroyCategory(int $id)
+    {
+        Category::findOrFail($id)->delete();
+
+        return redirect()->back()->with('success', 'Category deleted successfully');
+    }
+
+    // ==================== INTERESTS ====================
+
+    /**
+     * Show interests list
+     */
+    public function interests(Request $request): Response
+    {
+        $search = $request->get('search');
+
+        $query = Interest::with('categories');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $interests = $query->latest()->paginate(20);
+
+        return Inertia::render('Admin/Interests', [
+            'interests' => $interests,
+        ]);
+    }
+
+    /**
+     * Show create interest page
+     */
+    public function createInterest(): Response
+    {
+        $categories = Category::where('status', 'published')->get();
+
+        return Inertia::render('Admin/InterestCreate', [
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Store interest
+     */
+    public function storeInterest(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'status' => 'required|in:draft,published',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'exists:categories,id',
+        ]);
+
+        $interest = Interest::create([
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+        ]);
+
+        // Attach categories
+        if (!empty($validated['category_ids'])) {
+            $interest->categories()->attach($validated['category_ids']);
+        }
+
+        return redirect('/admin/interests')->with('success', 'Interest created successfully');
+    }
+
+    /**
+     * Show edit interest page
+     */
+    public function editInterest(int $id): Response
+    {
+        $interest = Interest::with('categories')->findOrFail($id);
+        $categories = Category::where('status', 'published')->get();
+
+        return Inertia::render('Admin/InterestEdit', [
+            'interest' => $interest,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Update interest
+     */
+    public function updateInterest(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'status' => 'required|in:draft,published',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'exists:categories,id',
+        ]);
+
+        $interest = Interest::findOrFail($id);
+        $interest->update([
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+        ]);
+
+        // Sync categories
+        if (isset($validated['category_ids'])) {
+            $interest->categories()->sync($validated['category_ids']);
+        } else {
+            $interest->categories()->detach();
+        }
+
+        return redirect('/admin/interests')->with('success', 'Interest updated successfully');
+    }
+
+    /**
+     * Delete interest
+     */
+    public function destroyInterest(int $id)
+    {
+        $interest = Interest::findOrFail($id);
+        $interest->categories()->detach();
+        $interest->delete();
+
+        return redirect()->back()->with('success', 'Interest deleted successfully');
     }
 }

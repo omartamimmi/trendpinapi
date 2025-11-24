@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function Plans({ plans, currentType = 'retailer' }) {
     const [showModal, setShowModal] = useState(false);
     const [editingPlan, setEditingPlan] = useState(null);
+    const [search, setSearch] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         type: currentType,
@@ -78,6 +80,11 @@ export default function Plans({ plans, currentType = 'retailer' }) {
         setShowModal(false);
     };
 
+    const handleSearch = (e) => {
+        e.preventDefault();
+        router.get('/admin/plans', { type: currentType, search }, { preserveState: true });
+    };
+
     return (
         <AdminLayout>
             <div className="px-4 py-6 sm:px-0">
@@ -90,6 +97,25 @@ export default function Plans({ plans, currentType = 'retailer' }) {
                     >
                         Add Plan
                     </button>
+                </div>
+
+                {/* Search */}
+                <div className="mb-4">
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Search plans..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                        />
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                        >
+                            Search
+                        </button>
+                    </form>
                 </div>
 
                 {/* Tabs */}
@@ -111,8 +137,8 @@ export default function Plans({ plans, currentType = 'retailer' }) {
                     </nav>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {plans?.map((plan) => (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+                    {plans.data && plans.data.length > 0 ? plans.data.map((plan) => (
                         <div key={plan.id} className="bg-white overflow-hidden shadow rounded-lg">
                             <div className="px-4 py-5 sm:p-6">
                                 <div className="flex justify-between items-start">
@@ -149,7 +175,7 @@ export default function Plans({ plans, currentType = 'retailer' }) {
                                 <div className="flex justify-end space-x-3">
                                     <button
                                         onClick={() => handleEdit(plan)}
-                                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                                        className="text-pink-600 hover:text-pink-900 text-sm font-medium"
                                     >
                                         Edit
                                     </button>
@@ -162,7 +188,16 @@ export default function Plans({ plans, currentType = 'retailer' }) {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="col-span-full text-center py-12 bg-white rounded-lg shadow">
+                            <p className="text-sm text-gray-500">No plans found</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination */}
+                <div className="bg-white shadow rounded-lg">
+                    <Pagination data={plans} />
                 </div>
 
                 {showModal && (
