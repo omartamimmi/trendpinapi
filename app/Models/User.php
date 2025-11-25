@@ -92,4 +92,20 @@ class User extends Authenticatable
     {
         return $this->hasOne(\Modules\RetailerOnboarding\app\Models\RetailerOnboarding::class);
     }
+
+    /**
+     * QR payments created by this user (as merchant/retailer)
+     */
+    public function qrPaymentsAsMerchant()
+    {
+        return $this->hasMany(\App\Models\QrPayment::class, 'merchant_id');
+    }
+
+    /**
+     * QR payments paid by this user (as customer)
+     */
+    public function qrPaymentsAsCustomer()
+    {
+        return $this->hasMany(\App\Models\QrPayment::class, 'customer_id');
+    }
 }

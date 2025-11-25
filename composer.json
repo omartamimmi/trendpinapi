@@ -18,6 +18,7 @@
         "netsells/laravel-geoscope": "^2.0",
         "nwidart/laravel-modules": "^12.0",
         "propaganistas/laravel-phone": "^6.0",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-image-optimizer": "^1.8",
         "spatie/laravel-permission": "^6.21",
         "twilio/sdk": "^8.8"
