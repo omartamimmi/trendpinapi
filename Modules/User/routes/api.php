@@ -48,7 +48,7 @@ Route::prefix('v1')
                         ->name('updateUserProfile');
                     Route::get('get-user-profile', 'getUserProfile')
                         ->name('getUserProfile');
-                    Route::post('change-password', 'changeMyPassword')
+                    Route::put('change-password', 'changeMyPassword')
                         ->name('changePassword');      
                     Route::post('destroy','destroy')
                         ->name('user-delete');
