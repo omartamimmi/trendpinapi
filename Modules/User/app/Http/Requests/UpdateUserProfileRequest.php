@@ -20,7 +20,7 @@ class UpdateUserProfileRequest extends FormRequest
     {
         return [
             'name' => [
-                'required',
+                // 'required',
                 'max:75',
                 'string',
             ],
@@ -30,7 +30,7 @@ class UpdateUserProfileRequest extends FormRequest
                 'max:191',
             ],
             'phone' => [
-                'required',
+                // 'required',
                 'max:255'
             ],
             'image_id' => [
