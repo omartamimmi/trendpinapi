@@ -44,7 +44,7 @@ Route::prefix('v1')
             ->group(function () {
                     Route::post('logout', 'logout')
                         ->name('logout');
-                    Route::post('update-user-profile', 'updateUserProfile')
+                    Route::put('update-user-profile', 'updateUserProfile')
                         ->name('updateUserProfile');
                     Route::get('get-user-profile', 'getUserProfile')
                         ->name('getUserProfile');
