@@ -25,7 +25,7 @@ class UpdateUserProfileRequest extends FormRequest
                 'string',
             ],
             'contact_email' => [
-                'required',
+                // 'required',
                 'email',
                 'max:191',
             ],
