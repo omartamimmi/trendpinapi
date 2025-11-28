@@ -1,0 +1,11 @@
+{
+    "name": "RetailerOnboarding",
+    "alias": "retaileronboarding",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\RetailerOnboarding\\app\\Providers\\RetailerOnboardingServiceProvider"
+    ],
+    "files": []
+}

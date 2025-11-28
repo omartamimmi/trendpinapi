@@ -1,0 +1,14 @@
+{
+    "User": true,
+    "Business": true,
+    "StagedForm": true,
+    "Category": true,
+    "Media": true,
+    "Shop": true,
+    "Location": true,
+    "Wishlist": true,
+    "Tag": true,
+    "Otp": true,
+    "RetailerOnboarding": true,
+    "Admin": true
+}
