@@ -1,0 +1,42 @@
+{
+    "sourceFile": "Modules/StagedForm/database/migrations/2025_09_23_064559_create_staged_forms_table.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 6,
+            "patches": [
+                {
+                    "date": 1758610476126,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758610500902,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,9 +11,9 @@\n      */\n     public function up(): void\n     {\n         Schema::create('staged_forms', function (Blueprint $table) {\n-                        $table->id();\n+            $table->id();\n             $table->integer('user_id')->nullable()->change();\n             $table->string('stage_id');\n             $table->string('stage_type');\n             $table->string('step');\n"
+                },
+                {
+                    "date": 1758625157418,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,33 @@\n+<?php\n+\n+use Illuminate\\Database\\Migrations\\Migration;\n+use Illuminate\\Database\\Schema\\Blueprint;\n+use Illuminate\\Support\\Facades\\Schema;\n+\n+return new class extends Migration\n+{\n+    /**\n+     * Run the migrations.\n+     */\n+    public function up(): void\n+    {\n+        Schema::create('staged_forms', function (Blueprint $table) {\n+            $table->id();\n+            $table->integer('user_id')->nullable()->change();\n+            $table->string('stage_id');\n+            $table->string('stage_type');\n+            $table->string('step');\n+            $table->json('submitted_form');\n+            $table->timestamps();\n+            $table->unique(['stage_id', 'stage_type']);\n+        });\n+    }\n+\n+    /**\n+     * Reverse the migrations.\n+     */\n+    public function down(): void\n+    {\n+        Schema::dropIfExists('staged_forms');\n+    }\n+};\n"
+                },
+                {
+                    "date": 1758627232536,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n     public function up(): void\n     {\n         Schema::create('staged_forms', function (Blueprint $table) {\n             $table->id();\n-            $table->integer('user_id')->nullable()->change();\n+            $table->integer('user_id')->nullable();\n             $table->string('stage_id');\n             $table->string('stage_type');\n             $table->string('step');\n             $table->json('submitted_form');\n@@ -30,37 +30,4 @@\n     {\n         Schema::dropIfExists('staged_forms');\n     }\n };\n-<?php\n-\n-use Illuminate\\Database\\Migrations\\Migration;\n-use Illuminate\\Database\\Schema\\Blueprint;\n-use Illuminate\\Support\\Facades\\Schema;\n-\n-return new class extends Migration\n-{\n-    /**\n-     * Run the migrations.\n-     */\n-    public function up(): void\n-    {\n-        Schema::create('staged_forms', function (Blueprint $table) {\n-            $table->id();\n-            $table->integer('user_id')->nullable()->change();\n-            $table->string('stage_id');\n-            $table->string('stage_type');\n-            $table->string('step');\n-            $table->json('submitted_form');\n-            $table->timestamps();\n-            $table->unique(['stage_id', 'stage_type', 'step']);\n-        });\n-    }\n-\n-    /**\n-     * Reverse the migrations.\n-     */\n-    public function down(): void\n-    {\n-        Schema::dropIfExists('staged_forms');\n-    }\n-};\n"
+                },
+                {
+                    "date": 1758628681435,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -16,9 +16,9 @@\n             $table->integer('user_id')->nullable();\n             $table->string('stage_id');\n             $table->string('stage_type');\n             $table->string('step');\n-            $table->json('submitted_form');\n+            // $table->json('submitted_form');\n             $table->timestamps();\n             $table->unique(['stage_id', 'stage_type']);\n         });\n     }\n"
+                },
+                {
+                    "date": 1758904879561,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,18 +10,18 @@\n      * Run the migrations.\n      */\n     public function up(): void\n     {\n-        Schema::create('staged_forms', function (Blueprint $table) {\n-            $table->id();\n-            $table->integer('user_id')->nullable();\n-            $table->string('stage_id');\n-            $table->string('stage_type');\n-            $table->string('step');\n-            // $table->json('submitted_form');\n-            $table->timestamps();\n-            $table->unique(['stage_id', 'stage_type']);\n-        });\n+        // Schema::create('staged_forms', function (Blueprint $table) {\n+        //     $table->id();\n+        //     $table->integer('user_id')->nullable();\n+        //     $table->string('stage_id');\n+        //     $table->string('stage_type');\n+        //     // $table->string('step');\n+        //     // $table->json('submitted_form');\n+        //     $table->timestamps();\n+        //     $table->unique(['stage_id', 'stage_type']);\n+        // });\n     }\n \n     /**\n      * Reverse the migrations.\n"
+                },
+                {
+                    "date": 1758904913974,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,18 +10,18 @@\n      * Run the migrations.\n      */\n     public function up(): void\n     {\n-        // Schema::create('staged_forms', function (Blueprint $table) {\n-        //     $table->id();\n-        //     $table->integer('user_id')->nullable();\n-        //     $table->string('stage_id');\n-        //     $table->string('stage_type');\n-        //     // $table->string('step');\n-        //     // $table->json('submitted_form');\n-        //     $table->timestamps();\n-        //     $table->unique(['stage_id', 'stage_type']);\n-        // });\n+        Schema::create('staged_forms', function (Blueprint $table) {\n+            $table->id();\n+            $table->integer('user_id')->nullable();\n+            $table->string('stage_id');\n+            $table->string('stage_type');\n+            // $table->string('step');\n+            // $table->json('submitted_form');\n+            $table->timestamps();\n+            $table->unique(['stage_id', 'stage_type']);\n+        });\n     }\n \n     /**\n      * Reverse the migrations.\n"
+                }
+            ],
+            "date": 1758610476126,
+            "name": "Commit-0",
+            "content": "<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration\n{\n    /**\n     * Run the migrations.\n     */\n    public function up(): void\n    {\n        Schema::create('staged_forms', function (Blueprint $table) {\n                        $table->id();\n            $table->integer('user_id')->nullable()->change();\n            $table->string('stage_id');\n            $table->string('stage_type');\n            $table->string('step');\n            $table->json('submitted_form');\n            $table->timestamps();\n            $table->unique(['stage_id', 'stage_type', 'step']);\n        });\n    }\n\n    /**\n     * Reverse the migrations.\n     */\n    public function down(): void\n    {\n        Schema::dropIfExists('staged_forms');\n    }\n};\n"
+        }
+    ]
+}

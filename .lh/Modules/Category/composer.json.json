@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/Category/composer.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1759745823699,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759745841933,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -29,35 +29,5 @@\n     }\n }\n \n \n-{\n-    \"name\": \"nwidart/stagedform\",\n-    \"description\": \"\",\n-    \"authors\": [\n-        {\n-            \"name\": \"Nicolas Widart\",\n-            \"email\": \"n.widart@gmail.com\"\n-        }\n-    ],\n-    \"extra\": {\n-        \"laravel\": {\n-            \"providers\": [],\n-            \"aliases\": {\n \n-            }\n-        }\n-    },\n-    \"autoload\": {\n-        \"psr-4\": {\n-            \"Modules\\\\StagedForm\\\\\": \"app/\",\n-            \"Modules\\\\StagedForm\\\\Database\\\\Factories\\\\\": \"database/factories/\",\n-            \"Modules\\\\StagedForm\\\\Database\\\\Seeders\\\\\": \"database/seeders/\"\n-        }\n-    },\n-    \"autoload-dev\": {\n-        \"psr-4\": {\n-            \"Modules\\\\StagedForm\\\\Tests\\\\\": \"tests/\"\n-        }\n-    }\n-}\n-\n"
+                }
+            ],
+            "date": 1759745823699,
+            "name": "Commit-0",
+            "content": "{\n    \"name\": \"nwidart/category\",\n    \"description\": \"\",\n    \"authors\": [\n        {\n            \"name\": \"Nicolas Widart\",\n            \"email\": \"n.widart@gmail.com\"\n        }\n    ],\n    \"extra\": {\n        \"laravel\": {\n            \"providers\": [],\n            \"aliases\": {\n\n            }\n        }\n    },\n    \"autoload\": {\n        \"psr-4\": {\n            \"Modules\\\\Category\\\\\": \"app/\",\n            \"Modules\\\\Category\\\\Database\\\\Factories\\\\\": \"database/factories/\",\n            \"Modules\\\\Category\\\\Database\\\\Seeders\\\\\": \"database/seeders/\"\n        }\n    },\n    \"autoload-dev\": {\n        \"psr-4\": {\n            \"Modules\\\\Category\\\\Tests\\\\\": \"tests/\"\n        }\n    }\n}\n\n\n{\n    \"name\": \"nwidart/stagedform\",\n    \"description\": \"\",\n    \"authors\": [\n        {\n            \"name\": \"Nicolas Widart\",\n            \"email\": \"n.widart@gmail.com\"\n        }\n    ],\n    \"extra\": {\n        \"laravel\": {\n            \"providers\": [],\n            \"aliases\": {\n\n            }\n        }\n    },\n    \"autoload\": {\n        \"psr-4\": {\n            \"Modules\\\\StagedForm\\\\\": \"app/\",\n            \"Modules\\\\StagedForm\\\\Database\\\\Factories\\\\\": \"database/factories/\",\n            \"Modules\\\\StagedForm\\\\Database\\\\Seeders\\\\\": \"database/seeders/\"\n        }\n    },\n    \"autoload-dev\": {\n        \"psr-4\": {\n            \"Modules\\\\StagedForm\\\\Tests\\\\\": \"tests/\"\n        }\n    }\n}\n\n"
+        }
+    ]
+}

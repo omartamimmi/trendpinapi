@@ -1,0 +1,30 @@
+{
+    "sourceFile": "Modules/User/database/migrations/2025_10_06_102707_create_users_table.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 3,
+            "patches": [
+                {
+                    "date": 1759746433897,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759746483613,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,9 +11,9 @@\n      */\n     public function up(): void\n     {\n         Schema::create('users', function (Blueprint $table) {\n-             $table->id();\n+            $table->id();\n             $table->string('name');\n             $table->tinyInteger('enable_location_notify')->default(0);\n             $table->tinyInteger('enable_notification')->default(0);\n             $table->tinyInteger('image_id')->nullable();\n"
+                },
+                {
+                    "date": 1759747181345,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -21,8 +21,9 @@\n             $table->timestamp('email_verified_at')->nullable();\n             $table->string('password');\n             $table->rememberToken();\n             $table->timestamps();\n+                        $table->timestamp('deleted_at')->nullable();\n         });\n     }\n \n     /**\n"
+                },
+                {
+                    "date": 1759747348574,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -19,11 +19,14 @@\n             $table->tinyInteger('image_id')->nullable();\n             $table->string('email')->unique();\n             $table->timestamp('email_verified_at')->nullable();\n             $table->string('password');\n+                        $table->string('phone',30)->nullable();\n+            $table->date('birthday')->nullable();\n+            $table->string('contact_email')->nullable();\n             $table->rememberToken();\n             $table->timestamps();\n-                        $table->timestamp('deleted_at')->nullable();\n+            $table->timestamp('deleted_at')->nullable();\n         });\n     }\n \n     /**\n"
+                }
+            ],
+            "date": 1759746433897,
+            "name": "Commit-0",
+            "content": "<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration\n{\n    /**\n     * Run the migrations.\n     */\n    public function up(): void\n    {\n        Schema::create('users', function (Blueprint $table) {\n             $table->id();\n            $table->string('name');\n            $table->tinyInteger('enable_location_notify')->default(0);\n            $table->tinyInteger('enable_notification')->default(0);\n            $table->tinyInteger('image_id')->nullable();\n            $table->string('email')->unique();\n            $table->timestamp('email_verified_at')->nullable();\n            $table->string('password');\n            $table->rememberToken();\n            $table->timestamps();\n        });\n    }\n\n    /**\n     * Reverse the migrations.\n     */\n    public function down(): void\n    {\n        Schema::dropIfExists('users');\n    }\n};\n"
+        }
+    ]
+}

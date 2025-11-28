@@ -1,0 +1,30 @@
+{
+    "sourceFile": "Modules/User/Services/OnboardingService.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 3,
+            "patches": [
+                {
+                    "date": 1743123315421,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1743123323037,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,12 +3,9 @@\n namespace Modules\\User\\Services;\n \n use App\\Abstractions\\Service;\n use Carbon\\Carbon;\n-use Exception;\n-use Illuminate\\Support\\Facades\\Auth;\n-use Illuminate\\Support\\Facades\\Hash;\n-use Modules\\User\\Repositories\\UserRepository;\n \n-class AuthService extends Service\n+\n+class OnboardingService extends Service\n {\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1743123404005,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,10 +2,9 @@\n \n namespace Modules\\User\\Services;\n \n use App\\Abstractions\\Service;\n-use Carbon\\Carbon;\n \n-\n class OnboardingService extends Service\n {\n+\n }\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1743123602497,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,6 +5,6 @@\n use App\\Abstractions\\Service;\n \n class OnboardingService extends Service\n {\n-\n+    \n }\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1743123315421,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\Services;\n\nuse App\\Abstractions\\Service;\nuse Carbon\\Carbon;\nuse Exception;\nuse Illuminate\\Support\\Facades\\Auth;\nuse Illuminate\\Support\\Facades\\Hash;\nuse Modules\\User\\Repositories\\UserRepository;\n\nclass AuthService extends Service\n{\n}"
+        }
+    ]
+}

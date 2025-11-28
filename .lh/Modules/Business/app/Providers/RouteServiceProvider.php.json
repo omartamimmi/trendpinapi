@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/Business/app/Providers/RouteServiceProvider.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1743118498778,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1743118504719,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,7 @@\n <?php\n \n-namespace Modules\\Business\\Providers;\n+namespace Modules\\Business\\app\\Providers;\n \n use Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider as ServiceProvider;\n use Illuminate\\Support\\Facades\\Route;\n \n"
+                }
+            ],
+            "date": 1743118498778,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Business\\app\\Providers;\n\nuse Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider as ServiceProvider;\nuse Illuminate\\Support\\Facades\\Route;\n\nclass RouteServiceProvider extends ServiceProvider\n{\n    protected string $name = 'Business';\n\n    /**\n     * Called before routes are registered.\n     *\n     * Register any model bindings or pattern based filters.\n     */\n    public function boot(): void\n    {\n        parent::boot();\n    }\n\n    /**\n     * Define the routes for the application.\n     */\n    public function map(): void\n    {\n        $this->mapApiRoutes();\n        $this->mapWebRoutes();\n    }\n\n    /**\n     * Define the \"web\" routes for the application.\n     *\n     * These routes all receive session state, CSRF protection, etc.\n     */\n    protected function mapWebRoutes(): void\n    {\n        Route::middleware('web')->group(module_path($this->name, '/routes/web.php'));\n    }\n\n    /**\n     * Define the \"api\" routes for the application.\n     *\n     * These routes are typically stateless.\n     */\n    protected function mapApiRoutes(): void\n    {\n        Route::middleware('api')->prefix('api')->name('api.')->group(module_path($this->name, '/routes/api.php'));\n    }\n}\n"
+        }
+    ]
+}

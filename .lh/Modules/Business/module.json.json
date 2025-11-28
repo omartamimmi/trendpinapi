@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/Business/module.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1743118666879,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1743118678503,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n     \"description\": \"\",\n     \"keywords\": [],\n     \"priority\": 0,\n     \"providers\": [\n-        \"Modules\\\\Business\\\\Providers\\\\app\\\\BusinessServiceProvider\"\n+        \"Modules\\\\Business\\\\Providers\\\\BusinessServiceProvider\"\n     ],\n     \"files\": []\n }\n"
+                }
+            ],
+            "date": 1743118666879,
+            "name": "Commit-0",
+            "content": "{\n    \"name\": \"Business\",\n    \"alias\": \"business\",\n    \"description\": \"\",\n    \"keywords\": [],\n    \"priority\": 0,\n    \"providers\": [\n        \"Modules\\\\Business\\\\Providers\\\\app\\\\BusinessServiceProvider\"\n    ],\n    \"files\": []\n}\n"
+        }
+    ]
+}

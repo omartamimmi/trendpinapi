@@ -1,0 +1,18 @@
+{
+    "sourceFile": "Modules/User/app/Http/Requests/AdminDeleteUserRequest.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1759747253957,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1759747253957,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\app\\Http\\Requests;\n\nuse Illuminate\\Foundation\\Http\\FormRequest;\nuse Modules\\User\\Rules\\NotUrl;\nuse Illuminate\\Contracts\\Validation\\Validator;\nuse Illuminate\\Http\\Exceptions\\HttpResponseException;\nclass AdminDeleteUserRequest extends FormRequest\n{\n    /**\n     * Get the validation rules that apply to the request.\n     *\n     * @return array\n     */\n    public function rules()\n    {\n        return [\n            'ids' => [\n                'array'\n            ]\n        ];\n    }\n\n    public function bodyParameters()\n    {\n        return [\n            'ids' => [\n                'description' => 'User\\'s ids',\n                'example' => '[1,2,3]'\n            ],\n        ];\n    }\n\n    /**\n     * Get the validation messages that apply to the rule.\n     *\n     * @return array\n     */\n    public function messages()\n    {\n        return [\n            'ids.array' => __('The User id field is required'),\n        ];\n    }\n\n}\n"
+        }
+    ]
+}

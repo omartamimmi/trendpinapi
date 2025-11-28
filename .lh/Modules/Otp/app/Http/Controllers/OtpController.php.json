@@ -1,0 +1,38 @@
+{
+    "sourceFile": "Modules/Otp/app/Http/Controllers/OtpController.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 5,
+            "patches": [
+                {
+                    "date": 1763886702179,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1763886737507,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,9 +3,8 @@\n namespace Modules\\Otp\\app\\Http\\Controllers;\n \n use App\\Http\\Controllers\\Controller;\n use Modules\\Otp\\app\\Http\\Requests\\SendOtpRequest;\n-use Modules\\Otp\\app\\Http\\Requests\\VerifyOtpRequest;\n use Modules\\Otp\\Services\\OtpService;\n use Illuminate\\Http\\JsonResponse;\n use Exception;\n \n"
+                },
+                {
+                    "date": 1763886743802,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -42,9 +42,9 @@\n \n     /**\n      * Verify OTP code\n      */\n-    public function verify(VerifyOtpRequest $request): JsonResponse\n+    public function verify(VerifyOtpRequ $request): JsonResponse\n     {\n         try {\n             $this->otpService->verify($request->phone_number, $request->code);\n \n"
+                },
+                {
+                    "date": 1763886753546,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,8 +3,9 @@\n namespace Modules\\Otp\\app\\Http\\Controllers;\n \n use App\\Http\\Controllers\\Controller;\n use Modules\\Otp\\app\\Http\\Requests\\SendOtpRequest;\n+use Modules\\Otp\\app\\Http\\Requests\\VerifyOtpRequest;\n use Modules\\Otp\\Services\\OtpService;\n use Illuminate\\Http\\JsonResponse;\n use Exception;\n \n@@ -42,9 +43,9 @@\n \n     /**\n      * Verify OTP code\n      */\n-    public function verify(VerifyOtpRequ $request): JsonResponse\n+    public function verify(VerifyOtpRequest $request): JsonResponse\n     {\n         try {\n             $this->otpService->verify($request->phone_number, $request->code);\n \n"
+                },
+                {
+                    "date": 1763888000094,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -22,8 +22,9 @@\n      * Send OTP to phone number\n      */\n     public function send(SendOtpRequest $request): JsonResponse\n     {\n+        dd(123);\n         try {\n             $verification = $this->otpService->send($request->phone_number);\n \n             return response()->json([\n"
+                },
+                {
+                    "date": 1763888116923,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -22,9 +22,8 @@\n      * Send OTP to phone number\n      */\n     public function send(SendOtpRequest $request): JsonResponse\n     {\n-        dd(123);\n         try {\n             $verification = $this->otpService->send($request->phone_number);\n \n             return response()->json([\n"
+                }
+            ],
+            "date": 1763886702179,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Otp\\app\\Http\\Controllers;\n\nuse App\\Http\\Controllers\\Controller;\nuse Modules\\Otp\\app\\Http\\Requests\\SendOtpRequest;\nuse Modules\\Otp\\app\\Http\\Requests\\VerifyOtpRequest;\nuse Modules\\Otp\\Services\\OtpService;\nuse Illuminate\\Http\\JsonResponse;\nuse Exception;\n\nclass OtpController extends Controller\n{\n    protected OtpService $otpService;\n\n    public function __construct(OtpService $otpService)\n    {\n        $this->otpService = $otpService;\n    }\n\n    /**\n     * Send OTP to phone number\n     */\n    public function send(SendOtpRequest $request): JsonResponse\n    {\n        try {\n            $verification = $this->otpService->send($request->phone_number);\n\n            return response()->json([\n                'success' => true,\n                'message' => __('otp::messages.code_sent'),\n                'data' => [\n                    'expires_at' => $verification->expires_at->toIso8601String(),\n                ],\n            ]);\n        } catch (Exception $e) {\n            return response()->json([\n                'success' => false,\n                'message' => $e->getMessage(),\n            ], 422);\n        }\n    }\n\n    /**\n     * Verify OTP code\n     */\n    public function verify(VerifyOtpRequest $request): JsonResponse\n    {\n        try {\n            $this->otpService->verify($request->phone_number, $request->code);\n\n            return response()->json([\n                'success' => true,\n                'message' => __('otp::messages.verification_success'),\n            ]);\n        } catch (Exception $e) {\n            return response()->json([\n                'success' => false,\n                'message' => $e->getMessage(),\n            ], 422);\n        }\n    }\n\n    /**\n     * Check if phone is verified\n     */\n    public function check(SendOtpRequest $request): JsonResponse\n    {\n        $isVerified = $this->otpService->isVerified($request->phone_number);\n\n        return response()->json([\n            'success' => true,\n            'data' => [\n                'is_verified' => $isVerified,\n            ],\n        ]);\n    }\n}\n"
+        }
+    ]
+}

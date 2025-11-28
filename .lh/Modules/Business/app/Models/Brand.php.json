@@ -1,0 +1,38 @@
+{
+    "sourceFile": "Modules/Business/app/Models/Brand.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 5,
+            "patches": [
+                {
+                    "date": 1758902805053,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759660331459,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = [];\n+    protected $fillable = ['business_id'];\n \n     // protected static function newFactory(): BrandFactory\n     // {\n     //     // return BrandFactory::new();\n"
+                },
+                {
+                    "date": 1759660339097,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = ['business_id'];\n+    protected $fillable = ['business_id','name'];\n \n     // protected static function newFactory(): BrandFactory\n     // {\n     //     // return BrandFactory::new();\n"
+                },
+                {
+                    "date": 1759660602801,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = ['business_id','name'];\n+    protected $fillable = ['brand_id','name'];\n \n     // protected static function newFactory(): BrandFactory\n     // {\n     //     // return BrandFactory::new();\n"
+                },
+                {
+                    "date": 1759660611075,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = ['brand_id','name'];\n+    protected $fillable = ['business_id','name'];\n \n     // protected static function newFactory(): BrandFactory\n     // {\n     //     // return BrandFactory::new();\n"
+                },
+                {
+                    "date": 1759691542113,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,35 @@\n+<?php\n+\n+namespace Modules\\Business\\app\\Models;\n+\n+use Illuminate\\Database\\Eloquent\\Model;\n+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n+// use Modules\\Business\\Database\\Factories\\BrandFactory;\n+\n+class Brand extends Model\n+{\n+    use HasFactory;\n+\n+    /**\n+     * The attributes that are mass assignable.\n+     */\n+    protected $fillable = ['business_id','name'];\n+\n+    // protected static function newFactory(): BrandFactory\n+    // {\n+    //     // return BrandFactory::new();\n+    // }\n+\n+    public function business() {\n+    return $this->belongsTo(Business::class);\n+}\n+\n+public function group() {\n+    return $this->belongsTo(Group::class);\n+}\n+\n+public function branches() {\n+    return $this->hasMany(Branch::class);\n+}\n+\n+}\n"
+                }
+            ],
+            "date": 1758902805053,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Business\\app\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n// use Modules\\Business\\Database\\Factories\\BrandFactory;\n\nclass Brand extends Model\n{\n    use HasFactory;\n\n    /**\n     * The attributes that are mass assignable.\n     */\n    protected $fillable = [];\n\n    // protected static function newFactory(): BrandFactory\n    // {\n    //     // return BrandFactory::new();\n    // }\n}\n"
+        }
+    ]
+}

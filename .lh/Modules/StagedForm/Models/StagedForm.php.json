@@ -1,0 +1,34 @@
+{
+    "sourceFile": "Modules/StagedForm/Models/StagedForm.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 4,
+            "patches": [
+                {
+                    "date": 1758611983595,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758612386457,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -14,10 +14,5 @@\n         'stage_id', // session id\n         'stage_type', // registration type\n         'user_id'\n     ];\n-\n-    // protected static function newFactory()\n-    // {\n-    //     return StagedFormFactory::new();\n-    // }\n }\n"
+                },
+                {
+                    "date": 1758627687110,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,7 +12,8 @@\n \n     protected $fillable = [\n         'stage_id', // session id\n         'stage_type', // registration type\n-        'user_id'\n+        'user_id',\n+        'step'\n     ];\n }\n"
+                },
+                {
+                    "date": 1758627696362,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -13,7 +13,8 @@\n     protected $fillable = [\n         'stage_id', // session id\n         'stage_type', // registration type\n         'user_id',\n-        'step'\n+        'step',\n+        'submitted_form'\n     ];\n }\n"
+                },
+                {
+                    "date": 1758628656887,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,7 @@\n \n     protected $fillable = [\n         'stage_id', // session id\n         'stage_type', // registration type\n-        'user_id',\n-        'step',\n-        'submitted_form'\n+        'user_id'\n     ];\n }\n"
+                }
+            ],
+            "date": 1758611983595,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\StagedForm\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\nuse Modules\\StagedForm\\Database\\factories\\StagedFormFactory;\n\nclass StagedForm extends Model\n{\n    use HasFactory;\n\n    protected $fillable = [\n        'stage_id', // session id\n        'stage_type', // registration type\n        'user_id'\n    ];\n\n    // protected static function newFactory()\n    // {\n    //     return StagedFormFactory::new();\n    // }\n}\n"
+        }
+    ]
+}

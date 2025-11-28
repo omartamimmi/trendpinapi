@@ -1,0 +1,18 @@
+{
+    "sourceFile": "Modules/User/app/Http/Requests/SocialLoginMobile.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1759747293031,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1759747293031,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\app\\Http\\Requests;\n\nuse Illuminate\\Foundation\\Http\\FormRequest;\nuse Modules\\User\\Rules\\NotUrl;\nuse Illuminate\\Contracts\\Validation\\Validator;\nuse Illuminate\\Http\\Exceptions\\HttpResponseException;\nclass SocialLoginMobile extends FormRequest\n{\n    /**\n     * Get the validation rules that apply to the request.\n     *\n     * @return array\n     */\n    public function rules()\n    {\n        return [\n            'name' => [\n                'string',\n                'max:255',\n            ],\n            'email' => [\n                'string',\n                'email',\n                'max:255',\n            ],\n            'appleId'=>[\n                \n            ]\n        ];\n    }\n\n    public function bodyParameters()\n    {\n        return [\n            'name' => [\n                'description' => 'User\\'s name',\n                'example' => 'John Doe'\n            ],\n            'email' => [\n                'description' => 'User\\'s email',\n                'example' => 'john.doe@example.com'\n            ],\n            'password' => [\n                'description' => 'User\\'s password',\n                'example' => 'aDD87.778'\n            ],\n            'term' => [\n                'description' => 'Confirm that the user accepts the terms & conditions',\n                'example' => 1\n            ]\n        ];\n    }\n\n    /**\n     * Get the validation messages that apply to the rule.\n     *\n     * @return array\n     */\n    public function messages()\n    {\n        return [\n            'name.required' => __('validation.name required'),\n            'name.max' => __('validation.name max'),\n            'name.string' => __('validation.name string'),\n            'email.required' => __('validation.email required'),\n            'email.email' => __('validation.email email'),\n            'email.string' => __('validation.email string'),\n            'email.max' => __('validation.email max'),\n            'email.unique' => __('validation.email.unique'),\n            'password.required' => __('validation.password required'),\n            'password.string' => __('validation.password string'),\n            'password.min' => __('validation.password.min'),\n            'term.required' => __('validation.term.required'),\n            'term.boolean' => __('validation.term.boolean'),\n        ];\n    }\n\n}\n"
+        }
+    ]
+}

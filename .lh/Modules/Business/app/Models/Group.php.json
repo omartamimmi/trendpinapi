@@ -1,0 +1,46 @@
+{
+    "sourceFile": "Modules/Business/app/Models/Group.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 7,
+            "patches": [
+                {
+                    "date": 1758902794926,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759659844720,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,24 @@\n+<?php\n+\n+namespace Modules\\Business\\app\\Models;\n+\n+use Illuminate\\Database\\Eloquent\\Model;\n+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n+// use Modules\\Business\\Database\\Factories\\GroupFactory;\n+\n+class Group extends Model\n+{\n+    use HasFactory;\n+\n+    /**\n+     * The attributes that are mass assignable.\n+     */\n+    protected $fillable = [\n+        'retailer_name'\n+    ];\n+\n+    // protected static function newFactory(): GroupFactory\n+    // {\n+    //     // return GroupFactory::new();\n+    // }\n+}\n"
+                },
+                {
+                    "date": 1759659854036,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,32 +12,8 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = [\n-        'retailer_name'\n-    ];\n-\n-    // protected static function newFactory(): GroupFactory\n-    // {\n-    //     // return GroupFactory::new();\n-    // }\n-}\n-<?php\n-\n-namespace Modules\\Business\\app\\Models;\n-\n-use Illuminate\\Database\\Eloquent\\Model;\n-use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n-// use Modules\\Business\\Database\\Factories\\GroupFactory;\n-\n-class Group extends Model\n-{\n-    use HasFactory;\n-\n-    /**\n-     * The attributes that are mass assignable.\n-     */\n     protected $fillable = [];\n \n     // protected static function newFactory(): GroupFactory\n     // {\n"
+                },
+                {
+                    "date": 1759659964548,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = [];\n+    protected $fillable = ['business_id'];\n \n     // protected static function newFactory(): GroupFactory\n     // {\n     //     // return GroupFactory::new();\n"
+                },
+                {
+                    "date": 1759659978312,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = ['business_id'];\n+    protected $fillable = ['business_id','name'];\n \n     // protected static function newFactory(): GroupFactory\n     // {\n     //     // return GroupFactory::new();\n"
+                },
+                {
+                    "date": 1759660010011,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = ['business_id','name'];\n+    protected $fillable = ['business_id'];\n \n     // protected static function newFactory(): GroupFactory\n     // {\n     //     // return GroupFactory::new();\n"
+                },
+                {
+                    "date": 1759660121298,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n \n     /**\n      * The attributes that are mass assignable.\n      */\n-    protected $fillable = ['business_id'];\n+    protected $fillable = ['business_id','name'];\n \n     // protected static function newFactory(): GroupFactory\n     // {\n     //     // return GroupFactory::new();\n"
+                },
+                {
+                    "date": 1759691509220,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,31 @@\n+<?php\n+\n+namespace Modules\\Business\\app\\Models;\n+\n+use Illuminate\\Database\\Eloquent\\Model;\n+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n+// use Modules\\Business\\Database\\Factories\\GroupFactory;\n+\n+class Group extends Model\n+{\n+    use HasFactory;\n+\n+    /**\n+     * The attributes that are mass assignable.\n+     */\n+    protected $fillable = ['business_id','name'];\n+\n+    // protected static function newFactory(): GroupFactory\n+    // {\n+    //     // return GroupFactory::new();\n+    // }\n+\n+    public function business() {\n+    return $this->belongsTo(Business::class);\n+}\n+\n+public function brands() {\n+    return $this->hasMany(Brand::class);\n+}\n+\n+}\n"
+                }
+            ],
+            "date": 1758902794926,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\Business\\app\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\n// use Modules\\Business\\Database\\Factories\\GroupFactory;\n\nclass Group extends Model\n{\n    use HasFactory;\n\n    /**\n     * The attributes that are mass assignable.\n     */\n    protected $fillable = [];\n\n    // protected static function newFactory(): GroupFactory\n    // {\n    //     // return GroupFactory::new();\n    // }\n}\n"
+        }
+    ]
+}

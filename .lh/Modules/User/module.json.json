@@ -1,0 +1,42 @@
+{
+    "sourceFile": "Modules/User/module.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 6,
+            "patches": [
+                {
+                    "date": 1758212014403,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758212300325,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n     \"description\": \"\",\n     \"keywords\": [],\n     \"priority\": 0,\n     \"providers\": [\n-        \"Modules\\\\User\\\\appProviders\\\\UserServiceProvider\"\n+        // \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n     ],\n     \"files\": []\n }\n"
+                },
+                {
+                    "date": 1758212311860,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,8 @@\n     \"description\": \"\",\n     \"keywords\": [],\n     \"priority\": 0,\n     \"providers\": [\n-        // \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n+        \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n     ],\n     \"files\": []\n }\n"
+                },
+                {
+                    "date": 1758212330877,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -8,4 +8,18 @@\n         \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n     ],\n     \"files\": []\n }\n+\n+{\n+    \"name\": \"User\",\n+    \"alias\": \"user\",\n+    \"description\": \"\",\n+    \"keywords\": [],\n+    \"priority\": 0,\n+    \"providers\": [\n+        \"Modules\\\\User\\\\Providers\\\\UserServiceProvider\"\n+    ],\n+    \"aliases\": {},\n+    \"files\": [],\n+    \"requires\": []\n+}\n"
+                },
+                {
+                    "date": 1758212337089,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,4 +1,6 @@\n+\n+\n {\n     \"name\": \"User\",\n     \"alias\": \"user\",\n     \"description\": \"\",\n@@ -6,20 +8,8 @@\n     \"priority\": 0,\n     \"providers\": [\n         \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n     ],\n-    \"files\": []\n-}\n-\n-{\n-    \"name\": \"User\",\n-    \"alias\": \"user\",\n-    \"description\": \"\",\n-    \"keywords\": [],\n-    \"priority\": 0,\n-    \"providers\": [\n-        \"Modules\\\\User\\\\Providers\\\\UserServiceProvider\"\n-    ],\n     \"aliases\": {},\n     \"files\": [],\n     \"requires\": []\n }\n"
+                },
+                {
+                    "date": 1758212351373,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,14 +1,12 @@\n-\n-\n {\n     \"name\": \"User\",\n     \"alias\": \"user\",\n     \"description\": \"\",\n     \"keywords\": [],\n     \"priority\": 0,\n     \"providers\": [\n-        \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n+        \"Modules\\\\User\\\\App\\\\Providers\\\\UserServiceProvider\"\n     ],\n     \"aliases\": {},\n     \"files\": [],\n     \"requires\": []\n"
+                },
+                {
+                    "date": 1758212359093,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,9 +4,9 @@\n     \"description\": \"\",\n     \"keywords\": [],\n     \"priority\": 0,\n     \"providers\": [\n-        \"Modules\\\\User\\\\App\\\\Providers\\\\UserServiceProvider\"\n+        \"Modules\\\\User\\\\app\\\\Providers\\\\UserServiceProvider\"\n     ],\n     \"aliases\": {},\n     \"files\": [],\n     \"requires\": []\n"
+                }
+            ],
+            "date": 1758212014403,
+            "name": "Commit-0",
+            "content": "{\n    \"name\": \"User\",\n    \"alias\": \"user\",\n    \"description\": \"\",\n    \"keywords\": [],\n    \"priority\": 0,\n    \"providers\": [\n        \"Modules\\\\User\\\\appProviders\\\\UserServiceProvider\"\n    ],\n    \"files\": []\n}\n"
+        }
+    ]
+}

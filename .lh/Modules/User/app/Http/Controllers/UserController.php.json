@@ -1,0 +1,38 @@
+{
+    "sourceFile": "Modules/User/app/Http/Controllers/UserController.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 5,
+            "patches": [
+                {
+                    "date": 1758214174174,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758214181232,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,9 +6,9 @@\n use Illuminate\\Http\\Request;\n \n class UserController extends Controller\n {\n-     public function login(LoginRequest $request, AuthService $authService)\n+     public function login(LoginRe $request, AuthService $authService)\n     {\n         try {\n             $authService\n                 ->setInputs($request->validated())\n"
+                },
+                {
+                    "date": 1758214203040,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,9 +6,9 @@\n use Illuminate\\Http\\Request;\n \n class UserController extends Controller\n {\n-     public function login(LoginRe $request, AuthService $authService)\n+     public function login(Login $request, AuthService $authService)\n     {\n         try {\n             $authService\n                 ->setInputs($request->validated())\n"
+                },
+                {
+                    "date": 1758214267435,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,12 +3,13 @@\n namespace Modules\\User\\Http\\Controllers;\n \n use App\\Http\\Controllers\\Controller;\n use Illuminate\\Http\\Request;\n+use Modules\\User\\app\\Http\\Requests\\LoginRequest;\n \n class UserController extends Controller\n {\n-     public function login(Login $request, AuthService $authService)\n+     public function login(LoginRequest $request, Auth $authService)\n     {\n         try {\n             $authService\n                 ->setInputs($request->validated())\n"
+                },
+                {
+                    "date": 1758214280208,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n use Modules\\User\\app\\Http\\Requests\\LoginRequest;\n \n class UserController extends Controller\n {\n-     public function login(LoginRequest $request, Auth $authService)\n+     public function login(LoginRequest $request,  $authService)\n     {\n         try {\n             $authService\n                 ->setInputs($request->validated())\n"
+                },
+                {
+                    "date": 1758215313729,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n use Modules\\User\\app\\Http\\Requests\\LoginRequest;\n \n class UserController extends Controller\n {\n-     public function login(LoginRequest $request,  $authService)\n+    public function login(LoginRequest $request,  $authService)\n     {\n         try {\n             $authService\n                 ->setInputs($request->validated())\n"
+                }
+            ],
+            "date": 1758214174174,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\User\\Http\\Controllers;\n\nuse App\\Http\\Controllers\\Controller;\nuse Illuminate\\Http\\Request;\n\nclass UserController extends Controller\n{\n     public function login(LoginRequest $request, AuthService $authService)\n    {\n        try {\n            $authService\n                ->setInputs($request->validated())\n                ->attemptAuthentication()\n                ->setAuthUser(Auth::id())\n                ->checkIfUserBlocked()\n                ->updateLastLogin()\n                ->createUserLoginToken()\n                ->collectOutput('data', $data);\n            return $this->getSuccessfulUserLoginResponse($data);\n\n        } catch (Exception $e) {\n            Log::error($e->getMessage());\n            return $this->getErrorResponse($e->getMessage(), $e->getCode());\n        }\n    }\n}\n"
+        }
+    ]
+}

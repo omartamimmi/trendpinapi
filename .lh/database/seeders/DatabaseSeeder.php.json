@@ -1,0 +1,58 @@
+{
+    "sourceFile": "database/seeders/DatabaseSeeder.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 10,
+            "patches": [
+                {
+                    "date": 1759824321619,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759825702511,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -13,9 +13,12 @@\n      */\n     public function run(): void\n     {\n         // User::factory(10)->create();\n-\n+ $this->call(PermissionSeeder::class);\n+        $this->call(RolesSeeder::class);\n+        $this->call(RolePermissionsSeeder::class);\n+        $this->call(UsersTableSeeder::class);\n         // User::factory()->create([\n         //     'name' => 'Test User',\n         //     'email' => 'test@example.com',\n         // ]);\n"
+                },
+                {
+                    "date": 1759825720028,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,9 @@\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n+use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n \n class DatabaseSeeder extends Seeder\n {\n     /**\n"
+                },
+                {
+                    "date": 1759825725137,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,8 +5,10 @@\n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n+use Modules\\User\\Database\\Seeders\\RolePermissionsSeeder;\n+use Modules\\User\\Database\\Seeders\\RolesSeeder;\n \n class DatabaseSeeder extends Seeder\n {\n     /**\n"
+                },
+                {
+                    "date": 1759825759357,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,8 +7,9 @@\n use Illuminate\\Database\\Seeder;\n use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n use Modules\\User\\Database\\Seeders\\RolePermissionsSeeder;\n use Modules\\User\\Database\\Seeders\\RolesSeeder;\n+use Modules\\User\\Database\\Seeders\\UsersTableSeeder;\n \n class DatabaseSeeder extends Seeder\n {\n     /**\n@@ -16,9 +17,9 @@\n      */\n     public function run(): void\n     {\n         // User::factory(10)->create();\n- $this->call(PermissionSeeder::class);\n+        $this->call(PermissionSeeder::class);\n         $this->call(RolesSeeder::class);\n         $this->call(RolePermissionsSeeder::class);\n         $this->call(UsersTableSeeder::class);\n         // User::factory()->create([\n"
+                },
+                {
+                    "date": 1759826009595,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,8 +17,9 @@\n      */\n     public function run(): void\n     {\n         // User::factory(10)->create();\n+        dd()\n         $this->call(PermissionSeeder::class);\n         $this->call(RolesSeeder::class);\n         $this->call(RolePermissionsSeeder::class);\n         $this->call(UsersTableSeeder::class);\n"
+                },
+                {
+                    "date": 1759826015726,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n      */\n     public function run(): void\n     {\n         // User::factory(10)->create();\n-        dd()\n+        dd(PermissionSeeder::class);)\n         $this->call(PermissionSeeder::class);\n         $this->call(RolesSeeder::class);\n         $this->call(RolePermissionsSeeder::class);\n         $this->call(UsersTableSeeder::class);\n"
+                },
+                {
+                    "date": 1759826051707,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,8 @@\n      */\n     public function run(): void\n     {\n         // User::factory(10)->create();\n-        dd(PermissionSeeder::class);)\n         $this->call(PermissionSeeder::class);\n         $this->call(RolesSeeder::class);\n         $this->call(RolePermissionsSeeder::class);\n         $this->call(UsersTableSeeder::class);\n"
+                },
+                {
+                    "date": 1759827330021,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n      */\n     public function run(): void\n     {\n         // User::factory(10)->create();\n-        $this->call(PermissionSeeder::class);\n+$this->call(\\Modules\\User\\Database\\Seeders\\PermissionSeeder::class);\n         $this->call(RolesSeeder::class);\n         $this->call(RolePermissionsSeeder::class);\n         $this->call(UsersTableSeeder::class);\n         // User::factory()->create([\n"
+                },
+                {
+                    "date": 1759827346345,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -18,11 +18,11 @@\n     public function run(): void\n     {\n         // User::factory(10)->create();\n $this->call(\\Modules\\User\\Database\\Seeders\\PermissionSeeder::class);\n-        $this->call(RolesSeeder::class);\n-        $this->call(RolePermissionsSeeder::class);\n-        $this->call(UsersTableSeeder::class);\n+        // $this->call(RolesSeeder::class);\n+        // $this->call(RolePermissionsSeeder::class);\n+        // $this->call(UsersTableSeeder::class);\n         // User::factory()->create([\n         //     'name' => 'Test User',\n         //     'email' => 'test@example.com',\n         // ]);\n"
+                },
+                {
+                    "date": 1759827392887,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,9 +4,9 @@\n \n use App\\Models\\User;\n // use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\n use Illuminate\\Database\\Seeder;\n-use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n+// use Modules\\User\\Database\\Seeders\\PermissionSeeder;\n use Modules\\User\\Database\\Seeders\\RolePermissionsSeeder;\n use Modules\\User\\Database\\Seeders\\RolesSeeder;\n use Modules\\User\\Database\\Seeders\\UsersTableSeeder;\n \n"
+                }
+            ],
+            "date": 1759824321619,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Database\\Seeders;\n\nuse App\\Models\\User;\n// use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;\nuse Illuminate\\Database\\Seeder;\n\nclass DatabaseSeeder extends Seeder\n{\n    /**\n     * Seed the application's database.\n     */\n    public function run(): void\n    {\n        // User::factory(10)->create();\n\n        // User::factory()->create([\n        //     'name' => 'Test User',\n        //     'email' => 'test@example.com',\n        // ]);\n    }\n}\n"
+        }
+    ]
+}

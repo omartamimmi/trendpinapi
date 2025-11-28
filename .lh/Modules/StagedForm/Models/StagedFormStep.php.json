@@ -1,0 +1,22 @@
+{
+    "sourceFile": "Modules/StagedForm/Models/StagedFormStep.php",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1758611989152,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1758612392098,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -26,12 +26,5 @@\n     public function stagedForm(): BelongsTo\n     {\n         return $this->belongsTo(StagedForm::class);\n     }\n-    /**\n-     * @return StagedFormStepFactory\n-     */\n-    // protected static function newFactory(): StagedFormStepFactory\n-    // {\n-    //     return StagedFormStepFactory::new();\n-    // }\n }\n"
+                }
+            ],
+            "date": 1758611989152,
+            "name": "Commit-0",
+            "content": "<?php\n\nnamespace Modules\\StagedForm\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Factories\\HasFactory;\nuse Illuminate\\Database\\Eloquent\\Relations\\BelongsTo;\nuse Modules\\StagedForm\\Database\\factories\\StagedFormStepFactory;\n\nclass StagedFormStep extends Model\n{\n    use HasFactory;\n\n    protected $fillable = [\n        'staged_form_id', // session id\n        'step', // step1, step2\n        'submitted_form', // you form data\n    ];\n\n    protected $casts = [\n        'submitted_form' => 'array'\n    ];\n    /**\n     * @return BelongsTo\n     */\n    public function stagedForm(): BelongsTo\n    {\n        return $this->belongsTo(StagedForm::class);\n    }\n    /**\n     * @return StagedFormStepFactory\n     */\n    // protected static function newFactory(): StagedFormStepFactory\n    // {\n    //     return StagedFormStepFactory::new();\n    // }\n}\n"
+        }
+    ]
+}
