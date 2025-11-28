@@ -4,38 +4,34 @@ namespace App\Services;
 
 use App\Models\QrPayment;
 use App\Models\User;
+use Modules\Business\app\Models\Branch;
+use Carbon\Carbon;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class QrPaymentService
 {
     /**
-     * Generate QR code payment for merchant
-     *
-     * @param User $merchant
-     * @param float $amount
-     * @param string|null $description
-     * @param int $expiryMinutes
-     * @param array $metadata
-     * @return QrPayment
+     * Generate QR code for payment
      */
     public function generateQrCode(
-        User $merchant,
+        int $branchId,
+        User $user,
         float $amount,
         ?string $description = null,
         int $expiryMinutes = 15,
         array $metadata = []
     ): QrPayment {
-        // Generate unique reference
+        // Verify branch exists
+        $branch = Branch::findOrFail($branchId);
+        
         $reference = QrPayment::generateReference();
-
-        // Create expiry time
         $expiresAt = Carbon::now()->addMinutes($expiryMinutes);
-
-        // Create payment record
+        
+        // Create QR payment record
         $qrPayment = QrPayment::create([
-            'merchant_id' => $merchant->id,
+            'branch_id' => $branchId,
+            'user_id' => $user->id,
             'qr_code_reference' => $reference,
             'amount' => $amount,
             'currency' => 'JOD',
@@ -48,8 +44,8 @@ class QrPaymentService
         // Generate QR code data (JSON payload)
         $qrData = [
             'reference' => $reference,
-            'merchant_id' => $merchant->id,
-            'merchant_name' => $merchant->name,
+            'branch_id' => $branchId,
+            'branch_name' => $branch->name,
             'amount' => $amount,
             'currency' => 'JOD',
             'description' => $description,
@@ -57,37 +53,33 @@ class QrPaymentService
         ];
 
         $qrDataJson = json_encode($qrData);
-
+        
         // Generate QR code image
         $qrCodeImage = $this->generateQrCodeImage($qrDataJson, $reference);
 
-        // Update payment with QR code data and image path
+        // Update with QR data and image
         $qrPayment->update([
             'qr_code_data' => $qrDataJson,
             'qr_code_image' => $qrCodeImage,
         ]);
 
-        return $qrPayment->fresh();
+        return $qrPayment->fresh(['branch', 'user']);
     }
 
     /**
-     * Generate QR code image and save to storage
-     *
-     * @param string $data
-     * @param string $reference
-     * @return string Path to QR code image
+     * Generate QR code image
      */
     protected function generateQrCodeImage(string $data, string $reference): string
     {
-        // Generate QR code as PNG
+        // Generate QR code PNG
         $qrCode = QrCode::format('png')
-            ->size(400)
+            ->size(512)
             ->margin(2)
             ->errorCorrection('H')
             ->generate($data);
 
-        // Save to storage
-        $filename = 'qr-codes/' . $reference . '.png';
+        // Store in storage/app/public/qr-codes/
+        $filename = "qr-codes/{$reference}.png";
         Storage::disk('public')->put($filename, $qrCode);
 
         return $filename;
@@ -95,40 +87,42 @@ class QrPaymentService
 
     /**
      * Get QR code image as base64
-     *
-     * @param QrPayment $qrPayment
-     * @return string
      */
-    public function getQrCodeBase64(QrPayment $qrPayment): string
+    public function getQrCodeBase64(QrPayment $qrPayment): ?string
     {
-        if ($qrPayment->qr_code_image && Storage::disk('public')->exists($qrPayment->qr_code_image)) {
-            $image = Storage::disk('public')->get($qrPayment->qr_code_image);
-            return 'data:image/png;base64,' . base64_encode($image);
+        if (!$qrPayment->qr_code_image) {
+            return null;
         }
 
-        // If image doesn't exist, regenerate it
-        if ($qrPayment->qr_code_data) {
-            $filename = $this->generateQrCodeImage($qrPayment->qr_code_data, $qrPayment->qr_code_reference);
-            $qrPayment->update(['qr_code_image' => $filename]);
-            $image = Storage::disk('public')->get($filename);
-            return 'data:image/png;base64,' . base64_encode($image);
+        $path = storage_path('app/public/' . $qrPayment->qr_code_image);
+        
+        if (!file_exists($path)) {
+            return null;
         }
 
-        return '';
+        $imageData = file_get_contents($path);
+        return 'data:image/png;base64,' . base64_encode($imageData);
     }
 
     /**
-     * Verify and decode QR code data
-     *
-     * @param string $qrData
-     * @return array|null
+     * Get payment by reference
+     */
+    public function getByReference(string $reference): ?QrPayment
+    {
+        return QrPayment::with(['branch', 'user', 'customer'])
+            ->where('qr_code_reference', $reference)
+            ->first();
+    }
+
+    /**
+     * Verify QR data
      */
     public function verifyQrData(string $qrData): ?array
     {
         try {
             $data = json_decode($qrData, true);
-
-            if (!$data || !isset($data['reference'], $data['merchant_id'], $data['amount'])) {
+            
+            if (!isset($data['reference'])) {
                 return null;
             }
 
@@ -139,140 +133,54 @@ class QrPaymentService
     }
 
     /**
-     * Get QR payment by reference
-     *
-     * @param string $reference
-     * @return QrPayment|null
-     */
-    public function getByReference(string $reference): ?QrPayment
-    {
-        return QrPayment::where('qr_code_reference', $reference)->first();
-    }
-
-    /**
-     * Process payment from customer
-     *
-     * @param string $reference
-     * @param User $customer
-     * @return array
+     * Process payment
      */
     public function processPayment(string $reference, User $customer): array
     {
         $qrPayment = $this->getByReference($reference);
 
-        if (!$qrPayment) {
+        if (!$qrPayment || !$qrPayment->canBePaid()) {
             return [
                 'success' => false,
-                'message' => 'Payment not found',
+                'message' => 'Payment cannot be processed. QR code may be expired or invalid.',
             ];
         }
-
-        // Check if already paid
-        if ($qrPayment->isCompleted()) {
-            return [
-                'success' => false,
-                'message' => 'This payment has already been completed',
-            ];
-        }
-
-        // Check if expired
-        if ($qrPayment->isExpired()) {
-            $qrPayment->markAsExpired();
-            return [
-                'success' => false,
-                'message' => 'This QR code has expired',
-            ];
-        }
-
-        // Check if can be paid
-        if (!$qrPayment->canBePaid()) {
-            return [
-                'success' => false,
-                'message' => 'This payment cannot be processed',
-            ];
-        }
-
-        // Here you would integrate with actual payment gateway
-        // For now, we'll just mark it as completed
-        // In production, you'd process the payment through a gateway first
 
         $qrPayment->markAsCompleted($customer);
 
         return [
             'success' => true,
             'message' => 'Payment completed successfully',
-            'payment' => $qrPayment->fresh(['merchant', 'customer']),
+            'payment' => $qrPayment->fresh(['branch', 'user', 'customer']),
         ];
     }
 
     /**
-     * Cancel QR payment
-     *
-     * @param QrPayment $qrPayment
-     * @return bool
+     * Cancel payment
      */
     public function cancelPayment(QrPayment $qrPayment): bool
     {
-        if ($qrPayment->status === 'pending') {
-            $qrPayment->markAsCancelled();
-            return true;
+        if ($qrPayment->status !== 'pending') {
+            return false;
         }
 
-        return false;
+        $qrPayment->markAsCancelled();
+        return true;
     }
 
     /**
-     * Get merchant's QR payments
-     *
-     * @param User $merchant
-     * @param string|null $status
-     * @param int $perPage
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * Cleanup expired QR codes
      */
-    public function getMerchantPayments(User $merchant, ?string $status = null, int $perPage = 20)
+    public function cleanupExpired(): int
     {
-        $query = QrPayment::where('merchant_id', $merchant->id)
-            ->with('customer')
-            ->orderBy('created_at', 'desc');
+        $expired = QrPayment::where('status', 'pending')
+            ->where('expires_at', '<', now())
+            ->get();
 
-        if ($status) {
-            $query->where('status', $status);
+        foreach ($expired as $payment) {
+            $payment->markAsExpired();
         }
 
-        return $query->paginate($perPage);
-    }
-
-    /**
-     * Get customer's QR payments
-     *
-     * @param User $customer
-     * @param int $perPage
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
-     */
-    public function getCustomerPayments(User $customer, int $perPage = 20)
-    {
-        return QrPayment::where('customer_id', $customer->id)
-            ->with('merchant')
-            ->orderBy('paid_at', 'desc')
-            ->paginate($perPage);
-    }
-
-    /**
-     * Expire old pending QR codes
-     * Should be called by a scheduled task
-     *
-     * @return int Number of expired QR codes
-     */
-    public function expireOldQrCodes(): int
-    {
-        $expiredCount = QrPayment::where('status', 'pending')
-            ->where('expires_at', '<', now())
-            ->count();
-
-        QrPayment::where('status', 'pending')
-            ->where('expires_at', '<', now())
-            ->update(['status' => 'expired']);
-
-        return $expiredCount;
+        return $expired->count();
     }
 }

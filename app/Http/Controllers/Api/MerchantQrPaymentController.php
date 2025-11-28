@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\QrPayment;
 use App\Services\QrPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -10,40 +11,33 @@ use Illuminate\Support\Facades\Auth;
 
 class MerchantQrPaymentController extends Controller
 {
-    protected QrPaymentService $qrPaymentService;
-
-    public function __construct(QrPaymentService $qrPaymentService)
-    {
-        $this->qrPaymentService = $qrPaymentService;
-    }
+    public function __construct(
+        protected QrPaymentService $qrPaymentService
+    ) {}
 
     /**
-     * Generate QR code for payment
-     *
-     * @param Request $request
-     * @return JsonResponse
+     * Generate QR code
      */
     public function generate(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'branch_id' => 'required|exists:branches,id',
             'amount' => 'required|numeric|min:0.01|max:999999.99',
             'description' => 'nullable|string|max:500',
-            'expiry_minutes' => 'nullable|integer|min:1|max:1440', // Max 24 hours
+            'expiry_minutes' => 'nullable|integer|min:1|max:1440',
             'metadata' => 'nullable|array',
         ]);
 
         try {
-            $merchant = Auth::user();
-
             $qrPayment = $this->qrPaymentService->generateQrCode(
-                merchant: $merchant,
+                branchId: $validated['branch_id'],
+                user: Auth::user(),
                 amount: $validated['amount'],
                 description: $validated['description'] ?? null,
                 expiryMinutes: $validated['expiry_minutes'] ?? 15,
                 metadata: $validated['metadata'] ?? []
             );
 
-            // Get QR code as base64
             $qrCodeImage = $this->qrPaymentService->getQrCodeBase64($qrPayment);
 
             return response()->json([
@@ -52,6 +46,10 @@ class MerchantQrPaymentController extends Controller
                 'data' => [
                     'id' => $qrPayment->id,
                     'reference' => $qrPayment->qr_code_reference,
+                    'branch' => [
+                        'id' => $qrPayment->branch->id,
+                        'name' => $qrPayment->branch->name,
+                    ],
                     'amount' => $qrPayment->amount,
                     'currency' => $qrPayment->currency,
                     'description' => $qrPayment->description,
@@ -64,27 +62,37 @@ class MerchantQrPaymentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to generate QR code: ' . $e->getMessage(),
+                'message' => 'Failed to generate QR code',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get merchant's QR payments list
-     *
-     * @param Request $request
-     * @return JsonResponse
+     * Get payment list for a branch
      */
     public function index(Request $request): JsonResponse
     {
-        $status = $request->query('status');
-        $perPage = $request->query('per_page', 20);
+        $validated = $request->validate([
+            'branch_id' => 'nullable|exists:branches,id',
+            'status' => 'nullable|in:pending,completed,expired,cancelled',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
 
-        $payments = $this->qrPaymentService->getMerchantPayments(
-            Auth::user(),
-            $status,
-            min($perPage, 100) // Max 100 per page
-        );
+        $query = QrPayment::with(['branch', 'user', 'customer'])
+            ->where('user_id', Auth::id());
+
+        if (isset($validated['branch_id'])) {
+            $query->where('branch_id', $validated['branch_id']);
+        }
+
+        if (isset($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        $payments = $query->orderBy('created_at', 'desc')
+            ->paginate($validated['per_page'] ?? 20);
 
         return response()->json([
             'success' => true,
@@ -93,58 +101,47 @@ class MerchantQrPaymentController extends Controller
     }
 
     /**
-     * Get specific QR payment details
-     *
-     * @param int $id
-     * @return JsonResponse
+     * Get single payment details
      */
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
-        $qrPayment = Auth::user()
-            ->qrPaymentsAsMerchant()
-            ->with('customer')
-            ->find($id);
+        $qrPayment = QrPayment::with(['branch', 'user', 'customer'])
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
 
-        if (!$qrPayment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment not found',
-            ], 404);
-        }
-
-        // Get QR code image if pending
-        $qrCodeImage = null;
-        if ($qrPayment->status === 'pending') {
-            $qrCodeImage = $this->qrPaymentService->getQrCodeBase64($qrPayment);
-        }
+        $qrCodeImage = $this->qrPaymentService->getQrCodeBase64($qrPayment);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'payment' => $qrPayment,
+                'id' => $qrPayment->id,
+                'reference' => $qrPayment->qr_code_reference,
+                'branch' => [
+                    'id' => $qrPayment->branch->id,
+                    'name' => $qrPayment->branch->name,
+                ],
+                'amount' => $qrPayment->amount,
+                'currency' => $qrPayment->currency,
+                'description' => $qrPayment->description,
+                'status' => $qrPayment->status,
+                'expires_at' => $qrPayment->expires_at->toIso8601String(),
+                'paid_at' => $qrPayment->paid_at?->toIso8601String(),
                 'qr_code_image' => $qrCodeImage,
+                'qr_code_data' => $qrPayment->qr_code_data,
+                'customer' => $qrPayment->customer ? [
+                    'id' => $qrPayment->customer->id,
+                    'name' => $qrPayment->customer->name,
+                ] : null,
             ],
         ]);
     }
 
     /**
-     * Cancel QR payment
-     *
-     * @param int $id
-     * @return JsonResponse
+     * Cancel payment
      */
-    public function cancel(int $id): JsonResponse
+    public function cancel($id): JsonResponse
     {
-        $qrPayment = Auth::user()
-            ->qrPaymentsAsMerchant()
-            ->find($id);
-
-        if (!$qrPayment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment not found',
-            ], 404);
-        }
+        $qrPayment = QrPayment::where('user_id', Auth::id())->findOrFail($id);
 
         if ($this->qrPaymentService->cancelPayment($qrPayment)) {
             return response()->json([
@@ -161,27 +158,16 @@ class MerchantQrPaymentController extends Controller
 
     /**
      * Check payment status
-     *
-     * @param string $reference
-     * @return JsonResponse
      */
-    public function checkStatus(string $reference): JsonResponse
+    public function checkStatus($reference): JsonResponse
     {
         $qrPayment = $this->qrPaymentService->getByReference($reference);
 
-        if (!$qrPayment) {
+        if (!$qrPayment || $qrPayment->user_id !== Auth::id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Payment not found',
             ], 404);
-        }
-
-        // Verify the merchant owns this QR payment
-        if ($qrPayment->merchant_id !== Auth::id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized',
-            ], 403);
         }
 
         return response()->json([

@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Modules\Business\app\Models\Branch;
 
 class QrPayment extends Model
 {
     protected $fillable = [
-        'merchant_id',
+        'branch_id',
+        'user_id',
         'customer_id',
         'qr_code_reference',
         'amount',
@@ -31,11 +33,19 @@ class QrPayment extends Model
     ];
 
     /**
-     * Merchant (retailer) who created the QR code
+     * Branch where the payment was generated
      */
-    public function merchant(): BelongsTo
+    public function branch(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'merchant_id');
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    /**
+     * User (retailer) who generated the QR code
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -72,6 +82,14 @@ class QrPayment extends Model
                         $q->where('status', 'pending')
                           ->where('expires_at', '<', now());
                     });
+    }
+
+    /**
+     * Scope for specific branch
+     */
+    public function scopeForBranch($query, $branchId)
+    {
+        return $query->where('branch_id', $branchId);
     }
 
     /**

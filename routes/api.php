@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\MerchantQrPaymentController;
 use App\Http\Controllers\Api\CustomerQrPaymentController;
 
@@ -33,6 +34,12 @@ Route::prefix('v1')->group(function () {
         // Auth routes
         Route::post('/logout', [AuthController::class, 'logout'])->name('api.v1.logout');
         Route::get('/me', [AuthController::class, 'me'])->name('api.v1.me');
+
+        // Branch routes
+        Route::prefix('branches')->group(function () {
+            Route::get('/', [BranchController::class, 'getUserBranches'])->name('api.v1.branches.index');
+            Route::get('/{id}', [BranchController::class, 'show'])->name('api.v1.branches.show');
+        });
 
         // Merchant QR Payment Routes (for retailers)
         Route::prefix('merchant/qr-payments')->group(function () {
