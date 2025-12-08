@@ -2,6 +2,8 @@ import SectionFive from "./sections/SectionFive";
 import SectionFour from "./sections/SectionFour";
 import SectionOne from "./sections/SectionOne";
 import SectionTwo from "./sections/SectionTwo";
+import SectionThree from "./sections/SectionThree";
+
 
 export default function Main() {
   return (
@@ -11,6 +13,9 @@ export default function Main() {
       </section>
       <section className="flex justify-center">
         <SectionTwo />
+      </section>
+          <section className="flex justify-center">
+        <SectionThree/>
       </section>
       <section className="flex justify-center">
         <SectionFour />

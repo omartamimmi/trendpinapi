@@ -1,6 +1,9 @@
 import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 createInertiaApp({
     resolve: name => {
