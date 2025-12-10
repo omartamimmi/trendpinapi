@@ -4,11 +4,13 @@ services:
   api:
     build:
       context: ../development/api   # Laravel Api project root
-      dockerfile: Dockerfile 
+      dockerfile: Dockerfile
     container_name: trendpin_api
     volumes:
       - ../../../trendpin:/var/www/api   # Api code lives in /var/www/api
       - "../development/nginx/conf.d/api.conf:/etc/nginx/conf.d/api.conf"
+    ports:
+      - "5173:5173"
     privileged: true
     depends_on:
       - db

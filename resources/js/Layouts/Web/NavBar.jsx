@@ -3,8 +3,8 @@ import { IoStorefrontOutline } from "react-icons/io5";
 
 export default function NavBar() {
   return (
-       <nav className="bg-white  p-4 flex justify-between items-center">
-        <img src="/images/Frame 1000000724.png" alt="Trendpin" className="w-30" />
+       <nav className="bg-white  pt-4 flex justify-between items-center">
+        <img src="/images/Frame 1000000724.png" alt="Trendpin" className="w-40" />
         <ul className="flex space-x-6 text-gray-600">
           <li>
             <Link

@@ -120,7 +120,7 @@ export default function SectionThree() {
     }, [activeTab]);
 
     return (
-        <section className="px-6 lg:px-20 py-16 bg-white">
+        <section className="px-6 lg:px-20 py-16 bg-white w-full">
             {/* Header with Title and Navigation */}
             <div className="flex justify-between items-start mb-12">
                 {/* Title with decorative element */}

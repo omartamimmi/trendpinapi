@@ -1,20 +1,20 @@
 export default function SectionOne() {
   return (
-    <div className="w-full py-12 px-6 md:px-16 bg-white relative overflow-hidden">
+    <div className="w-full py-12 bg-white relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-20 right-10 w-3 h-3 bg-pink-300 rounded-full opacity-40"></div>
       <div className="absolute bottom-40 left-20 w-2 h-2 bg-gray-800 rounded-full opacity-30"></div>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
         {/* Left Section - MEDIUM SIZE */}
         <div className="space-y-6 text-left relative z-10">
           <h1 className="font-bold text-4xl md:text-5xl lg:text-6xl leading-tight">
-            Claim Best Offer
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#F2C94C] ml-2 mb-1.5"></span>
-            <br />
-            on Fast <span className="text-[#E8347E] italic">Food</span> &
-            <br />
-            <span className="text-[#E8347E] italic">Restaurants</span>
+            Claim Best Offer 
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#F2C94C] ml-2 mb-1.5 absolute top-16 right-16"></span>
+            {/* <br /> */}
+            <span> on Fast</span><span className="text-[#E8347E] italic">Food</span> &
+            {/* <br /> */}
+            <span className="text-[#E8347E] italic"> Restaurants</span>
           </h1>
 
           <p className="text-gray-600 text-base md:text-lg leading-relaxed">
@@ -28,22 +28,22 @@ export default function SectionOne() {
           </button>
 
           {/* Customer Reviews Section - MEDIUM SIZE */}
-          <div className="flex items-center mt-6 bg-white rounded-xl p-3.5 shadow-md max-w-sm">
+          <div className="flex items-center mt-6 max-w-sm">
             <div className="flex -space-x-2.5">
               <img
                 src="/images/customer1.jpg"
                 alt="Customer"
-                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                className="w-17 h-17 rounded-full border-2 border-white object-cover"
               />
               <img
                 src="/images/customer2.jpg"
                 alt="Customer"
-                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                className="w-17 h-17 rounded-full border-2 border-white object-cover"
               />
               <img
                 src="/images/customer3.jpg"
                 alt="Customer"
-                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                className="w-17 h-17 rounded-full border-2 border-white object-cover"
               />
             </div>
             <div className="ml-3.5">
@@ -63,7 +63,7 @@ export default function SectionOne() {
         {/* Right Section - MEDIUM Image with floating elements */}
         <div className="relative flex justify-center items-center lg:justify-end">
           {/* Main circular image container - MEDIUM SIZE */}
-          <div className="relative w-[320px] h-[320px] md:w-[400px] md:h-[400px] lg:w-[450px] lg:h-[450px]">
+          <div className="relative w-[320px] h-[320px] md:w-[400px] md:h-[400px] lg:w-[600px] lg:h-[600px]">
             {/* Background gradient circle */}
             <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-blue-50 rounded-full opacity-50 blur-2xl"></div>
 
@@ -95,11 +95,11 @@ export default function SectionOne() {
             </div>
 
             {/* Floating Card - Bottom Right (Pizza offer) - MEDIUM */}
-            <div className="absolute -bottom-7 -right-7 lg:-bottom-9 lg:-right-9 bg-white rounded-xl shadow-xl p-2.5 lg:p-3.5 animate-float">
+            <div className="absolute -bottom-7 -right-7 lg:-bottom-9 lg:-right-9 rounded-xl animate-float w-70">
               <img
                 src="/images/Frame 10.png"
                 alt="Italian Pizza offer"
-                className="w-24 h-24 lg:w-28 lg:h-28"
+                className=""
               />
             </div>
 

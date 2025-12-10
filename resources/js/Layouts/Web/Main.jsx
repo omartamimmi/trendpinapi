@@ -7,7 +7,7 @@ import SectionThree from "./sections/SectionThree";
 
 export default function Main() {
   return (
-    <main className="flex-1 p-8 space-y-4">
+    <main className="flex-1 space-y-4">
        <section className="flex justify-center">
         <SectionOne />
       </section>
