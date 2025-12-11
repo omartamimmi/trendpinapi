@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function OnboardingApprovals({ onboardings, currentStatus, counts }) {
     const [search, setSearch] = useState('');
@@ -114,8 +115,8 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {onboardings?.length > 0 ? (
-                                onboardings.map((onboarding) => (
+                            {(onboardings?.data || onboardings)?.length > 0 ? (
+                                (onboardings.data || onboardings).map((onboarding) => (
                                     <tr key={onboarding.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
@@ -168,6 +169,9 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
                             )}
                         </tbody>
                     </table>
+
+                    {/* Pagination */}
+                    {onboardings.data && <Pagination data={onboardings} />}
                 </div>
             </div>
         </AdminLayout>

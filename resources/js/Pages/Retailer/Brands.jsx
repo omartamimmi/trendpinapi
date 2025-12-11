@@ -1,9 +1,10 @@
 import { router } from '@inertiajs/react';
 import RetailerLayout from '@/Layouts/RetailerLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function Brands({ brands, groups }) {
     // Group brands by group name
-    const groupedBrands = brands.reduce((acc, brand) => {
+    const groupedBrands = (brands.data || brands).reduce((acc, brand) => {
         const groupName = brand.group?.name || 'Ungrouped';
         if (!acc[groupName]) {
             acc[groupName] = [];
@@ -40,12 +41,12 @@ export default function Brands({ brands, groups }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-xl shadow-sm p-4">
                         <p className="text-sm text-gray-500">Total Brands</p>
-                        <p className="text-2xl font-bold text-gray-900">{brands.length}</p>
+                        <p className="text-2xl font-bold text-gray-900">{brands.total || (brands.data || brands).length}</p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm p-4">
                         <p className="text-sm text-gray-500">Total Branches</p>
                         <p className="text-2xl font-bold text-gray-900">
-                            {brands.reduce((acc, brand) => acc + (brand.branches?.length || 0), 0)}
+                            {(brands.data || brands).reduce((acc, brand) => acc + (brand.branches?.length || 0), 0)}
                         </p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm p-4">
@@ -55,7 +56,7 @@ export default function Brands({ brands, groups }) {
                 </div>
 
                 {/* Brands List */}
-                {brands.length > 0 ? (
+                {(brands.data || brands).length > 0 ? (
                     <div className="space-y-6">
                         {Object.entries(groupedBrands).map(([groupName, groupBrands]) => (
                             <div key={groupName} className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -140,6 +141,11 @@ export default function Brands({ brands, groups }) {
                         </button>
                     </div>
                 )}
+
+                {/* Pagination */}
+                {brands.data && <div className="mt-6">
+                    <Pagination data={brands} />
+                </div>}
             </div>
         </RetailerLayout>
     );

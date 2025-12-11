@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import RetailerLayout from '@/Layouts/RetailerLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function Offers({ offers }) {
     return (
@@ -24,12 +25,12 @@ export default function Offers({ offers }) {
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
                     <div className="bg-white rounded-xl shadow-sm p-4">
                         <p className="text-sm text-gray-500">Total Offers</p>
-                        <p className="text-2xl font-bold text-gray-900">{offers?.length || 0}</p>
+                        <p className="text-2xl font-bold text-gray-900">{offers?.total || (offers?.data || offers)?.length || 0}</p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm p-4">
                         <p className="text-sm text-gray-500">Active</p>
                         <p className="text-2xl font-bold text-green-600">
-                            {offers?.filter(o => o.status === 'active').length || 0}
+                            {(offers?.data || offers)?.filter(o => o.status === 'active').length || 0}
                         </p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm p-4">
@@ -43,7 +44,7 @@ export default function Offers({ offers }) {
                 </div>
 
                 {/* Offers List */}
-                {offers && offers.length > 0 ? (
+                {(offers?.data || offers) && (offers.data || offers).length > 0 ? (
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
@@ -55,8 +56,8 @@ export default function Offers({ offers }) {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {offers.map((offer) => (
+                            <tbody className="divide-y divide-y-gray-200">
+                                {(offers.data || offers).map((offer) => (
                                     <tr key={offer.id}>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="font-medium text-gray-900">{offer.name}</div>
@@ -100,6 +101,9 @@ export default function Offers({ offers }) {
                                 ))}
                             </tbody>
                         </table>
+
+                        {/* Pagination */}
+                        {offers.data && <Pagination data={offers} />}
                     </div>
                 ) : (
                     <div className="bg-white rounded-xl shadow-sm p-12 text-center">

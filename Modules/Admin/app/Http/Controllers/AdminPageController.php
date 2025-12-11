@@ -21,6 +21,9 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Modules\Category\Models\Category;
 use App\Models\Interest;
+use Modules\Notification\app\Models\NotificationProvider;
+use Modules\Notification\app\Models\NotificationMessage;
+use Modules\Notification\app\Models\NotificationTemplate;
 
 class AdminPageController extends Controller
 {
@@ -677,7 +680,7 @@ class AdminPageController extends Controller
             });
         }
 
-        $onboardings = $query->latest()->get();
+        $onboardings = $query->latest()->paginate(20);
 
         // Get counts for each status
         $counts = [
@@ -975,5 +978,55 @@ class AdminPageController extends Controller
         $interest->delete();
 
         return redirect()->back()->with('success', 'Interest deleted successfully');
+    }
+
+    /**
+     * Show notification providers page
+     */
+    public function notificationProviders(): Response
+    {
+        $providers = NotificationProvider::orderBy('type')->orderBy('priority')->get();
+        return Inertia::render('Admin/NotificationProviders', [
+            'providers' => $providers,
+        ]);
+    }
+
+    /**
+     * Show notifications list page
+     */
+    public function notifications(): Response
+    {
+        $notifications = NotificationMessage::with('creator')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return Inertia::render('Admin/Notifications', [
+            'notifications' => $notifications,
+        ]);
+    }
+
+    /**
+     * Show send notification page
+     */
+    public function sendNotificationPage(): Response
+    {
+        $templates = NotificationTemplate::active()->get();
+        $providers = NotificationProvider::active()->get();
+
+        return Inertia::render('Admin/SendNotification', [
+            'templates' => $templates,
+            'providers' => $providers,
+        ]);
+    }
+
+    /**
+     * Show notification templates page
+     */
+    public function notificationTemplates(): Response
+    {
+        $templates = NotificationTemplate::orderBy('created_at', 'desc')->get();
+        return Inertia::render('Admin/NotificationTemplates', [
+            'templates' => $templates,
+        ]);
     }
 }

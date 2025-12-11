@@ -31,19 +31,22 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Check if user is a retailer
-        if (!$user->hasRole('retailer')) {
+        // Check if user has a valid role (retailer or customer)
+        $userRole = $user->roles->first()?->name;
+
+        if (!$user->hasRole(['retailer', 'customer'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Access denied. Only retailers can login to the merchant app.',
+                'message' => 'Access denied. Invalid user role.',
             ], 403);
         }
 
         // Delete old tokens
         $user->tokens()->delete();
 
-        // Create new token
-        $token = $user->createToken('merchant-app')->plainTextToken;
+        // Create new token with appropriate name
+        $tokenName = $user->hasRole('retailer') ? 'merchant-app' : 'customer-app';
+        $token = $user->createToken($tokenName)->plainTextToken;
 
         return response()->json([
             'success' => true,

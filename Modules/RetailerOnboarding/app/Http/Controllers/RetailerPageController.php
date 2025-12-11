@@ -252,10 +252,10 @@ class RetailerPageController extends Controller
         $user = Auth::user();
         $brands = Brand::where('create_user', $user->id)
             ->with(['group', 'branches'])
-            ->get();
+            ->paginate(12);
 
         // Get groups that have brands from this retailer or are available
-        $groupIds = $brands->pluck('group_id')->filter()->unique()->values();
+        $groupIds = collect($brands->items())->pluck('group_id')->filter()->unique()->values();
         $groups = Group::whereIn('id', $groupIds)->orWhereNull('business_id')->get();
 
         return Inertia::render('Retailer/Brands', [
@@ -414,7 +414,7 @@ class RetailerPageController extends Controller
         $offers = Offer::where('user_id', $user->id)
             ->with('brand')
             ->latest()
-            ->get();
+            ->paginate(15);
 
         return Inertia::render('Retailer/Offers', [
             'offers' => $offers,

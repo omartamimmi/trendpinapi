@@ -78,4 +78,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/interests/{id}/edit', [AdminPageController::class, 'editInterest'])->name('admin.interests.edit');
     Route::put('/interests/{id}', [AdminPageController::class, 'updateInterest'])->name('admin.interests.update');
     Route::delete('/interests/{id}', [AdminPageController::class, 'destroyInterest'])->name('admin.interests.destroy');
+
+    // Notifications
+    Route::get('/notifications', [AdminPageController::class, 'notifications'])->name('admin.notifications');
+    Route::get('/notifications/send', [AdminPageController::class, 'sendNotificationPage'])->name('admin.notifications.send');
+    Route::get('/notification-providers', [AdminPageController::class, 'notificationProviders'])->name('admin.notification-providers');
+    Route::get('/notification-templates', [AdminPageController::class, 'notificationTemplates'])->name('admin.notification-templates');
 });

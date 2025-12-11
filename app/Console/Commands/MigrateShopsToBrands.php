@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Modules\Business\app\Models\Brand;
+use Modules\Business\app\Models\Branch;
 use Modules\RetailerOnboarding\app\Models\RetailerOnboarding;
 
 class MigrateShopsToBrands extends Command
@@ -25,7 +26,7 @@ class MigrateShopsToBrands extends Command
      *
      * @var string
      */
-    protected $description = 'Migrate shops to brands table and assign shop owners as retailers';
+    protected $description = 'Migrate shops to brands (grouped by main branch) and create branch records for each shop';
 
     /**
      * Execute the console command.
@@ -48,17 +49,53 @@ class MigrateShopsToBrands extends Command
             return 0;
         }
 
+        // Group shops by their brand (main_branch_id or their own id if they are main)
+        $brandGroups = [];
+        foreach ($shops as $shop) {
+            // Determine the brand key (main branch id)
+            $brandKey = $shop->is_main_branch ? $shop->id : $shop->main_branch_id;
+
+            if (!isset($brandGroups[$brandKey])) {
+                $brandGroups[$brandKey] = [
+                    'main_shop' => null,
+                    'branches' => [],
+                ];
+            }
+
+            if ($shop->is_main_branch) {
+                $brandGroups[$brandKey]['main_shop'] = $shop;
+            }
+
+            $brandGroups[$brandKey]['branches'][] = $shop;
+        }
+
         // Get unique user IDs
         $userIds = $shops->pluck('create_user')->filter()->unique()->values();
         $users = User::whereIn('id', $userIds)->get()->keyBy('id');
 
-        $this->info("Found {$shops->count()} shops from {$users->count()} users.");
+        $totalBrands = count($brandGroups);
+        $totalBranches = $shops->count();
+
+        $this->info("Found {$totalBranches} shops grouped into {$totalBrands} brands");
+        $this->info("From {$users->count()} users");
 
         if ($this->option('dry-run')) {
             $this->info('DRY RUN - No changes will be made.');
             $this->newLine();
 
-            // Show summary table
+            // Show first 10 brand groups as examples
+            $this->info('Sample brand groups:');
+            $count = 0;
+            foreach ($brandGroups as $brandKey => $group) {
+                if ($count >= 10) break;
+                $mainShop = $group['main_shop'];
+                $branchCount = count($group['branches']);
+                $brandName = $mainShop ? $mainShop->title : 'Unknown (missing main shop)';
+                $this->line("  • {$brandName}: {$branchCount} branch(es)");
+                $count++;
+            }
+
+            $this->newLine();
             $this->table(
                 ['User ID', 'Name', 'Email', 'Shops Count', 'Has Retailer Role'],
                 $users->map(function ($user) use ($shops) {
@@ -76,7 +113,7 @@ class MigrateShopsToBrands extends Command
             return 0;
         }
 
-        if (!$this->option('force') && !$this->confirm("Migrate {$shops->count()} shops and assign {$users->count()} users as retailers?")) {
+        if (!$this->option('force') && !$this->confirm("Migrate {$totalBrands} brands with {$totalBranches} total branches from {$users->count()} users?")) {
             $this->info('Operation cancelled.');
             return 0;
         }
@@ -84,64 +121,76 @@ class MigrateShopsToBrands extends Command
         $this->info('Starting migration...');
         $this->newLine();
 
-        $migratedShops = 0;
+        $migratedBrands = 0;
+        $migratedBranches = 0;
         $migratedUsers = 0;
         $errors = [];
+        $skippedNoMain = 0;
 
-        // Migrate shops to brands
-        $this->info('Migrating shops to brands...');
-        $bar = $this->output->createProgressBar($shops->count());
+        // Map to store main_shop_id => brand_id
+        $shopToBrandMap = [];
+
+        // Step 1: Create brands from main shops
+        $this->info('Creating brands from shop groups...');
+        $bar = $this->output->createProgressBar($totalBrands);
         $bar->start();
 
-        foreach ($shops as $shop) {
+        foreach ($brandGroups as $brandKey => $group) {
             try {
-                // Check if brand already exists (by source_id or slug)
-                $existingBrand = Brand::where('source_id', $shop->id)
-                    ->orWhere('slug', $shop->slug)
-                    ->first();
+                $mainShop = $group['main_shop'];
 
-                if ($existingBrand) {
+                if (!$mainShop) {
+                    $errors[] = "Brand group {$brandKey}: Missing main shop (has " . count($group['branches']) . " branch(es))";
+                    $skippedNoMain++;
                     $bar->advance();
                     continue;
                 }
 
-                // Create brand from shop data
-                Brand::create([
-                    'name' => $shop->title,
-                    'title' => $shop->title,
-                    'title_ar' => $shop->title_ar,
-                    'slug' => $shop->slug,
-                    'description' => $shop->description,
-                    'description_ar' => $shop->description_ar,
-                    'logo' => $shop->featured_image,
-                    'image_id' => $shop->image_id,
-                    'gallery' => $shop->gallery,
-                    'video' => $shop->video,
-                    'featured_mobile' => $shop->featured_image,
-                    'status' => $shop->status,
-                    'publish_date' => $shop->publish_date,
-                    'days' => $shop->days,
-                    'open_status' => $shop->open_status,
-                    'featured' => $shop->featured,
-                    'location_id' => $shop->location_id,
-                    'location' => null, // Will be set from location_id if needed
-                    'phone_number' => $shop->phone_number,
-                    'lat' => $shop->lat,
-                    'lng' => $shop->lng,
-                    'is_main_branch' => $shop->is_main_branch ?? 1,
-                    'main_branch_id' => $shop->main_branch_id,
-                    'type' => $shop->type,
-                    'website_link' => $shop->website_link,
-                    'insta_link' => $shop->insta_link,
-                    'facebook_link' => $shop->facebook_link,
-                    'source_id' => $shop->id, // Reference to original shop
-                    'create_user' => $shop->create_user,
-                    'update_user' => $shop->update_user,
+                // Check if brand already exists
+                $existingBrand = Brand::where('source_id', $mainShop->id)->first();
+
+                if ($existingBrand) {
+                    $shopToBrandMap[$mainShop->id] = $existingBrand->id;
+                    $bar->advance();
+                    continue;
+                }
+
+                // Create brand using main shop's information
+                $brand = Brand::create([
+                    'name' => $mainShop->title,
+                    'title' => $mainShop->title,
+                    'title_ar' => $mainShop->title_ar,
+                    'slug' => $mainShop->slug,
+                    'description' => $mainShop->description,
+                    'description_ar' => $mainShop->description_ar,
+                    'logo' => $mainShop->featured_image,
+                    'image_id' => $mainShop->image_id,
+                    'gallery' => $mainShop->gallery,
+                    'video' => $mainShop->video,
+                    'featured_mobile' => $mainShop->featured_image,
+                    'status' => $mainShop->status,
+                    'publish_date' => $mainShop->publish_date,
+                    'days' => $mainShop->days,
+                    'open_status' => $mainShop->open_status,
+                    'featured' => $mainShop->featured,
+                    'location_id' => $mainShop->location_id,
+                    'location' => null,
+                    'phone_number' => $mainShop->phone_number,
+                    'lat' => $mainShop->lat,
+                    'lng' => $mainShop->lng,
+                    'type' => $mainShop->type,
+                    'website_link' => $mainShop->website_link,
+                    'insta_link' => $mainShop->insta_link,
+                    'facebook_link' => $mainShop->facebook_link,
+                    'source_id' => $mainShop->id,
+                    'create_user' => $mainShop->create_user,
+                    'update_user' => $mainShop->update_user,
                 ]);
 
-                $migratedShops++;
+                $shopToBrandMap[$mainShop->id] = $brand->id;
+                $migratedBrands++;
             } catch (\Exception $e) {
-                $errors[] = "Shop {$shop->id}: {$e->getMessage()}";
+                $errors[] = "Brand group {$brandKey}: {$e->getMessage()}";
             }
 
             $bar->advance();
@@ -150,7 +199,73 @@ class MigrateShopsToBrands extends Command
         $bar->finish();
         $this->newLine(2);
 
-        // Assign users as retailers and create onboarding records
+        // Step 2: Create branch records for ALL shops (including main branches)
+        $this->info('Creating branch records for all shops...');
+        $bar = $this->output->createProgressBar($totalBranches);
+        $bar->start();
+
+        foreach ($brandGroups as $brandKey => $group) {
+            $mainShop = $group['main_shop'];
+
+            if (!$mainShop) {
+                // Skip if no main shop
+                foreach ($group['branches'] as $shop) {
+                    $bar->advance();
+                }
+                continue;
+            }
+
+            $brandId = $shopToBrandMap[$mainShop->id] ?? null;
+
+            if (!$brandId) {
+                // Try to find brand by source_id
+                $brand = Brand::where('source_id', $mainShop->id)->first();
+                $brandId = $brand?->id;
+            }
+
+            if (!$brandId) {
+                $errors[] = "Cannot find brand for main shop {$mainShop->id}";
+                foreach ($group['branches'] as $shop) {
+                    $bar->advance();
+                }
+                continue;
+            }
+
+            // Create branch for each shop in the group
+            foreach ($group['branches'] as $shop) {
+                try {
+                    // Check if branch already exists
+                    $existingBranch = Branch::where('brand_id', $brandId)
+                        ->where('name', $shop->title)
+                        ->first();
+
+                    if ($existingBranch) {
+                        $bar->advance();
+                        continue;
+                    }
+
+                    // Create branch record
+                    Branch::create([
+                        'brand_id' => $brandId,
+                        'name' => $shop->title,
+                        'location' => $shop->location_id ? "Location ID: {$shop->location_id}" : null,
+                        'phone' => $shop->phone_number,
+                        'is_main' => $shop->is_main_branch ? 1 : 0,
+                    ]);
+
+                    $migratedBranches++;
+                } catch (\Exception $e) {
+                    $errors[] = "Branch for shop {$shop->id}: {$e->getMessage()}";
+                }
+
+                $bar->advance();
+            }
+        }
+
+        $bar->finish();
+        $this->newLine(2);
+
+        // Step 3: Assign users as retailers
         $this->info('Assigning users as retailers...');
         $bar = $this->output->createProgressBar($users->count());
         $bar->start();
@@ -191,8 +306,13 @@ class MigrateShopsToBrands extends Command
 
         // Summary
         $this->info('Migration complete!');
-        $this->info("Shops migrated to brands: {$migratedShops}");
+        $this->info("Brands created: {$migratedBrands}");
+        $this->info("Branches created: {$migratedBranches}");
         $this->info("Users assigned as retailers: {$migratedUsers}");
+
+        if ($skippedNoMain > 0) {
+            $this->warn("Brand groups skipped (missing main shop): {$skippedNoMain}");
+        }
 
         if (!empty($errors)) {
             $this->newLine();

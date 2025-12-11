@@ -59,3 +59,6 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
+
+// Include Notification Module Routes
+require __DIR__.'/../Modules/Notification/routes/api.php';
