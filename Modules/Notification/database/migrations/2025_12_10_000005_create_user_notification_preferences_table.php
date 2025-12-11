@@ -8,17 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('user_notification_preferences', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('channel'); // push, sms, email
-            $table->string('tag'); // nearby, new_offer, promotional, etc
-            $table->boolean('is_enabled')->default(true);
-            $table->timestamps();
+        if (!Schema::hasTable('user_notification_preferences')) {
 
-            $table->unique(['user_id', 'channel', 'tag']);
-            $table->index('user_id');
-        });
+            Schema::create('user_notification_preferences', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+                $table->string('channel'); // push, sms, email
+                $table->string('tag'); // nearby, new_offer, promotional, etc
+                $table->boolean('is_enabled')->default(true);
+                $table->timestamps();
+
+                $table->unique(['user_id', 'channel', 'tag']);
+                $table->index('user_id');
+            });
+        }
     }
 
     public function down(): void
