@@ -11,21 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment_webhooks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('gateway', 50);
-            $table->string('event_type', 100);
-            $table->json('payload');
-            $table->boolean('processed')->default(false);
-            $table->timestamp('processed_at')->nullable();
-            $table->text('error_message')->nullable();
-            $table->timestamps();
+        if (!Schema::hasTable('payment_webhooks')) {
 
-            $table->index(['gateway', 'event_type']);
-            $table->index('processed');
-            $table->index('created_at');
-        });
+            Schema::create('payment_webhooks', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
+                $table->string('gateway', 50);
+                $table->string('event_type', 100);
+                $table->json('payload');
+                $table->boolean('processed')->default(false);
+                $table->timestamp('processed_at')->nullable();
+                $table->text('error_message')->nullable();
+                $table->timestamps();
+
+                $table->index(['gateway', 'event_type']);
+                $table->index('processed');
+                $table->index('created_at');
+            });
+        }
     }
 
     /**

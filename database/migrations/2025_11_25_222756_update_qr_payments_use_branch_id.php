@@ -8,13 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('qr_payments', function (Blueprint $table) {
-            // Add branch_id column first
-            $table->foreignId('branch_id')->nullable()->after('merchant_id')->constrained('branches')->cascadeOnDelete();
+        if (!Schema::hasTable('qr_payments')) {
 
-            // Add user_id to track which user generated the QR (optional, for audit)
-            $table->foreignId('user_id')->nullable()->after('branch_id')->constrained('users')->nullOnDelete();
-        });
+            Schema::table('qr_payments', function (Blueprint $table) {
+                // Add branch_id column first
+                $table->foreignId('branch_id')->nullable()->after('merchant_id')->constrained('branches')->cascadeOnDelete();
+
+                // Add user_id to track which user generated the QR (optional, for audit)
+                $table->foreignId('user_id')->nullable()->after('branch_id')->constrained('users')->nullOnDelete();
+            });
+        }
     }
 
     public function down(): void
