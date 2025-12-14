@@ -3,7 +3,7 @@ import { Image } from "primereact/image";
 import { FaFile } from "react-icons/fa";
 import { useRef, useState } from "react";
 import { PhoneInput } from "react-international-phone";
-import "react-international-phone/style.css"; 
+import "react-international-phone/style.css";
 
 interface Props {
   data: {
@@ -23,6 +23,8 @@ interface Props {
 export default function Step1RetailerDetails({ data, onChange }: Props) {
   const logoRef = useRef<HTMLInputElement | null>(null);
   const licenseRef = useRef<HTMLInputElement | null>(null);
+
+  console.log(1132);
 
   // Default country (ISO2 format)
   const [country, setCountry] = useState("jo"); // 🇯🇴 Jordan by default

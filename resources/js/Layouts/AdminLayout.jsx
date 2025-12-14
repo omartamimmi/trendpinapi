@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 
 export default function AdminLayout({ children }) {
     const { auth } = usePage().props;
@@ -90,6 +90,11 @@ export default function AdminLayout({ children }) {
 
     const isActive = (href) => currentPath.startsWith(href);
 
+    const handleLogout = (e) => {
+        e.preventDefault();
+        router.get('/logout');
+    };
+
     return (
         <div className="min-h-screen flex">
             {/* Sidebar */}
@@ -130,16 +135,14 @@ export default function AdminLayout({ children }) {
                             </div>
                             <span className="ml-3 text-white text-sm truncate">{auth?.user?.name}</span>
                         </div>
-                        <Link
-                            href="/logout"
-                            method="post"
-                            as="button"
-                            className="text-gray-400 hover:text-white"
+                        <button
+                            onClick={handleLogout}
+                            className="text-gray-400 hover:text-white transition-colors"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

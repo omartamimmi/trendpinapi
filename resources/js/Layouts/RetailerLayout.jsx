@@ -109,7 +109,7 @@ export default function RetailerLayout({ children }) {
                         </div>
                         <Link
                             href="/logout"
-                            method="post"
+                            method="get"
                             as="button"
                             className="text-gray-400 hover:text-white"
                         >
