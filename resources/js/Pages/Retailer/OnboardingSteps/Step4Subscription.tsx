@@ -3,48 +3,38 @@ import CardRetailerSubscriptionInformation from "../../../Components/Cards/CardR
 interface Step4Data {
   subscription: string;
 }
+
+interface Plan {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  duration_months: number;
+  trial_days?: number;
+  features?: any;
+}
+
 interface Step4Props {
   data: Step4Data;
   onChange: <K extends keyof Step4Data>(
     field: K,
     value: Step4Data[K]
   ) => void;
+  plans: Plan[];
 }
 
 
-export default function Step4Subscription({ data, onChange }: Step4Props) {
-  const subscriptions = [
-    {
-      img: "/images/Frame 1000000724.png",
-      header: "Trendpin Blue 35 Offers",
-      title: "Per month",
-      description:
-        "Lorem ipsum dolor sit amet consectetur. Condimentum id semper lacinia dignissim at a condimentum.",
-      offer: "3 Month Free",
-      validity: "Membership valid until 10/08/2025",
-      value: "blue35",
-    },
-    {
-      img: "/images/Frame 1000000724.png",
-      header: "Trendpin Green 20 Offers",
-      title: "Per month",
-      description:
-        "Phasellus facilisis metus nec turpis consequat, non facilisis orci gravida.",
-      offer: "1 Month Free",
-      validity: "Membership valid until 05/09/2025",
-      value: "green20",
-    },
-    {
-      img: "/images/Frame 1000000724.png",
-      header: "Trendpin Red 50 Offers",
-      title: "Per month",
-      description:
-        "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere.",
-      offer: "6 Month Free",
-      validity: "Membership valid until 12/12/2025",
-      value: "red50",
-    },
-  ];
+export default function Step4Subscription({ data, onChange, plans = [] }: Step4Props) {
+  // Transform database plans to match component format
+  const subscriptions = plans.map((plan) => ({
+    img: "/images/Frame 1000000724.png",
+    header: plan.name,
+    title: `${plan.price > 0 ? `$${plan.price}` : 'Free'} / ${plan.duration_months} month${plan.duration_months > 1 ? 's' : ''}`,
+    description: plan.description || "No description available",
+    offer: plan.trial_days ? `${plan.trial_days} Days Free Trial` : "No trial",
+    validity: `Duration: ${plan.duration_months} month${plan.duration_months > 1 ? 's' : ''}`,
+    value: String(plan.id), // Use plan ID as value
+  }));
 
   return (
     <div className="space-y-8">

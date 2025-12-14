@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip this migration if column doesn't exist
+        if (!Schema::hasColumn('groups', 'business_id')) {
+            return;
+        }
+
         Schema::table('groups', function (Blueprint $table) {
             $table->unsignedBigInteger('business_id')->nullable()->default(null)->change();
         });

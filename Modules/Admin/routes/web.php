@@ -59,6 +59,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Onboarding Approvals
     Route::get('/onboarding-approvals', [AdminPageController::class, 'onboardingApprovals'])->name('admin.onboarding-approvals');
     Route::get('/onboarding-approvals/{id}', [AdminPageController::class, 'showOnboardingReview'])->name('admin.onboarding-approvals.show');
+    Route::get('/onboarding-approvals/{id}/edit', [AdminPageController::class, 'editOnboarding'])->name('admin.onboarding-approvals.edit');
     Route::post('/onboarding-approvals/{id}/approve', [AdminPageController::class, 'approveOnboarding'])->name('admin.onboarding-approvals.approve');
     Route::post('/onboarding-approvals/{id}/request-changes', [AdminPageController::class, 'requestOnboardingChanges'])->name('admin.onboarding-approvals.request-changes');
     Route::post('/onboarding-approvals/{id}/reject', [AdminPageController::class, 'rejectOnboarding'])->name('admin.onboarding-approvals.reject');
@@ -84,4 +85,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/notifications/send', [AdminPageController::class, 'sendNotificationPage'])->name('admin.notifications.send');
     Route::get('/notification-providers', [AdminPageController::class, 'notificationProviders'])->name('admin.notification-providers');
     Route::get('/notification-templates', [AdminPageController::class, 'notificationTemplates'])->name('admin.notification-templates');
+    Route::get('/notification-settings', [AdminPageController::class, 'notificationSettings'])->name('admin.notification-settings');
+    Route::get('/notification-credentials', [AdminPageController::class, 'notificationCredentials'])->name('admin.notification-credentials');
 });

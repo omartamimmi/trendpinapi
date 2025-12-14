@@ -23,6 +23,7 @@ Route::prefix('retailer')->middleware(['auth', 'role:retailer'])->group(function
     // Onboarding API (web session auth)
     Route::prefix('onboarding')->group(function () {
         Route::post('/start', [OnboardingController::class, 'start']);
+        Route::post('/retailer-details', [OnboardingController::class, 'saveRetailerDetails']);
         Route::post('/phone/send-otp', [OnboardingController::class, 'sendPhoneOtp']);
         Route::post('/phone/verify', [OnboardingController::class, 'verifyPhone']);
         Route::post('/payment-methods', [OnboardingController::class, 'savePaymentMethods']);
@@ -36,8 +37,8 @@ Route::prefix('retailer')->middleware(['auth', 'role:retailer'])->group(function
         Route::post('/complete', [OnboardingController::class, 'completeOnboarding']);
     });
 
-    // Dashboard and other pages (require onboarding completion)
-    Route::middleware(['onboarding.complete'])->group(function () {
+    // Dashboard and other pages (require onboarding completion and admin approval)
+    Route::middleware(['onboarding.complete', 'retailer.approved'])->group(function () {
         Route::get('/dashboard', [RetailerPageController::class, 'dashboard'])->name('retailer.dashboard');
         Route::get('/', fn() => redirect()->route('retailer.dashboard'));
 

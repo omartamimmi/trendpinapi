@@ -38,6 +38,7 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
     };
 
     const tabs = [
+        { key: 'pending', label: 'Pending', count: counts.pending },
         { key: 'pending_approval', label: 'Pending Approval', count: counts.pending_approval },
         { key: 'approved', label: 'Approved', count: counts.approved },
         { key: 'changes_requested', label: 'Changes Requested', count: counts.changes_requested },

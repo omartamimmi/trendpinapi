@@ -13,6 +13,7 @@ type Step1Data = {
   retailerName: string;
   phoneNumber?: string;
   countryCode?: string;
+  city: string;
   category: string;
   logoFile: File | null;
   licenseFile: File | null;
@@ -58,13 +59,37 @@ interface OnboardingProps {
     user_id: number;
     current_step: string;
     status: string;
+    city?: string;
+    category?: string;
+    logo_path?: string;
+    license_path?: string;
+    logo_url?: string;
+    license_url?: string;
+  };
+  user?: {
+    name: string;
+    phone: string;
   };
   currentStep: number;
   plans: any[];
   csrf_token?: string;
+  existingPaymentMethods?: any[];
+  existingBrands?: any[];
+  existingSubscription?: any;
+  isAdminEdit?: boolean;
 }
 
-export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_token }: OnboardingProps) {
+export default function Onboarding({
+  onboarding,
+  user,
+  currentStep = 1,
+  plans,
+  csrf_token,
+  existingPaymentMethods = [],
+  existingBrands = [],
+  existingSubscription,
+  isAdminEdit = false
+}: OnboardingProps) {
   const [activeStep, setActiveStep] = useState<StepId>(currentStep as StepId);
   const [processing, setProcessing] = useState(false);
 
@@ -76,26 +101,57 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
     { id: 5, title: "Payment" },
   ];
 
-  const [formData, setFormData] = useState<FormDataType>({
-    step1: {
-      retailerName: "",
-      phoneNumber: "",
-      countryCode: "",
-      category: "",
-      logoFile: null,
+  // Initialize form data with existing data
+  const initializeFormData = (): FormDataType => {
+    // Step 1: Retailer Details from onboarding table and user
+    const step1 = {
+      retailerName: user?.name || "",
+      phoneNumber: user?.phone || "",
+      countryCode: "", // Extract from phone if needed
+      city: onboarding.city || "",
+      category: onboarding.category || "",
+      logoFile: null, // Files can't be pre-filled, but we'll show preview
       licenseFile: null
-    },
-    step2: {
-      paymentMethod: [],
-      bankName: "",
-      iban: "",
-      cliqNumber: "",
+    };
+
+    // Step 2: Payment Methods
+    const step2 = {
+      paymentMethod: existingPaymentMethods.length > 0
+        ? existingPaymentMethods.map(pm => pm.type)
+        : [],
+      bankName: existingPaymentMethods.find(pm => pm.type === 'bank')?.bank_name || "",
+      iban: existingPaymentMethods.find(pm => pm.type === 'bank')?.iban || "",
+      cliqNumber: existingPaymentMethods.find(pm => pm.type === 'cliq')?.cliq_number || "",
       countryCode: ""
-    },
-    step3: { groups: [] },
-    step4: { subscription: "" },
-    step5: { paymentOption: "" },
-  });
+    };
+
+    // Step 3: Brands
+    const step3 = {
+      groups: existingBrands.map(brand => ({
+        brandName: brand.name,
+        description: brand.description || "",
+        position: brand.location
+          ? (typeof brand.location === 'string'
+              ? JSON.parse(brand.location)
+              : brand.location)
+          : { lat: 0, lng: 0 }
+      }))
+    };
+
+    // Step 4: Subscription
+    const step4 = {
+      subscription: existingSubscription?.subscription_plan_id?.toString() || ""
+    };
+
+    // Step 5: Payment
+    const step5 = {
+      paymentOption: "" as "" | "cliq" | "cash" | "card"
+    };
+
+    return { step1, step2, step3, step4, step5 };
+  };
+
+  const [formData, setFormData] = useState<FormDataType>(initializeFormData());
 
   const handleChange = <
     K extends keyof FormDataType,
@@ -111,9 +167,168 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
     }));
   };
 
-  const handleNext = () => {
-    if (activeStep < 5) {
-      setActiveStep((prev) => (prev + 1) as StepId);
+  const handleNext = async () => {
+    setProcessing(true);
+
+    try {
+      if (activeStep === 1) {
+        // Step 1: Save retailer details
+        if (!formData.step1.retailerName || !formData.step1.category || !formData.step1.city) {
+          alert('Please fill in all required fields in Step 1');
+          setProcessing(false);
+          return;
+        }
+
+        const submitData = new FormData();
+        submitData.append('retailer_name', formData.step1.retailerName);
+        submitData.append('category', formData.step1.category);
+        submitData.append('city', formData.step1.city);
+        if (formData.step1.phoneNumber) submitData.append('phone_number', formData.step1.phoneNumber);
+        if (formData.step1.countryCode) submitData.append('country_code', formData.step1.countryCode);
+        if (formData.step1.logoFile) submitData.append('logo', formData.step1.logoFile);
+        if (formData.step1.licenseFile) submitData.append('license', formData.step1.licenseFile);
+        if (isAdminEdit && onboarding?.user_id) submitData.append('onboarding_user_id', String(onboarding.user_id));
+
+        await router.post('/retailer/onboarding/retailer-details', submitData, {
+          preserveState: !isAdminEdit,
+          preserveScroll: true,
+          forceFormData: true,
+          onSuccess: () => {
+            console.log('Step 1 data saved successfully');
+            setProcessing(false);
+            if (!isAdminEdit) {
+              setActiveStep(2);
+            }
+          },
+          onError: (errors) => {
+            console.error('Error saving Step 1:', errors);
+            setProcessing(false);
+            alert('Failed to save Step 1 data. Please try again.');
+          },
+        });
+      } else if (activeStep === 2) {
+        // Step 2: Save payment methods - format data as array
+        const methods = (formData.step2.paymentMethod || []).map((type: string) => {
+          if (type === 'cliq') {
+            return {
+              type: 'cliq',
+              cliq_number: formData.step2.cliqNumber || '',
+              bank_name: null,
+              iban: null,
+            };
+          } else if (type === 'bank') {
+            return {
+              type: 'bank',
+              cliq_number: null,
+              bank_name: formData.step2.bankName || '',
+              iban: formData.step2.iban || '',
+            };
+          }
+        }).filter(Boolean);
+
+        // Skip if no payment methods selected
+        if (methods.length === 0) {
+          setProcessing(false);
+          setActiveStep(3);
+          return;
+        }
+
+        const submitData: any = {
+          payment_methods: methods,
+        };
+        if (isAdminEdit && onboarding?.user_id) {
+          submitData.onboarding_user_id = onboarding.user_id;
+        }
+
+        await router.post('/retailer/onboarding/payment-methods', submitData, {
+          preserveState: !isAdminEdit,
+          preserveScroll: true,
+          onSuccess: () => {
+            console.log('Step 2 data saved successfully');
+            setProcessing(false);
+            if (!isAdminEdit) {
+              setActiveStep(3);
+            }
+          },
+          onError: (errors) => {
+            console.error('Error saving Step 2:', errors);
+            setProcessing(false);
+            alert('Failed to save payment methods. Please try again.');
+          },
+        });
+      } else if (activeStep === 3) {
+        // Step 3: Save brand information
+        const groups = formData.step3.groups || [];
+
+        // Skip if no brands added
+        if (groups.length === 0) {
+          setProcessing(false);
+          setActiveStep(4);
+          return;
+        }
+
+        // Transform data to match backend expectations
+        const brands = groups.map((group: any) => ({
+          name: group.brandName,
+          description: group.description || '',
+          latitude: group.position?.lat || 0,
+          longitude: group.position?.lng || 0,
+        }));
+
+        const submitData: any = {
+          brand_type: brands.length > 1 ? 'group' : 'single',
+          brands: brands,
+        };
+        if (isAdminEdit && onboarding?.user_id) {
+          submitData.onboarding_user_id = onboarding.user_id;
+        }
+
+        await router.post('/retailer/onboarding/brands', submitData, {
+          preserveState: !isAdminEdit,
+          preserveScroll: true,
+          onSuccess: () => {
+            console.log('Step 3 data saved successfully');
+            setProcessing(false);
+            if (!isAdminEdit) {
+              setActiveStep(4);
+            }
+          },
+          onError: (errors) => {
+            console.error('Error saving Step 3:', errors);
+            setProcessing(false);
+            alert('Failed to save brand information. Please try again.');
+          },
+        });
+      } else if (activeStep === 4) {
+        // Step 4: Save subscription plan (optional for now)
+        const submitData: any = {
+          plan_id: formData.step4.subscription || null,
+        };
+        if (isAdminEdit && onboarding?.user_id) {
+          submitData.onboarding_user_id = onboarding.user_id;
+        }
+
+        await router.post('/retailer/onboarding/plans/select', submitData, {
+          preserveState: !isAdminEdit,
+          preserveScroll: true,
+          onSuccess: () => {
+            console.log('Step 4 data saved successfully');
+            setProcessing(false);
+            if (!isAdminEdit) {
+              setActiveStep(5);
+            }
+          },
+          onError: (errors) => {
+            console.error('Error saving Step 4:', errors);
+            setProcessing(false);
+            alert('Failed to save subscription plan. Please try again.');
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setProcessing(false);
+      alert('An error occurred. Please try again.');
     }
   };
 
@@ -126,71 +341,29 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
   const handleSubmit = async (e?: FormEvent) => {
     if (e) e.preventDefault();
 
-    // Validation
-    if (!formData.step1.retailerName || !formData.step1.category) {
-      alert('Please fill in all required fields in Step 1');
-      setActiveStep(1);
-      return;
-    }
-
-    if (!formData.step4.subscription) {
-      alert('Please select a subscription plan');
-      setActiveStep(4);
-      return;
-    }
-
-    if (!formData.step5.paymentOption) {
-      alert('Please select a payment option');
-      return;
-    }
-
+    // Since all steps are already saved, just mark as complete
     setProcessing(true);
 
     try {
-      // Get CSRF token from props or meta tag
-      const csrfToken = csrf_token || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      // Simply mark the onboarding as completed
+      const submitData: any = {
+        payment_option: formData.step5.paymentOption || 'pending',
+      };
 
-      if (!csrfToken) {
-        throw new Error('CSRF token not found. Please refresh the page.');
+      // Add onboarding_user_id for admin edits
+      if (isAdminEdit && onboarding?.user_id) {
+        submitData.onboarding_user_id = onboarding.user_id;
       }
 
-      // Prepare form data
-      const submitData = new FormData();
-
-      // Add CSRF token
-      submitData.append('_token', csrfToken);
-
-      // Step 1 data
-      submitData.append('retailer_name', formData.step1.retailerName);
-      submitData.append('category', formData.step1.category);
-      submitData.append('phone_number', formData.step1.phoneNumber || '');
-      submitData.append('country_code', formData.step1.countryCode || '');
-      if (formData.step1.logoFile) submitData.append('logo', formData.step1.logoFile);
-      if (formData.step1.licenseFile) submitData.append('license', formData.step1.licenseFile);
-
-      // Step 2 data
-      submitData.append('payment_methods', JSON.stringify(formData.step2.paymentMethod || []));
-      submitData.append('bank_name', formData.step2.bankName || '');
-      submitData.append('iban', formData.step2.iban || '');
-      submitData.append('cliq_number', formData.step2.cliqNumber || '');
-
-      // Step 3 data
-      submitData.append('brands', JSON.stringify(formData.step3.groups || []));
-
-      // Step 4 data
-      submitData.append('subscription_plan', formData.step4.subscription);
-
-      // Step 5 data
-      submitData.append('payment_option', formData.step5.paymentOption);
-
-      // Submit to backend
+      // Submit to backend to mark as complete
       router.post('/retailer/onboarding/complete', submitData, {
+        preserveState: !isAdminEdit,
         onSuccess: () => {
-          // The backend will redirect automatically
           setProcessing(false);
+          // Backend will redirect to pending approval page
         },
         onError: (errors) => {
-          console.error('Onboarding submission error:', errors);
+          console.error('Onboarding completion error:', errors);
           setProcessing(false);
 
           // Display validation errors
@@ -225,6 +398,8 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
           <Step1RetailerDetails
             data={formData.step1}
             onChange={(f, v) => handleChange("step1", f, v)}
+            existingLogoUrl={onboarding.logo_url}
+            existingLicenseUrl={onboarding.license_url}
           />
         );
       case 2:
@@ -246,6 +421,7 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
           <Step4Subscription
             data={formData.step4}
             onChange={(f, v) => handleChange("step4", f, v)}
+            plans={plans}
           />
         );
       case 5:
@@ -281,20 +457,24 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
               ></div>
             )}
 
-            <div
-              className={`z-10 flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300 ${
+            <button
+              type="button"
+              onClick={() => setActiveStep(step.id)}
+              className={`z-10 flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300 cursor-pointer hover:scale-110 ${
                 isCompleted
-                  ? "bg-pink-500 text-white border-pink-500"
+                  ? "bg-pink-500 text-white border-pink-500 hover:bg-pink-600"
                   : isActive
                   ? "bg-[#2F305A] text-white border-[#2F305A]"
-                  : "bg-gray-100 border-gray-300 text-gray-500"
+                  : "bg-gray-100 border-gray-300 text-gray-500 hover:bg-gray-200"
               }`}
             >
               {isCompleted ? <FaCheck /> : step.id}
-            </div>
+            </button>
 
-            <span
-              className={`mt-2 text-xs text-center ${
+            <button
+              type="button"
+              onClick={() => setActiveStep(step.id)}
+              className={`mt-2 text-xs text-center cursor-pointer hover:underline ${
                 isCompleted
                   ? "text-pink-500"
                   : isActive
@@ -303,7 +483,7 @@ export default function Onboarding({ onboarding, currentStep = 1, plans, csrf_to
               }`}
             >
               {step.title}
-            </span>
+            </button>
           </div>
         );
       })}

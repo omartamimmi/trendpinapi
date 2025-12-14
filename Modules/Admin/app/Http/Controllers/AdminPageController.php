@@ -560,6 +560,7 @@ class AdminPageController extends Controller
      */
     public function updateRetailerBrand(Request $request, int $id)
     {
+        dd(123);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'title' => 'required|string|max:255',
@@ -663,11 +664,11 @@ class AdminPageController extends Controller
      */
     public function onboardingApprovals(Request $request): Response
     {
-        $status = $request->get('status', 'pending_approval');
+        $status = $request->get('status', 'pending');
         $search = $request->get('search');
 
-        $query = RetailerOnboarding::with(['user'])
-            ->where('status', 'completed');
+        // Show all onboarding records, not just completed ones
+        $query = RetailerOnboarding::with(['user']);
 
         if ($status !== 'all') {
             $query->where('approval_status', $status);
@@ -682,16 +683,13 @@ class AdminPageController extends Controller
 
         $onboardings = $query->latest()->paginate(20);
 
-        // Get counts for each status
+        // Get counts for each status (all records, not just completed)
         $counts = [
-            'pending_approval' => RetailerOnboarding::where('status', 'completed')
-                ->where('approval_status', 'pending_approval')->count(),
-            'approved' => RetailerOnboarding::where('status', 'completed')
-                ->where('approval_status', 'approved')->count(),
-            'changes_requested' => RetailerOnboarding::where('status', 'completed')
-                ->where('approval_status', 'changes_requested')->count(),
-            'rejected' => RetailerOnboarding::where('status', 'completed')
-                ->where('approval_status', 'rejected')->count(),
+            'pending' => RetailerOnboarding::where('approval_status', 'pending')->count(),
+            'pending_approval' => RetailerOnboarding::where('approval_status', 'pending_approval')->count(),
+            'approved' => RetailerOnboarding::where('approval_status', 'approved')->count(),
+            'changes_requested' => RetailerOnboarding::where('approval_status', 'changes_requested')->count(),
+            'rejected' => RetailerOnboarding::where('approval_status', 'rejected')->count(),
         ];
 
         return Inertia::render('Admin/OnboardingApprovals', [
@@ -720,6 +718,54 @@ class AdminPageController extends Controller
     }
 
     /**
+     * Show edit onboarding form
+     */
+    public function editOnboarding(int $id): Response
+    {
+        $onboarding = RetailerOnboarding::with(['user'])->findOrFail($id);
+        $user = $onboarding->user;
+
+        // Map step names to numbers
+        $stepMap = [
+            'retailer_details' => 1,
+            'payment_details' => 2,
+            'brand_information' => 3,
+            'subscription' => 4,
+            'payment' => 5,
+            'completed' => 5
+        ];
+
+        $plans = SubscriptionPlan::where('is_active', true)->get();
+
+        // Load related data for editing
+        $paymentMethods = \Modules\RetailerOnboarding\app\Models\RetailerPaymentMethod::where('user_id', $user->id)->get();
+        $brands = Brand::where('create_user', $user->id)->get();
+        $subscription = RetailerSubscription::where('user_id', $user->id)->first();
+
+        // Add full image URLs for logo and license
+        $onboardingData = $onboarding->toArray();
+        $onboardingData['logo_url'] = $onboarding->logo_path
+            ? asset('storage/' . $onboarding->logo_path)
+            : null;
+        $onboardingData['license_url'] = $onboarding->license_path
+            ? asset('storage/' . $onboarding->license_path)
+            : null;
+
+        return Inertia::render('Admin/EditOnboarding', [
+            'onboarding' => $onboardingData,
+            'user' => [
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
+            'currentStep' => $stepMap[$onboarding->current_step] ?? 1,
+            'plans' => $plans,
+            'existingPaymentMethods' => $paymentMethods,
+            'existingBrands' => $brands,
+            'existingSubscription' => $subscription,
+        ]);
+    }
+
+    /**
      * Approve onboarding
      */
     public function approveOnboarding(Request $request, int $id)
@@ -732,6 +778,18 @@ class AdminPageController extends Controller
             'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
+
+        // Activate the retailer's subscription
+        $subscription = \Modules\RetailerOnboarding\app\Models\RetailerSubscription::where('user_id', $onboarding->user_id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($subscription) {
+            $subscription->update([
+                'status' => 'active',
+                'starts_at' => now(), // Start subscription from approval time
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Onboarding approved successfully');
     }
@@ -1028,5 +1086,56 @@ class AdminPageController extends Controller
         return Inertia::render('Admin/NotificationTemplates', [
             'templates' => $templates,
         ]);
+    }
+
+    /**
+     * Show notification settings page
+     */
+    public function notificationSettings(): Response
+    {
+        return Inertia::render('Admin/NotificationSettings');
+    }
+
+    /**
+     * Show notification credentials page
+     */
+    public function notificationCredentials(): Response
+    {
+        // Get current credential statuses
+        $statuses = [
+            'smtp' => $this->checkSmtpStatus(),
+            'sms' => $this->checkSmsStatus(),
+            'whatsapp' => $this->checkWhatsappStatus(),
+            'push' => $this->checkPushStatus(),
+        ];
+
+        return Inertia::render('Admin/NotificationCredentials', [
+            'statuses' => $statuses,
+        ]);
+    }
+
+    private function checkSmtpStatus(): string
+    {
+        $host = config('mail.mailers.smtp.host');
+        $username = config('mail.mailers.smtp.username');
+        return ($host && $username) ? 'configured' : 'not_configured';
+    }
+
+    private function checkSmsStatus(): string
+    {
+        $provider = NotificationProvider::where('type', 'sms')->where('is_active', true)->first();
+        return $provider ? 'configured' : 'not_configured';
+    }
+
+    private function checkWhatsappStatus(): string
+    {
+        $provider = NotificationProvider::where('type', 'whatsapp')->where('is_active', true)->first();
+        return $provider ? 'configured' : 'not_configured';
+    }
+
+    private function checkPushStatus(): string
+    {
+        $provider = NotificationProvider::where('type', 'push')->where('is_active', true)->first();
+        return $provider ? 'configured' : 'not_configured';
     }
 }

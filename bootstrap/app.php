@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'onboarding.complete' => \Modules\RetailerOnboarding\app\Http\Middleware\EnsureOnboardingCompleted::class,
+            'retailer.approved' => \App\Http\Middleware\EnsureRetailerApproved::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

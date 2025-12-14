@@ -31,16 +31,16 @@ export default function Notifications({ notifications }) {
                     <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
                     <div className="flex gap-3">
                         <Link
-                            href="/admin/notification-providers"
+                            href="/admin/notification-settings"
                             className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                         >
-                            Providers
+                            Settings
                         </Link>
                         <Link
-                            href="/admin/notification-templates"
+                            href="/admin/notification-credentials"
                             className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                         >
-                            Templates
+                            Credentials
                         </Link>
                         <Link
                             href="/admin/notifications/send"

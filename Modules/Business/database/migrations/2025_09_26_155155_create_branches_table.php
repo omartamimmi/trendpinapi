@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('branches', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
-            $table->string('name');
-            $table->string('location')->nullable();
-            $table->string('phone')->nullable();
-            $table->boolean('is_main')->default(false); // main branch indicator
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        if (!Schema::hasTable('branches')) {
+
+            Schema::create('branches', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
+                $table->string('name');
+                $table->string('location')->nullable();
+                $table->string('phone')->nullable();
+                $table->boolean('is_main')->default(false); // main branch indicator
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
     }
 
     /**

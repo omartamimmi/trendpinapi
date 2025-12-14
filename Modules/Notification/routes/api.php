@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Notification\app\Http\Controllers\AdminNotificationController;
 use Modules\Notification\app\Http\Controllers\CustomerNotificationController;
+use Modules\Notification\app\Http\Controllers\NotificationCredentialController;
+use Modules\Notification\app\Http\Controllers\NotificationSettingsController;
 
 // Admin Routes (protected by auth:sanctum and admin middleware)
 Route::prefix('v1/admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
@@ -24,6 +26,58 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'role:admin'])->group(fun
     Route::post('notification-templates', [AdminNotificationController::class, 'storeTemplate']);
     Route::put('notification-templates/{id}', [AdminNotificationController::class, 'updateTemplate']);
     Route::delete('notification-templates/{id}', [AdminNotificationController::class, 'deleteTemplate']);
+
+    // Notification Credentials Management
+    Route::prefix('notification-credentials')->group(function () {
+        // Get all credential statuses
+        Route::get('statuses', [NotificationCredentialController::class, 'getStatuses']);
+
+        // Get all credentials (masked)
+        Route::get('/', [NotificationCredentialController::class, 'getAllCredentials']);
+
+        // Get providers for a channel
+        Route::get('providers/{channel}', [NotificationCredentialController::class, 'getProviders']);
+
+        // Channel-specific credentials
+        Route::get('{channel}', [NotificationCredentialController::class, 'getCredentials']);
+        Route::post('{channel}', [NotificationCredentialController::class, 'saveCredentials']);
+        Route::delete('{channel}', [NotificationCredentialController::class, 'deleteCredentials']);
+        Route::post('{channel}/test', [NotificationCredentialController::class, 'testCredentials']);
+        Route::post('{channel}/toggle', [NotificationCredentialController::class, 'toggleActive']);
+    });
+
+    // Notification Testing
+    Route::prefix('notification-test')->group(function () {
+        // Get available test events
+        Route::get('events', [NotificationCredentialController::class, 'getTestEvents']);
+
+        // Get placeholders for an event
+        Route::get('events/{eventId}/placeholders', [NotificationCredentialController::class, 'getEventPlaceholders']);
+
+        // Get recipients by type
+        Route::get('recipients/{type}', [NotificationCredentialController::class, 'getRecipients']);
+
+        // Send test notification
+        Route::post('send', [NotificationCredentialController::class, 'sendTest']);
+    });
+
+    // Notification Settings (Events & Templates)
+    Route::prefix('notification-settings')->group(function () {
+        // Get all settings
+        Route::get('/', [NotificationSettingsController::class, 'index']);
+
+        // Save all settings (bulk)
+        Route::post('/', [NotificationSettingsController::class, 'store']);
+
+        // Get single setting
+        Route::get('{eventId}', [NotificationSettingsController::class, 'show']);
+
+        // Update single setting
+        Route::put('{eventId}', [NotificationSettingsController::class, 'update']);
+
+        // Toggle enabled status
+        Route::post('{eventId}/toggle', [NotificationSettingsController::class, 'toggleEnabled']);
+    });
 });
 
 // Customer Routes (protected by auth:sanctum)

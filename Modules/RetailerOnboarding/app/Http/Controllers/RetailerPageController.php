@@ -14,6 +14,7 @@ use Modules\Business\app\Models\Brand;
 use Modules\Business\app\Models\Group;
 use Modules\Business\app\Models\Branch;
 use Modules\RetailerOnboarding\app\Models\Offer;
+use Modules\Notification\app\Services\EventNotificationService;
 
 class RetailerPageController extends Controller
 {
@@ -89,6 +90,17 @@ class RetailerPageController extends Controller
 
         $user->assignRole('retailer');
 
+        // Send welcome notification to the new retailer (non-blocking)
+        try {
+            $notificationService = new EventNotificationService();
+            $notificationService->sendNewRetailerNotification($user);
+        } catch (\Exception $e) {
+            // Log but don't fail the registration
+            \Illuminate\Support\Facades\Log::warning('Failed to send retailer welcome notification', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         Auth::login($user);
 
         return redirect('/retailer/onboarding');
@@ -110,7 +122,7 @@ class RetailerPageController extends Controller
     /**
      * Show the onboarding page
      */
-    public function onboarding()
+    public function onboarding(Request $request)
     {
         $user = Auth::user();
 
@@ -124,11 +136,22 @@ class RetailerPageController extends Controller
             ]);
         }
 
-        // If onboarding is pending approval, show pending page
-        if ($onboarding->status === 'pending' || $onboarding->approval_status === 'pending') {
-            return Inertia::render('Retailer/OnboardingPending', [
-                'onboarding' => $onboarding,
-                'user' => $user
+        // If approved, redirect to dashboard
+        if ($onboarding->approval_status === 'approved') {
+            return redirect('/retailer/dashboard');
+        }
+
+        // If changes requested or rejected and user clicked edit, allow editing
+        if (in_array($onboarding->approval_status, ['changes_requested', 'rejected']) && $request->has('edit')) {
+            // Reset status to allow editing
+            $onboarding->update(['status' => 'in_progress']);
+            // Continue to show the onboarding form below
+        }
+        // If awaiting approval (pending/changes/rejected) and status is completed, show pending page
+        elseif (in_array($onboarding->approval_status, ['pending', 'pending_approval', 'changes_requested', 'rejected']) && $onboarding->status === 'completed') {
+            return Inertia::render('Retailer/PendingApproval', [
+                'status' => $onboarding->approval_status,
+                'admin_notes' => $onboarding->admin_notes,
             ]);
         }
 
@@ -144,10 +167,31 @@ class RetailerPageController extends Controller
 
         $plans = SubscriptionPlan::where('is_active', true)->get();
 
+        // Load related data for editing
+        $paymentMethods = \Modules\RetailerOnboarding\app\Models\RetailerPaymentMethod::where('user_id', $user->id)->get();
+        $brands = Brand::where('create_user', $user->id)->get();
+        $subscription = RetailerSubscription::where('user_id', $user->id)->first();
+
+        // Add full image URLs for logo and license
+        $onboardingData = $onboarding->toArray();
+        $onboardingData['logo_url'] = $onboarding->logo_path
+            ? asset('storage/' . $onboarding->logo_path)
+            : null;
+        $onboardingData['license_url'] = $onboarding->license_path
+            ? asset('storage/' . $onboarding->license_path)
+            : null;
+
         return Inertia::render('Retailer/Onboarding', [
-            'onboarding' => $onboarding,
+            'onboarding' => $onboardingData,
+            'user' => [
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
             'currentStep' => $stepMap[$onboarding->current_step] ?? 1,
-            'plans' => $plans
+            'plans' => $plans,
+            'existingPaymentMethods' => $paymentMethods,
+            'existingBrands' => $brands,
+            'existingSubscription' => $subscription,
         ]);
     }
 

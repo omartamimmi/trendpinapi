@@ -19,6 +19,10 @@ class RetailerOnboarding extends Model
         'admin_notes',
         'approved_by',
         'approved_at',
+        'city',
+        'category',
+        'logo_path',
+        'license_path',
     ];
 
     protected $casts = [

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Modules\Notification\Services\NotificationService;
+use Modules\Notification\app\Services\EventNotificationService;
 use Modules\User\app\Http\Requests\SendNotificationBasedLocation;
 use Modules\User\app\Http\Requests\StoreUserFcmRequest;
 use Laravel\Socialite\Facades\Socialite;
@@ -62,6 +63,23 @@ class AuthController extends Controller
                 ->assignRoleToUser()
                 ->createUserLoginToken()
                 ->collectOutput('data', $data);
+
+            // Send welcome notification to the new customer (non-blocking)
+            try {
+                $userId = $data['id'] ?? null;
+                if ($userId) {
+                    $user = \App\Models\User::find($userId);
+                    if ($user) {
+                        $notificationService = new EventNotificationService();
+                        $notificationService->sendNewCustomerNotification($user);
+                    }
+                }
+            } catch (\Exception $notificationException) {
+                // Log but don't fail the registration
+                Log::warning('Failed to send welcome notification', [
+                    'error' => $notificationException->getMessage(),
+                ]);
+            }
 
             return $this->getSuccessfulUserCreationResponse($data);
         } catch (Exception $e) {

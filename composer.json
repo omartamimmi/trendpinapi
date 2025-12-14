@@ -17,6 +17,7 @@
         "mcamara/laravel-localization": "^2.3",
         "netsells/laravel-geoscope": "^2.0",
         "nwidart/laravel-modules": "^12.0",
+        "phpmailer/phpmailer": "^7.0",
         "propaganistas/laravel-phone": "^6.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-image-optimizer": "^1.8",
