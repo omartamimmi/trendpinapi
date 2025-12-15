@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ../development/api   # Laravel Api project root
+      dockerfile: Dockerfile 
+    container_name: trendpin_api
+    volumes:
+      - ../../../trendpin:/var/www/api   # Api code lives in /var/www/api
+      - "../development/nginx/conf.d/api.conf:/etc/nginx/conf.d/api.conf"
+    privileged: true
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ../../../trendpin:/var/www/api   # Api code lives in /var/www/api
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - "8866:80"
+    depends_on:
+      - api
+
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3366:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  dbdata:

@@ -1,0 +1,87 @@
+<?php
+
+namespace Modules\Location\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Modules\Category\Models\Category;
+use Modules\Shop\Models\Shop;
+use Netsells\GeoScope\Traits\GeoScopeTrait;
+
+class Location extends Model
+{
+    use GeoScopeTrait;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'address',
+        'exact_address',
+        'lat',
+        'lng',
+        'shop_id',
+        'image_id',
+        'city',
+        'country',
+        'state',
+        'zip',
+
+    ];
+
+    protected $table = "exact_locations";
+
+    protected $slugField     = 'slug';
+    protected $slugFromField = 'exact_address';
+
+
+    public function save(array $options = [])
+    {
+        if ($this->create_user) {
+            $this->update_user = Auth::id();
+        } else {
+            $this->create_user = Auth::id();
+        }
+        if ($this->slugField && $this->slugFromField) {
+            $slugField = $this->slugField;
+            $this->$slugField = $this->generateSlug($this->$slugField);
+        }
+        return parent::save($options);
+    }
+
+
+    public function generateSlug($string = false, $count = 0)
+    {
+        $slugFromField = $this->slugFromField;
+        if (empty($string))
+            $string = $this->$slugFromField;
+        $slug = $newSlug = $this->strToSlug($string);
+        $newSlug = $slug . ($count ? '-' . $count : '');
+        $model = static::select('count(id)');
+        if ($this->id) {
+            $model->where('id', '<>', $this->id);
+        }
+        $check = $model->where($this->slugField, $newSlug)->count();
+        if (!empty($check)) {
+            return $this->generateSlug($slug, $count + 1);
+        }
+        return $newSlug;
+    }
+
+    // Add Support for non-ascii string
+    // Example বাংলাদেশ   ব্যাংকের    রিজার্ভের  অর্থ  চুরির   ঘটনায়   ফিলিপাইনের
+    protected function strToSlug($string) {
+        $slug = Str::slug($string);
+        if(empty($slug)){
+            $slug = preg_replace('/\s+/u', '-', trim($string));
+        }
+        return $slug;
+    }
+     public function shop(){
+
+        return $this->belongsTo(Shop::class,'shop_id','id');
+    }
+}

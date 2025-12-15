@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/retaileronboarding",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\RetailerOnboarding\\": "app/",
+            "Modules\\RetailerOnboarding\\Database\\Factories\\": "database/factories/",
+            "Modules\\RetailerOnboarding\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\RetailerOnboarding\\Tests\\": "tests/"
+        }
+    }
+}

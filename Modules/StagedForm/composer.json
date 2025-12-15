@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/stagedform",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\StagedForm\\": "app/",
+            "Modules\\StagedForm\\Database\\Factories\\": "database/factories/",
+            "Modules\\StagedForm\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\StagedForm\\Tests\\": "tests/"
+        }
+    }
+}
