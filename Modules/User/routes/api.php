@@ -26,7 +26,7 @@ Route::prefix('v1')
         Route::middleware(['auth:sanctum'])
             ->group(function () {
                 Route::post('logout', 'logout')->name('logout');
-                Route::match(['post', 'put'], 'update-user-profile', 'updateUserProfile')
+                Route::patch('update-user-profile', 'updateUserProfile')
                     ->name('updateUserProfile');
                 Route::get('get-user-profile', 'getUserProfile')
                     ->name('getUserProfile');
