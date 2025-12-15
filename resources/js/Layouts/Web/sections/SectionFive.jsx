@@ -1,7 +1,7 @@
 export default function SectionFive() {
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-16">
-      <div className="relative bg-gradient-to-br from-[#F8F4FF] to-[#FFF0F8] rounded-3xl overflow-hidden">
+    <div className="w-full mx-auto px-4 md:px-8 py-12 md:py-16">
+      <div className="relative bg-gradient-to-br from-[#1A1B380A] to-[#1A1B380A] rounded-3xl overflow-hidden">
         <div className="grid md:grid-cols-2 items-center">
 
           {/* Left Content */}

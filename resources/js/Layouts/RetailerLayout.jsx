@@ -1,12 +1,29 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+const scrollbarStyles = `
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+`;
+
 export default function RetailerLayout({ children }) {
     const { auth } = usePage().props;
     const currentPath = usePage().url;
-    const [offersOpen, setOffersOpen] = useState(false);
+    const [offersOpen, setOffersOpen] = useState(currentPath.includes('/retailer/offers'));
 
     const navigation = [
+        // Main
         {
             name: 'Dashboard',
             href: '/retailer/dashboard',
@@ -16,12 +33,47 @@ export default function RetailerLayout({ children }) {
                 </svg>
             )
         },
+        // Section divider
+        { type: 'divider', label: 'Business' },
         {
             name: 'My Brands',
             href: '/retailer/brands',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            )
+        },
+        {
+            name: 'Offers & Discounts',
+            href: '/retailer/offers',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+            ),
+            submenu: [
+                { name: 'All Offers', href: '/retailer/offers' },
+                { name: 'Create Offer', href: '/retailer/offers/create' },
+            ]
+        },
+        // Section divider
+        { type: 'divider', label: 'Account' },
+        {
+            name: 'My Plan',
+            href: '/retailer/plan',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Billing',
+            href: '/retailer/billing',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
             )
         },
@@ -34,72 +86,102 @@ export default function RetailerLayout({ children }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
             )
-        }
+        },
     ];
 
-    const isActive = (href) => currentPath.startsWith(href);
+    const isActive = (href) => currentPath === href || (href !== '/retailer/dashboard' && currentPath.startsWith(href));
 
     return (
         <div className="min-h-screen flex">
+            <style>{scrollbarStyles}</style>
             {/* Sidebar */}
-            <div className="w-64 fixed h-full" style={{ backgroundColor: '#2D2A4A' }}>
-                {/* Logo */}
-                <div className="flex items-center px-6 py-6">
-                    <svg className="w-8 h-8 mr-2" viewBox="0 0 40 40" fill="none">
-                        <path d="M20 0C12.268 0 6 6.268 6 14c0 10.5 14 26 14 26s14-15.5 14-26c0-7.732-6.268-14-14-14zm0 19c-2.761 0-5-2.239-5-5s2.239-5 5-5 5 2.239 5 5-2.761 5-5 5z" fill="#E91E8C"/>
-                        <circle cx="20" cy="14" r="3" fill="white"/>
-                    </svg>
-                    <span className="text-white text-xl font-semibold">Trenpin</span>
+            <div className="w-64 fixed h-full flex flex-col" style={{ backgroundColor: '#2D2A4A' }}>
+                {/* Logo - Fixed at top */}
+                <div className="flex items-center justify-center px-6 py-6 border-b border-white/10">
+                    <img src="/images/logo.png" alt="Trendpin" className="h-8" />
+                    <span className="text-white text-xl font-semibold ml-2">Trendpin</span>
                 </div>
 
-                {/* Navigation */}
-                <nav className="mt-6 px-4">
-                    {navigation.map((item) => (
-                        <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`flex items-center px-4 py-3 mb-2 rounded-lg text-sm font-medium transition-colors ${
-                                isActive(item.href)
-                                    ? 'text-pink-500'
-                                    : 'text-gray-300 hover:text-white'
-                            }`}
-                        >
-                            <span className={isActive(item.href) ? 'text-pink-500' : ''}>{item.icon}</span>
-                            <span className="ml-3">{item.name}</span>
-                        </Link>
-                    ))}
+                {/* Navigation - Scrollable */}
+                <nav className="flex-1 overflow-y-auto mt-2 px-4 py-2 custom-scrollbar">
+                    {navigation.map((item, index) => {
+                        // Render divider
+                        if (item.type === 'divider') {
+                            return (
+                                <div key={index} className="mt-6 mb-3 px-4">
+                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        {item.label}
+                                    </span>
+                                </div>
+                            );
+                        }
 
-                    {/* Offers and Discounts Dropdown */}
-                    <div>
-                        <button
-                            onClick={() => setOffersOpen(!offersOpen)}
-                            className="flex items-center justify-between w-full px-4 py-3 mb-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                        >
-                            <div className="flex items-center">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                </svg>
-                                <span className="ml-3">Offers and Discounts</span>
-                            </div>
-                            <svg className={`w-4 h-4 transition-transform ${offersOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                        {offersOpen && (
-                            <div className="ml-6 space-y-1">
-                                <Link href="/retailer/offers" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">
-                                    My Offers
-                                </Link>
-                                <Link href="/retailer/offers/create" className="block px-4 py-2 text-sm text-gray-400 hover:text-white">
-                                    Create Offer
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                        // Render nav item with submenu
+                        if (item.submenu) {
+                            const isSubmenuActive = item.submenu.some(sub => isActive(sub.href));
+                            return (
+                                <div key={item.name}>
+                                    <button
+                                        onClick={() => setOffersOpen(!offersOpen)}
+                                        className={`flex items-center justify-between w-full px-4 py-3 mb-1 rounded-lg text-sm font-medium transition-all ${
+                                            isSubmenuActive
+                                                ? 'bg-pink-500/20 text-white border-l-4 border-pink-500'
+                                                : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                                        }`}
+                                    >
+                                        <div className="flex items-center">
+                                            <span className={isSubmenuActive ? 'text-pink-400' : ''}>
+                                                {item.icon}
+                                            </span>
+                                            <span className="ml-3">{item.name}</span>
+                                        </div>
+                                        <svg className={`w-4 h-4 transition-transform ${offersOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    {offersOpen && (
+                                        <div className="ml-4 mt-1 mb-2 space-y-1 border-l-2 border-gray-600">
+                                            {item.submenu.map((sub) => (
+                                                <Link
+                                                    key={sub.name}
+                                                    href={sub.href}
+                                                    className={`block pl-6 pr-4 py-2 text-sm rounded-r-lg transition-all ${
+                                                        isActive(sub.href)
+                                                            ? 'text-pink-400 bg-pink-500/10 border-l-2 border-pink-500 -ml-[2px]'
+                                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    {sub.name}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
+                        // Render regular nav item
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`flex items-center px-4 py-3 mb-1 rounded-lg text-sm font-medium transition-all ${
+                                    isActive(item.href)
+                                        ? 'bg-pink-500/20 text-white border-l-4 border-pink-500'
+                                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                                }`}
+                            >
+                                <span className={isActive(item.href) ? 'text-pink-400' : ''}>
+                                    {item.icon}
+                                </span>
+                                <span className="ml-3">{item.name}</span>
+                            </Link>
+                        );
+                    })}
                 </nav>
 
-                {/* User Info at Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+                {/* User Info at Bottom - Fixed */}
+                <div className="p-4 border-t border-white/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
                             <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-sm font-medium">
@@ -123,27 +205,6 @@ export default function RetailerLayout({ children }) {
 
             {/* Main Content */}
             <div className="flex-1 ml-64">
-                {/* Top Bar */}
-                <header className="bg-white border-b border-gray-200 px-8 py-4">
-                    <div className="flex items-center justify-end">
-                        <div className="flex items-center space-x-4">
-                            <button className="relative text-gray-400 hover:text-gray-600">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
-                                <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span>
-                            </button>
-                            <div className="flex items-center">
-                                <div className="w-8 h-8 rounded-full bg-gray-300"></div>
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-900">{auth?.user?.name}</p>
-                                    <p className="text-xs text-gray-500">Retailer</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
                 <main className="p-8 bg-gray-50 min-h-screen">
                     {children}
                 </main>

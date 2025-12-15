@@ -3,100 +3,72 @@
 namespace Modules\Admin\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Modules\Admin\app\Exceptions\InvalidCredentialsException;
+use Modules\Admin\app\Exceptions\UnauthorizedAccessException;
+use Modules\Admin\app\Http\Requests\LoginRequest;
+use Modules\Admin\app\Services\Contracts\AuthServiceInterface;
 
 class AuthController extends Controller
 {
-    /**
-     * Admin login
-     */
-    public function login(Request $request): JsonResponse
+    public function __construct(
+        protected AuthServiceInterface $authService
+    ) {}
+
+    public function login(LoginRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
         try {
-            $user = User::where('email', $validated['email'])->first();
-
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid credentials'
-                ], 401);
-            }
-
-            // Check if user is admin
-            if (!$user->hasRole('admin')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Access denied. Admin role required.'
-                ], 403);
-            }
-
-            // Create token
-            $token = $user->createToken('admin-token')->plainTextToken;
+            $data = $this->authService->login($request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
-                'data' => [
-                    'user' => $user,
-                    'token' => $token,
-                    'roles' => $user->getRoleNames(),
-                ]
+                'data' => $data,
             ]);
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
+        } catch (InvalidCredentialsException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+            ], 401);
+        } catch (UnauthorizedAccessException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 403);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during login.',
             ], 500);
         }
     }
 
-    /**
-     * Admin logout
-     */
     public function logout(Request $request): JsonResponse
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            $this->authService->logout($request->user());
 
             return response()->json([
                 'success' => true,
-                'message' => 'Logged out successfully'
+                'message' => 'Logged out successfully',
             ]);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'An error occurred during logout.',
             ], 500);
         }
     }
 
-    /**
-     * Get current admin user
-     */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $data = $this->authService->getCurrentUser($request->user());
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'user' => $user,
-                'roles' => $user->getRoleNames(),
-                'permissions' => $user->getAllPermissions()->pluck('name'),
-            ]
+            'data' => $data,
         ]);
     }
 }

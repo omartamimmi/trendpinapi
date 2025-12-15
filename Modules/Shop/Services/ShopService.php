@@ -215,9 +215,9 @@ class ShopService extends Service
     }
     
     public function checkAuthority($shop)
-    {   
+    {
         if($shop->create_user != Auth::user()->id){
-            return throw new Exception('unauthorized', 403);
+            throw new Exception('unauthorized', 403);
         }
     }
 
@@ -302,7 +302,7 @@ class ShopService extends Service
         $shop = $this->shopRepository->getShopById($branchId);
         $this->setInput('is_main_branch',1);
         if(!empty($branchId) && !($shop->is_main_branch == 1)){
-            return throw new Exception('The branch should be a main business', 400);
+            throw new Exception('The branch should be a main business', 400);
         }
         return $this;
     }

@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('retailer_onboardings', 'requires_completion')) {
+            return;
+        }
+
         Schema::table('retailer_onboardings', function (Blueprint $table) {
             $table->boolean('requires_completion')->default(false)->after('status');
         });

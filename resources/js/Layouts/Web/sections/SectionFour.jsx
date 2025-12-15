@@ -73,11 +73,8 @@ export default function SectionFour() {
         {/* Right Side - Content */}
         <div className="space-y-6 text-left">
           <h1 className="font-bold text-5xl md:text-6xl leading-tight">
-            Enjoy <span className="text-[#E8347E]">10% OFF</span> with
-            <br />
-            participating bank credit
-            <br />
-            cards
+            Enjoy <span className="text-[#E8347E]">10% OFF</span> 
+            <span>with participating bank credit cards</span>
           </h1>
 
           <p className="text-gray-600 text-lg leading-relaxed">

@@ -10,5 +10,7 @@
     "Tag": true,
     "Otp": true,
     "RetailerOnboarding": true,
-    "Admin": true
+    "Admin": true,
+    "Notification": true,
+    "Log": true
 }

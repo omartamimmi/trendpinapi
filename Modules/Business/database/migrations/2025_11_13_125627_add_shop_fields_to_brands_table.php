@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip if columns already exist
+        if (Schema::hasColumn('brands', 'title')) {
+            return;
+        }
+
         Schema::table('brands', function (Blueprint $table) {
             // Core shop fields
             $table->string('title')->after('name')->nullable();

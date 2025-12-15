@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('subscription_plans', 'type')) {
+            return;
+        }
+
         Schema::table('subscription_plans', function (Blueprint $table) {
             $table->enum('type', ['user', 'retailer', 'bank'])->default('retailer')->after('name');
         });

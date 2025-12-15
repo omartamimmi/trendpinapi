@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Modules\Notification\Services\NotificationService;
+use Modules\Notification\app\Services\AsyncNotificationService;
 use Modules\User\app\Http\Requests\SendNotificationBasedLocation;
 use Modules\User\app\Http\Requests\StoreUserFcmRequest;
 use Laravel\Socialite\Facades\Socialite;
@@ -62,6 +63,15 @@ class AuthController extends Controller
                 ->assignRoleToUser()
                 ->createUserLoginToken()
                 ->collectOutput('data', $data);
+
+            // Queue welcome notification to the new customer (non-blocking)
+            $userId = $data['id'] ?? null;
+            if ($userId) {
+                $user = \App\Models\User::find($userId);
+                if ($user) {
+                    AsyncNotificationService::sendNewCustomerNotification($user);
+                }
+            }
 
             return $this->getSuccessfulUserCreationResponse($data);
         } catch (Exception $e) {

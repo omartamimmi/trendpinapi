@@ -23,18 +23,17 @@ Route::prefix('v1')
             ->controller(MediaController::class)
             ->group(function () {
                 Route::middleware(['auth:sanctum'])->group(function () {
-                    Route::post('store', 'store')
-                        ->name('store');
+                    // Upload endpoints
+                    Route::post('store', 'store')->name('store');
+                    Route::post('upload-multiple', 'uploadMultiple')->name('uploadMultiple');
 
-                    Route::get('get-all-media', 'allMedia')
-                        ->name('allMedia');
+                    // Retrieve endpoints
+                    Route::get('get-all-media', 'allMedia')->name('allMedia');
+                    Route::get('{id}', 'show')->name('show');
+                    Route::post('get-by-ids', 'getByIds')->name('getByIds');
 
-                    Route::post('delete', 'delete')
-                        ->name('delete');
+                    // Delete endpoint
+                    Route::post('delete', 'delete')->name('delete');
                 });
-                // Route::get('private/view', 'privateFileView')
-                //     ->name('media.private.view');
-                // Route::get('get-image', 'getImage')
-                //     ->name('getImage');
             });
     });

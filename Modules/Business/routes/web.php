@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Business\app\Http\Controllers\BusinessController;
 
+// Business web routes - managed via RetailerOnboarding and Admin modules
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('businesses', BusinessController::class)->names('business');
+    // Brand routes are now handled by RetailerPageController
 });

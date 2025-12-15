@@ -1,0 +1,13 @@
+{
+    "name": "Log",
+    "alias": "log",
+    "description": "Activity logging module for admin panel",
+    "keywords": ["log", "activity", "admin"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Log\\app\\Providers\\LogServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

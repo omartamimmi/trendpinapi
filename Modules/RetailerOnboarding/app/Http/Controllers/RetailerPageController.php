@@ -11,9 +11,9 @@ use Inertia\Inertia;
 use Modules\RetailerOnboarding\app\Models\SubscriptionPlan;
 use Modules\RetailerOnboarding\app\Models\RetailerSubscription;
 use Modules\Business\app\Models\Brand;
-use Modules\Business\app\Models\Group;
 use Modules\Business\app\Models\Branch;
 use Modules\RetailerOnboarding\app\Models\Offer;
+use Modules\Notification\app\Services\AsyncNotificationService;
 
 class RetailerPageController extends Controller
 {
@@ -89,6 +89,9 @@ class RetailerPageController extends Controller
 
         $user->assignRole('retailer');
 
+        // Queue welcome notification to the new retailer (non-blocking)
+        AsyncNotificationService::sendNewRetailerNotification($user);
+
         Auth::login($user);
 
         return redirect('/retailer/onboarding');
@@ -110,7 +113,7 @@ class RetailerPageController extends Controller
     /**
      * Show the onboarding page
      */
-    public function onboarding()
+    public function onboarding(Request $request)
     {
         $user = Auth::user();
 
@@ -124,11 +127,22 @@ class RetailerPageController extends Controller
             ]);
         }
 
-        // If onboarding is pending approval, show pending page
-        if ($onboarding->status === 'pending' || $onboarding->approval_status === 'pending') {
-            return Inertia::render('Retailer/OnboardingPending', [
-                'onboarding' => $onboarding,
-                'user' => $user
+        // If approved, redirect to dashboard
+        if ($onboarding->approval_status === 'approved') {
+            return redirect('/retailer/dashboard');
+        }
+
+        // If changes requested or rejected and user clicked edit, allow editing
+        if (in_array($onboarding->approval_status, ['changes_requested', 'rejected']) && $request->has('edit')) {
+            // Reset status to allow editing
+            $onboarding->update(['status' => 'in_progress']);
+            // Continue to show the onboarding form below
+        }
+        // If awaiting approval (pending/changes/rejected) and status is completed, show pending page
+        elseif (in_array($onboarding->approval_status, ['pending', 'pending_approval', 'changes_requested', 'rejected']) && $onboarding->status === 'completed') {
+            return Inertia::render('Retailer/PendingApproval', [
+                'status' => $onboarding->approval_status,
+                'admin_notes' => $onboarding->admin_notes,
             ]);
         }
 
@@ -144,10 +158,31 @@ class RetailerPageController extends Controller
 
         $plans = SubscriptionPlan::where('is_active', true)->get();
 
+        // Load related data for editing
+        $paymentMethods = \Modules\RetailerOnboarding\app\Models\RetailerPaymentMethod::where('user_id', $user->id)->get();
+        $brands = Brand::where('create_user', $user->id)->get();
+        $subscription = RetailerSubscription::where('user_id', $user->id)->first();
+
+        // Add full image URLs for logo and license
+        $onboardingData = $onboarding->toArray();
+        $onboardingData['logo_url'] = $onboarding->logo_path
+            ? asset('storage/' . $onboarding->logo_path)
+            : null;
+        $onboardingData['license_url'] = $onboarding->license_path
+            ? asset('storage/' . $onboarding->license_path)
+            : null;
+
         return Inertia::render('Retailer/Onboarding', [
-            'onboarding' => $onboarding,
+            'onboarding' => $onboardingData,
+            'user' => [
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
             'currentStep' => $stepMap[$onboarding->current_step] ?? 1,
-            'plans' => $plans
+            'plans' => $plans,
+            'existingPaymentMethods' => $paymentMethods,
+            'existingBrands' => $brands,
+            'existingSubscription' => $subscription,
         ]);
     }
 
@@ -158,25 +193,55 @@ class RetailerPageController extends Controller
     {
         $user = Auth::user();
 
-        // Get stats for the retailer
+        // Get offers for the user
+        $offers = Offer::where('user_id', $user->id)->get();
+        $totalOffers = $offers->count();
+        $activeOffers = $offers->where('status', 'active')->count();
+        $totalClaims = $offers->sum('claims_count');
+        $totalViews = $offers->sum('views_count');
+
+        // Get recent offers (last 5)
+        $recentOffers = Offer::where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($offer) {
+                return [
+                    'id' => $offer->id,
+                    'name' => $offer->name,
+                    'type' => $offer->discount_type,
+                    'claims' => $offer->claims_count ?? 0,
+                    'status' => $offer->status,
+                ];
+            });
+
+        // Get subscription info
+        $subscription = RetailerSubscription::where('user_id', $user->id)
+            ->with('plan')
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
         $stats = [
             'offers' => [
-                'total' => 0,
-                'active' => 0,
+                'total' => $totalOffers,
+                'active' => $activeOffers,
             ],
             'claims' => [
-                'total' => 0,
-                'this_month' => 0,
+                'total' => $totalClaims,
+                'this_month' => $totalClaims, // TODO: Filter by month if needed
             ],
             'views' => [
-                'total' => 0,
-                'this_week' => 0,
+                'total' => $totalViews,
+                'this_week' => $totalViews, // TODO: Filter by week if needed
             ],
             'subscription' => [
-                'status' => 'Active',
-                'expires_at' => 'Dec 31, 2025',
+                'status' => $subscription ? ucfirst($subscription->status) : 'No Subscription',
+                'expires_at' => $subscription && $subscription->ends_at
+                    ? $subscription->ends_at->format('M d, Y')
+                    : 'N/A',
             ],
-            'recent_offers' => []
+            'recent_offers' => $recentOffers
         ];
 
         return Inertia::render('Retailer/Dashboard', [
@@ -251,16 +316,11 @@ class RetailerPageController extends Controller
     {
         $user = Auth::user();
         $brands = Brand::where('create_user', $user->id)
-            ->with(['group', 'branches'])
-            ->get();
-
-        // Get groups that have brands from this retailer or are available
-        $groupIds = $brands->pluck('group_id')->filter()->unique()->values();
-        $groups = Group::whereIn('id', $groupIds)->orWhereNull('business_id')->get();
+            ->with(['branches'])
+            ->paginate(12);
 
         return Inertia::render('Retailer/Brands', [
             'brands' => $brands,
-            'groups' => $groups,
         ]);
     }
 
@@ -269,10 +329,10 @@ class RetailerPageController extends Controller
      */
     public function createBrand()
     {
-        $groups = Group::whereNull('business_id')->get();
+        $categories = \Modules\Category\Models\Category::where('status', 'published')->get();
 
         return Inertia::render('Retailer/BrandCreate', [
-            'groups' => $groups,
+            'categories' => $categories,
         ]);
     }
 
@@ -289,7 +349,6 @@ class RetailerPageController extends Controller
             'title_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'group_id' => 'nullable|exists:groups,id',
             'phone_number' => 'nullable|string',
             'location' => 'nullable|string',
             'lat' => 'nullable|string',
@@ -297,21 +356,44 @@ class RetailerPageController extends Controller
             'website_link' => 'nullable|string',
             'insta_link' => 'nullable|string',
             'facebook_link' => 'nullable|string',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'integer|exists:categories,id',
+            'status' => 'nullable|string|in:draft,publish',
         ]);
 
         $brand = Brand::create([
-            ...$validated,
+            'name' => $validated['name'],
+            'title' => $validated['title'],
+            'title_ar' => $validated['title_ar'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'description_ar' => $validated['description_ar'] ?? null,
+            'phone_number' => $validated['phone_number'] ?? null,
+            'location' => $validated['location'] ?? null,
+            'lat' => $validated['lat'] ?? null,
+            'lng' => $validated['lng'] ?? null,
+            'website_link' => $validated['website_link'] ?? null,
+            'insta_link' => $validated['insta_link'] ?? null,
+            'facebook_link' => $validated['facebook_link'] ?? null,
             'create_user' => $user->id,
-            'status' => 'publish',
+            'status' => $validated['status'] ?? 'draft',
         ]);
+
+        // Sync categories
+        if (!empty($validated['category_ids'])) {
+            $brand->categories()->sync($validated['category_ids']);
+        }
 
         // Create branches if provided
         if ($request->has('branches')) {
             foreach ($request->branches as $branchData) {
-                if (!empty($branchData['name'])) {
+                if (!empty($branchData['name']) || !empty($branchData['location'])) {
                     Branch::create([
                         'brand_id' => $brand->id,
-                        'name' => $branchData['name'],
+                        'name' => $branchData['name'] ?? 'Branch',
+                        'location' => $branchData['location'] ?? null,
+                        'lat' => $branchData['lat'] ?? null,
+                        'lng' => $branchData['lng'] ?? null,
+                        'status' => $branchData['status'] ?? 'draft',
                     ]);
                 }
             }
@@ -328,14 +410,14 @@ class RetailerPageController extends Controller
         $user = Auth::user();
         $brand = Brand::where('id', $id)
             ->where('create_user', $user->id)
-            ->with(['group', 'branches'])
+            ->with(['branches', 'categories'])
             ->firstOrFail();
 
-        $groups = Group::whereNull('business_id')->get();
+        $categories = \Modules\Category\Models\Category::where('status', 'published')->get();
 
         return Inertia::render('Retailer/BrandEdit', [
             'brand' => $brand,
-            'groups' => $groups,
+            'categories' => $categories,
         ]);
     }
 
@@ -363,23 +445,37 @@ class RetailerPageController extends Controller
             'website_link' => 'nullable|string',
             'insta_link' => 'nullable|string',
             'facebook_link' => 'nullable|string',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'integer|exists:categories,id',
+            'status' => 'nullable|string|in:draft,publish',
         ]);
 
         // Handle empty group_id
         if (empty($validated['group_id'])) {
-            $validated['group_id'] = null;
+            unset($validated['group_id']);
         }
 
+        // Remove category_ids from validated array before update
+        $categoryIds = $validated['category_ids'] ?? [];
+        unset($validated['category_ids']);
+
         $brand->update($validated);
+
+        // Sync categories
+        $brand->categories()->sync($categoryIds);
 
         // Update branches if provided
         if ($request->has('branches')) {
             Branch::where('brand_id', $brand->id)->delete();
             foreach ($request->branches as $branchData) {
-                if (!empty($branchData['name'])) {
+                if (!empty($branchData['name']) || !empty($branchData['location'])) {
                     Branch::create([
                         'brand_id' => $brand->id,
-                        'name' => $branchData['name'],
+                        'name' => $branchData['name'] ?? 'Branch',
+                        'location' => $branchData['location'] ?? null,
+                        'lat' => $branchData['lat'] ?? null,
+                        'lng' => $branchData['lng'] ?? null,
+                        'status' => $branchData['status'] ?? 'draft',
                     ]);
                 }
             }
@@ -414,7 +510,7 @@ class RetailerPageController extends Controller
         $offers = Offer::where('user_id', $user->id)
             ->with('brand')
             ->latest()
-            ->get();
+            ->paginate(15);
 
         return Inertia::render('Retailer/Offers', [
             'offers' => $offers,

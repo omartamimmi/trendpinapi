@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Business\app\Http\Controllers\BusinessController;
 
+// Business API routes - managed via RetailerOnboarding and Admin modules
 Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
-    Route::apiResource('business', BusinessController::class)->names('business');
+    // Brand routes are now handled by RetailerOnboarding module
 });

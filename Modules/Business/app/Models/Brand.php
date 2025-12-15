@@ -11,16 +11,16 @@ use Illuminate\Support\Str;
 use Modules\Category\Models\Category;
 use LamaLama\Wishlist\Wishlistable;
 use Modules\Media\Helpers\FileHelper;
+use Modules\Media\Traits\HasMedia;
 
 class Brand extends Model
 {
-    use HasFactory, Wishlistable, SoftDeletes;
+    use HasFactory, Wishlistable, SoftDeletes, HasMedia;
 
     /**
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'business_id',
         'name',
         'logo',
         'location',
@@ -56,16 +56,6 @@ class Brand extends Model
 
     protected $slugField = 'slug';
     protected $slugFromField = 'title';
-
-    public function business()
-    {
-        return $this->belongsTo(Business::class);
-    }
-
-    public function group()
-    {
-        return $this->belongsTo(Group::class);
-    }
 
     public function branches()
     {
@@ -194,5 +184,45 @@ class Brand extends Model
             }
         }
         return '';
+    }
+
+    /**
+     * Get the logo URL using the Media module
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        // First check for media relationship
+        $logo = $this->getFirstMedia('logo');
+        if ($logo) {
+            return $logo->getPresetUrl('thumb');
+        }
+
+        // Fallback to legacy logo field
+        if ($this->logo) {
+            return FileHelper::url($this->logo, 'thumb');
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the gallery images using the Media module
+     */
+    public function getGalleryImagesAttribute(): array
+    {
+        // First check for media relationship
+        $galleryMedia = $this->getMedia('gallery');
+        if ($galleryMedia->count() > 0) {
+            return $galleryMedia->map(fn($media) => [
+                'id' => $media->id,
+                'url' => $media->url,
+                'thumbnail_url' => $media->thumbnail_url,
+                'medium' => $media->getPresetUrl('medium'),
+                'large' => $media->getPresetUrl('large'),
+            ])->toArray();
+        }
+
+        // Fallback to legacy gallery field
+        return $this->getGallery(true) ?: [];
     }
 }

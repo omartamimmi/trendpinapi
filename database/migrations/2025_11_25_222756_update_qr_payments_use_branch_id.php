@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Skip if qr_payments doesn't exist or branch_id column already exists
+        if (!Schema::hasTable('qr_payments') || Schema::hasColumn('qr_payments', 'branch_id')) {
+            return;
+        }
+
         Schema::table('qr_payments', function (Blueprint $table) {
             // Add branch_id column first
             $table->foreignId('branch_id')->nullable()->after('merchant_id')->constrained('branches')->cascadeOnDelete();

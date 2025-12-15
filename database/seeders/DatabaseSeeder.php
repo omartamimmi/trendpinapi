@@ -5,10 +5,10 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-// use Modules\User\Database\Seeders\PermissionSeeder;
-use Modules\User\Database\Seeders\RolePermissionsSeeder;
-use Modules\User\Database\Seeders\RolesSeeder;
-use Modules\User\Database\Seeders\UsersTableSeeder;
+use Modules\User\database\seeders\PermissionSeeder;
+use Modules\User\database\seeders\RolePermissionsSeeder;
+use Modules\User\database\seeders\RolesSeeder;
+use Modules\User\database\seeders\UsersTableSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-$this->call(\Modules\User\Database\Seeders\PermissionSeeder::class);
+        $this->call(PermissionSeeder::class);
         $this->call(RolesSeeder::class);
         $this->call(RolePermissionsSeeder::class);
         $this->call(UsersTableSeeder::class);
