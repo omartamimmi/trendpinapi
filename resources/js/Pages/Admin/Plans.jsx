@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import Pagination from '@/Components/Pagination';
+import { useToast } from '@/Components/Toast';
+import { useConfirm } from '@/Components/ConfirmDialog';
 
 export default function Plans({ plans, currentType = 'retailer' }) {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editingPlan, setEditingPlan] = useState(null);
     const [search, setSearch] = useState('');
@@ -31,9 +35,19 @@ export default function Plans({ plans, currentType = 'retailer' }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this plan?')) {
-            router.delete(`/admin/plans/${id}`);
-        }
+        confirm({
+            title: 'Delete Plan',
+            message: 'Are you sure you want to delete this plan? This action cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: () => {
+                router.delete(`/admin/plans/${id}`, {
+                    onSuccess: () => toast.success('Plan deleted successfully'),
+                    onError: () => toast.error('Failed to delete plan'),
+                });
+            },
+        });
     };
 
     const handleEdit = (plan) => {

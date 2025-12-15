@@ -178,7 +178,7 @@ class UserService extends Service
     public function checkAuthority($user)
     {
         if($user->create_user != $this->getInput('authId')){
-            return throw new Exception('unauthorized', 403);
+            throw new Exception('unauthorized', 403);
         }
     }
 

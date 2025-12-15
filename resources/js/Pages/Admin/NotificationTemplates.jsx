@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
+import { useToast } from '@/Components/Toast';
+import { useConfirm } from '@/Components/ConfirmDialog';
 
 export default function NotificationTemplates({ templates }) {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [formData, setFormData] = useState({
@@ -20,26 +24,36 @@ export default function NotificationTemplates({ templates }) {
         try {
             if (editingTemplate) {
                 await axios.put(`/api/v1/admin/notification-templates/${editingTemplate.id}`, formData);
+                toast.success('Template updated successfully');
             } else {
                 await axios.post('/api/v1/admin/notification-templates', formData);
+                toast.success('Template created successfully');
             }
             router.reload();
             setShowModal(false);
             resetForm();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to save template');
+            toast.error(error.response?.data?.message || 'Failed to save template');
         }
     };
 
-    const handleDelete = async (templateId) => {
-        if (confirm('Are you sure you want to delete this template?')) {
-            try {
-                await axios.delete(`/api/v1/admin/notification-templates/${templateId}`);
-                router.reload();
-            } catch (error) {
-                alert('Failed to delete template');
-            }
-        }
+    const handleDelete = (templateId) => {
+        confirm({
+            title: 'Delete Template',
+            message: 'Are you sure you want to delete this template? This action cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/api/v1/admin/notification-templates/${templateId}`);
+                    toast.success('Template deleted successfully');
+                    router.reload();
+                } catch (error) {
+                    toast.error('Failed to delete template');
+                }
+            },
+        });
     };
 
     const resetForm = () => {

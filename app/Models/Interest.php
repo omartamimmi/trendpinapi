@@ -13,6 +13,7 @@ class Interest extends Model
 
     protected $fillable = [
         'name',
+        'name_ar',
         'slug',
         'status',
         'image_id',

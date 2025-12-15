@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
+import { useToast } from '@/Components/Toast';
+import { useConfirm } from '@/Components/ConfirmDialog';
 
 export default function NotificationProviders({ providers }) {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editingProvider, setEditingProvider] = useState(null);
     const [formData, setFormData] = useState({
@@ -22,35 +26,49 @@ export default function NotificationProviders({ providers }) {
         try {
             if (editingProvider) {
                 await axios.put(`/api/v1/admin/notification-providers/${editingProvider.id}`, formData);
+                toast.success('Provider updated successfully');
             } else {
                 await axios.post('/api/v1/admin/notification-providers', formData);
+                toast.success('Provider created successfully');
             }
             router.reload();
             setShowModal(false);
             resetForm();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to save provider');
+            toast.error(error.response?.data?.message || 'Failed to save provider');
         }
     };
 
     const handleTest = async (providerId) => {
         try {
             const response = await axios.post(`/api/v1/admin/notification-providers/${providerId}/test`);
-            alert(response.data.valid ? 'Provider credentials are valid!' : `Test failed: ${response.data.message}`);
+            if (response.data.valid) {
+                toast.success('Provider credentials are valid!');
+            } else {
+                toast.warning(`Test failed: ${response.data.message}`);
+            }
         } catch (error) {
-            alert('Failed to test provider');
+            toast.error('Failed to test provider');
         }
     };
 
-    const handleDelete = async (providerId) => {
-        if (confirm('Are you sure you want to delete this provider?')) {
-            try {
-                await axios.delete(`/api/v1/admin/notification-providers/${providerId}`);
-                router.reload();
-            } catch (error) {
-                alert('Failed to delete provider');
-            }
-        }
+    const handleDelete = (providerId) => {
+        confirm({
+            title: 'Delete Provider',
+            message: 'Are you sure you want to delete this provider? This action cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/api/v1/admin/notification-providers/${providerId}`);
+                    toast.success('Provider deleted successfully');
+                    router.reload();
+                } catch (error) {
+                    toast.error('Failed to delete provider');
+                }
+            },
+        });
     };
 
     const resetForm = () => {

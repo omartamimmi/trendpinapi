@@ -1,45 +1,376 @@
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { router, Link } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import { MediaUploader, MediaGallery } from '@/Components/Media';
 
-export default function RetailerBrands({ retailer, brands, groups }) {
-    const [expandedBrands, setExpandedBrands] = useState([0]);
-    const [brandList, setBrandList] = useState(brands || [
-        {
-            id: null,
-            name: '',
-            gallery: [],
-            description: '',
-            discount_type: 'percentage',
-            discount_value: '',
-            buy_one_get: '',
-            apply_all_branches: false,
-            start_date: '',
-            end_date: '',
-            branches: []
+// Fix Leaflet default marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// Component to handle map center changes
+function MapController({ center }) {
+    const map = useMap();
+    useEffect(() => {
+        if (center) {
+            map.setView(center, 15);
         }
-    ]);
+    }, [center, map]);
+    return null;
+}
+
+// Component to handle map clicks
+function MapClickHandler({ onLocationSelect }) {
+    useMapEvents({
+        click: async (e) => {
+            const { lat, lng } = e.latlng;
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                    { headers: { 'Accept-Language': 'en' } }
+                );
+                const data = await response.json();
+                onLocationSelect({
+                    name: data.display_name?.split(',')[0] || 'Selected Location',
+                    location: data.display_name || '',
+                    lat,
+                    lng
+                });
+            } catch (error) {
+                onLocationSelect({
+                    name: 'Selected Location',
+                    location: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                    lat,
+                    lng
+                });
+            }
+        }
+    });
+    return null;
+}
+
+// Location Search Component
+function LocationSearch({ onSelect }) {
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showResults, setShowResults] = useState(false);
+    const searchRef = useRef(null);
+    const debounceRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setShowResults(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const searchLocation = useCallback(async (searchQuery) => {
+        if (!searchQuery.trim()) {
+            setResults([]);
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`,
+                { headers: { 'Accept-Language': 'en' } }
+            );
+            const data = await response.json();
+            setResults(data);
+            setShowResults(true);
+        } catch (error) {
+            setResults([]);
+        }
+        setIsSearching(false);
+    }, []);
+
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setQuery(value);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => searchLocation(value), 300);
+    };
+
+    const selectResult = (result) => {
+        onSelect({
+            name: result.display_name.split(',')[0],
+            location: result.display_name,
+            lat: parseFloat(result.lat),
+            lng: parseFloat(result.lon)
+        });
+        setQuery(result.display_name);
+        setShowResults(false);
+    };
+
+    return (
+        <div ref={searchRef} className="relative">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={query}
+                    onChange={handleInputChange}
+                    onFocus={() => results.length > 0 && setShowResults(true)}
+                    placeholder="Search for a location..."
+                    className="w-full px-4 py-3 pl-10 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all text-sm"
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                    {isSearching ? (
+                        <svg className="animate-spin w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    ) : (
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    )}
+                </div>
+            </div>
+            {showResults && results.length > 0 && (
+                <div className="absolute z-[1000] w-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 max-h-60 overflow-y-auto">
+                    {results.map((result, index) => (
+                        <button
+                            key={index}
+                            type="button"
+                            onClick={() => selectResult(result)}
+                            className="w-full px-4 py-3 text-left hover:bg-pink-50 transition-colors border-b border-gray-50 last:border-b-0"
+                        >
+                            <div className="flex items-start gap-3">
+                                <svg className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                </svg>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-800">{result.display_name.split(',')[0]}</p>
+                                    <p className="text-xs text-gray-500 line-clamp-1">{result.display_name}</p>
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Location Picker Modal
+function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }) {
+    const [location, setLocation] = useState(initialLocation || {
+        name: '',
+        location: '',
+        lat: 31.963158,
+        lng: 35.930359
+    });
+    const [showAdvanced, setShowAdvanced] = useState(false);
+
+    useEffect(() => {
+        if (initialLocation) {
+            setLocation(initialLocation);
+        }
+    }, [initialLocation]);
+
+    const handleLatChange = (value) => {
+        const lat = parseFloat(value);
+        if (!isNaN(lat) && lat >= -90 && lat <= 90) {
+            setLocation({ ...location, lat });
+        }
+    };
+
+    const handleLngChange = (value) => {
+        const lng = parseFloat(value);
+        if (!isNaN(lng) && lng >= -180 && lng <= 180) {
+            setLocation({ ...location, lng });
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50" onClick={onClose}></div>
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-100">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-800">Select Location</h3>
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="p-6 space-y-4">
+                    <LocationSearch onSelect={(loc) => setLocation({ ...location, ...loc })} />
+                    <div className="h-[250px] rounded-xl overflow-hidden border border-gray-200 relative z-0">
+                        <MapContainer
+                            center={[location.lat, location.lng]}
+                            zoom={13}
+                            style={{ height: '100%', width: '100%' }}
+                            zoomControl={false}
+                        >
+                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <ZoomControl position="bottomright" />
+                            <Marker position={[location.lat, location.lng]} />
+                            <MapController center={[location.lat, location.lng]} />
+                            <MapClickHandler onLocationSelect={(loc) => setLocation({ ...location, ...loc })} />
+                        </MapContainer>
+                    </div>
+
+                    {/* Custom Name Field */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">Branch Name</label>
+                        <input
+                            type="text"
+                            value={location.name}
+                            onChange={(e) => setLocation({ ...location, name: e.target.value })}
+                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                            placeholder="Enter custom branch name"
+                        />
+                    </div>
+
+                    {/* Address Display/Edit */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">Address</label>
+                        <textarea
+                            value={location.location}
+                            onChange={(e) => setLocation({ ...location, location: e.target.value })}
+                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all resize-none"
+                            rows="2"
+                            placeholder="Enter or edit address"
+                        />
+                    </div>
+
+                    {/* Advanced Options Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-pink-500 transition-colors"
+                    >
+                        <svg className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        {showAdvanced ? 'Hide' : 'Show'} coordinates
+                    </button>
+
+                    {/* Lat/Lng Manual Input */}
+                    {showAdvanced && (
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Latitude</label>
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={location.lat}
+                                    onChange={(e) => handleLatChange(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-300 transition-all"
+                                    placeholder="31.963158"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Longitude</label>
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={location.lng}
+                                    onChange={(e) => handleLngChange(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-300 transition-all"
+                                    placeholder="35.930359"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => onSave(location)}
+                        className="px-6 py-2 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-xl font-medium hover:from-pink-600 hover:to-pink-700 transition-all"
+                    >
+                        Save Location
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default function RetailerBrands({ retailer, brands }) {
+    const [expandedBrands, setExpandedBrands] = useState([0]);
+    const [activeTab, setActiveTab] = useState(0); // For switching between EN/AR
+    const [brandList, setBrandList] = useState(brands?.length > 0 ? brands.map(brand => ({
+        id: brand.id || null,
+        name: brand.name || '',
+        title: brand.title || '',
+        title_ar: brand.title_ar || '',
+        description: brand.description || '',
+        description_ar: brand.description_ar || '',
+        phone_number: brand.phone_number || '',
+        website_link: brand.website_link || '',
+        insta_link: brand.insta_link || '',
+        facebook_link: brand.facebook_link || '',
+        status: brand.status || 'draft',
+        logo: brand.logo_media || null,
+        gallery: brand.gallery_media || [],
+        branches: brand.branches?.map(b => ({
+            id: b.id || null,
+            name: b.name || '',
+            location: b.location || '',
+            lat: b.lat || null,
+            lng: b.lng || null,
+            status: b.status || 'draft'
+        })) || []
+    })) : [{
+        id: null,
+        name: '',
+        title: '',
+        title_ar: '',
+        description: '',
+        description_ar: '',
+        phone_number: '',
+        website_link: '',
+        insta_link: '',
+        facebook_link: '',
+        status: 'draft',
+        logo: null,
+        gallery: [],
+        branches: []
+    }]);
+    const [saving, setSaving] = useState(false);
+    const [locationModal, setLocationModal] = useState({ open: false, brandIndex: null, branchIndex: null });
+    const [error, setError] = useState(null);
 
     const toggleBrand = (index) => {
         setExpandedBrands(prev =>
-            prev.includes(index)
-                ? prev.filter(i => i !== index)
-                : [...prev, index]
+            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
         );
     };
 
     const addBrand = () => {
         setBrandList([...brandList, {
             id: null,
-            name: 'New Brand',
-            gallery: [],
+            name: '',
+            title: '',
+            title_ar: '',
             description: '',
-            discount_type: 'percentage',
-            discount_value: '',
-            buy_one_get: '',
-            apply_all_branches: false,
-            start_date: '',
-            end_date: '',
+            description_ar: '',
+            phone_number: '',
+            website_link: '',
+            insta_link: '',
+            facebook_link: '',
+            status: 'draft',
+            logo: null,
+            gallery: [],
             branches: []
         }]);
         setExpandedBrands([...expandedBrands, brandList.length]);
@@ -59,19 +390,58 @@ export default function RetailerBrands({ retailer, brands, groups }) {
     };
 
     const addBranch = (brandIndex) => {
+        setLocationModal({ open: true, brandIndex, branchIndex: -1 });
+    };
+
+    const openEditBranchLocation = (brandIndex, branchIndex) => {
+        setLocationModal({ open: true, brandIndex, branchIndex });
+    };
+
+    const handleLocationSave = (locationData) => {
+        const { brandIndex, branchIndex } = locationModal;
         const updated = [...brandList];
-        updated[brandIndex].branches.push({
-            id: null,
-            name: '',
-            location: '',
-            lat: null,
-            lng: null,
-            discount_value: '',
-            buy_one_get: '',
-            start_date: '',
-            end_date: ''
-        });
+        if (branchIndex === -1) {
+            updated[brandIndex].branches.push({
+                id: null,
+                name: locationData.name || '',
+                location: locationData.location || '',
+                lat: locationData.lat,
+                lng: locationData.lng,
+                status: 'draft'
+            });
+        } else {
+            updated[brandIndex].branches[branchIndex] = {
+                ...updated[brandIndex].branches[branchIndex],
+                name: locationData.name || updated[brandIndex].branches[branchIndex].name,
+                location: locationData.location || '',
+                lat: locationData.lat,
+                lng: locationData.lng
+            };
+        }
         setBrandList(updated);
+        setLocationModal({ open: false, brandIndex: null, branchIndex: null });
+    };
+
+    const updateBranchStatus = (brandIndex, branchIndex, status) => {
+        const updated = [...brandList];
+        updated[brandIndex].branches[branchIndex] = {
+            ...updated[brandIndex].branches[branchIndex],
+            status
+        };
+        setBrandList(updated);
+    };
+
+    const getCurrentBranchLocation = () => {
+        const { brandIndex, branchIndex } = locationModal;
+        if (brandIndex === null || branchIndex === -1) return null;
+        const branch = brandList[brandIndex]?.branches[branchIndex];
+        if (!branch) return null;
+        return {
+            name: branch.name || '',
+            location: branch.location || '',
+            lat: branch.lat ? parseFloat(branch.lat) : 31.963158,
+            lng: branch.lng ? parseFloat(branch.lng) : 35.930359
+        };
     };
 
     const removeBranch = (brandIndex, branchIndex) => {
@@ -80,78 +450,211 @@ export default function RetailerBrands({ retailer, brands, groups }) {
         setBrandList(updated);
     };
 
-    const updateBranch = (brandIndex, branchIndex, field, value) => {
-        const updated = [...brandList];
-        updated[brandIndex].branches[branchIndex] = {
-            ...updated[brandIndex].branches[branchIndex],
-            [field]: value
-        };
-        setBrandList(updated);
-    };
-
     const handleSubmit = () => {
+        setError(null);
+
+        // Validate: cannot publish without at least one published branch
+        const invalidBrand = brandList.find(brand => {
+            if (brand.status !== 'publish') return false;
+            const hasPublishedBranch = brand.branches?.some(b => b.status === 'publish');
+            return !hasPublishedBranch;
+        });
+        if (invalidBrand) {
+            setError(`'${invalidBrand.name || 'Brand'}' must have at least one published branch to be published.`);
+            return;
+        }
+
+        setSaving(true);
+        // Format brands data with only necessary fields (avoid sending full media objects)
+        const formattedBrands = brandList.map(brand => ({
+            id: brand.id,
+            name: brand.name,
+            title: brand.title,
+            title_ar: brand.title_ar,
+            description: brand.description,
+            description_ar: brand.description_ar,
+            phone_number: brand.phone_number,
+            website_link: brand.website_link,
+            insta_link: brand.insta_link,
+            facebook_link: brand.facebook_link,
+            status: brand.status,
+            logo_id: brand.logo?.id || null,
+            gallery_ids: brand.gallery?.map(m => m.id) || [],
+            branches: brand.branches?.map(b => ({
+                id: b.id,
+                name: b.name,
+                location: b.location,
+                lat: b.lat,
+                lng: b.lng,
+                status: b.status || 'draft',
+            })) || [],
+        }));
+
         router.post(`/admin/retailers/${retailer?.id}/brands`, {
-            brands: brandList
+            brands: formattedBrands
+        }, {
+            onFinish: () => setSaving(false),
+            onError: (errors) => {
+                if (errors.brands) setError(errors.brands);
+            }
         });
     };
 
     return (
         <AdminLayout>
-            <div className="max-w-6xl">
+            <div>
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            {retailer?.name || 'New Retailer'} - Brands
-                        </h1>
-                        <p className="text-sm text-gray-500">Manage brands and offers</p>
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Link
+                            href={`/admin/retailers/${retailer?.id}`}
+                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                {retailer?.name || 'Retailer'} - Brands
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Manage brands, translations, social links, and branch locations
+                            </p>
+                        </div>
                     </div>
-                    <button
-                        onClick={handleSubmit}
-                        className="px-6 py-2 rounded-lg text-white font-medium"
-                        style={{ backgroundColor: '#E91E8C' }}
-                    >
-                        Save Changes
-                    </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
-                    {/* Brand Forms */}
-                    <div className="col-span-2 space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Sidebar - 1/3 (right side) */}
+                    <div className="lg:col-span-1 lg:order-last space-y-4">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sticky top-4">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                Brands ({brandList.length})
+                            </h3>
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                                {brandList.map((brand, index) => (
+                                    <div
+                                        key={index}
+                                        className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                                            expandedBrands.includes(index)
+                                                ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
+                                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                        onClick={() => {
+                                            setExpandedBrands([index]);
+                                            document.querySelector(`[data-brand-index="${index}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${expandedBrands.includes(index) ? 'bg-white/20' : 'bg-white'}`}>
+                                                <span className={`text-sm font-bold ${expandedBrands.includes(index) ? 'text-white' : 'text-pink-500'}`}>{index + 1}</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-sm truncate max-w-[120px]">{brand.name || 'Unnamed'}</p>
+                                                <p className={`text-xs ${expandedBrands.includes(index) ? 'text-white/70' : 'text-gray-400'}`}>
+                                                    {brand.branches?.length || 0} branches
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                            expandedBrands.includes(index)
+                                                ? brand.status === 'publish' ? 'bg-green-400/30' : 'bg-white/20'
+                                                : brand.status === 'publish' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                                        }`}>
+                                            {brand.status === 'publish' ? 'Live' : 'Draft'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button
+                                onClick={addBrand}
+                                className="w-full mt-4 p-3 border-2 border-dashed border-pink-200 rounded-xl text-pink-500 font-medium hover:bg-pink-50 hover:border-pink-300 transition-all flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Add Brand
+                            </button>
+                            {error && (
+                                <div className="p-3 bg-red-50 border border-red-200 rounded-xl mt-3">
+                                    <p className="text-sm text-red-600 flex items-center gap-2">
+                                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
+                            <button
+                                onClick={handleSubmit}
+                                disabled={saving}
+                                className="w-full mt-3 py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {saving ? (
+                                    <>
+                                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Save All
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Brand Forms - 2/3 */}
+                    <div className="lg:col-span-2 space-y-4">
                         {brandList.map((brand, brandIndex) => (
-                            <div key={brandIndex} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                            <div
+                                key={brandIndex}
+                                data-brand-index={brandIndex}
+                                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                            >
                                 {/* Brand Header */}
                                 <div
-                                    className="flex items-center justify-between p-4 cursor-pointer"
-                                    style={{ backgroundColor: '#E91E8C' }}
+                                    className="flex items-center justify-between p-4 cursor-pointer bg-gradient-to-r from-pink-500 to-pink-600"
                                     onClick={() => toggleBrand(brandIndex)}
                                 >
-                                    <input
-                                        type="text"
-                                        value={brand.name}
-                                        onChange={(e) => updateBrand(brandIndex, 'name', e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="bg-transparent text-white font-medium border-none focus:outline-none"
-                                        placeholder="Brand Name"
-                                    />
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-semibold">
+                                                {brand.name || `Brand ${brandIndex + 1}`}
+                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-white/70 text-sm">{brand.branches?.length || 0} branches</span>
+                                                <span className={`px-2 py-0.5 rounded-full text-xs ${brand.status === 'publish' ? 'bg-green-400/30 text-white' : 'bg-white/20 text-white/80'}`}>
+                                                    {brand.status === 'publish' ? 'Published' : 'Draft'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeBrand(brandIndex);
-                                            }}
-                                            className="p-1 rounded-full bg-white/20 text-white hover:bg-white/30"
+                                            onClick={(e) => { e.stopPropagation(); removeBrand(brandIndex); }}
+                                            className="p-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
                                         </button>
-                                        <svg
-                                            className={`w-5 h-5 text-white transition-transform ${expandedBrands.includes(brandIndex) ? 'rotate-180' : ''}`}
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
+                                        <svg className={`w-5 h-5 text-white transition-transform duration-200 ${expandedBrands.includes(brandIndex) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                         </svg>
                                     </div>
@@ -160,266 +663,314 @@ export default function RetailerBrands({ retailer, brands, groups }) {
                                 {/* Brand Content */}
                                 {expandedBrands.includes(brandIndex) && (
                                     <div className="p-6 space-y-6">
-                                        {/* Gallery Images */}
+                                        {/* Language Tabs */}
+                                        <div className="flex gap-2 border-b border-gray-100 pb-4">
+                                            <button
+                                                onClick={() => setActiveTab(0)}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 0 ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                            >
+                                                English
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab(1)}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 1 ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                            >
+                                                Arabic
+                                            </button>
+                                        </div>
+
+                                        {/* Basic Information */}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Brand {brandIndex + 1} Gallery Images <span className="text-red-500">*</span>
-                                            </label>
-                                            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-                                                <svg className="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                <p className="text-sm text-gray-500">Click to drop image</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Description */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Description
-                                            </label>
-                                            <textarea
-                                                value={brand.description}
-                                                onChange={(e) => updateBrand(brandIndex, 'description', e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                rows="3"
-                                                placeholder="Type description here"
-                                            />
-                                        </div>
-
-                                        {/* Discount Types */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                                Discounts Types
-                                            </label>
-                                            <div className="grid grid-cols-3 gap-4">
+                                                Basic Information
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Percentage %</label>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2">
+                                                        Brand Name <span className="text-red-500">*</span>
+                                                    </label>
                                                     <input
                                                         type="text"
-                                                        value={brand.discount_value}
-                                                        onChange={(e) => updateBrand(brandIndex, 'discount_value', e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                        placeholder="%"
+                                                        value={brand.name}
+                                                        onChange={(e) => updateBrand(brandIndex, 'name', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                        placeholder="Enter brand name"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Buy one Get</label>
-                                                    <div className="flex items-center">
-                                                        <input
-                                                            type="text"
-                                                            value={brand.buy_one_get}
-                                                            onChange={(e) => updateBrand(brandIndex, 'buy_one_get', e.target.value)}
-                                                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                            placeholder="Buy 1 Get 1"
-                                                        />
-                                                        <input
-                                                            type="checkbox"
-                                                            className="ml-2 w-4 h-4"
-                                                            style={{ accentColor: '#E91E8C' }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Apply Discount for all branches</label>
-                                                    <div className="flex items-center">
-                                                        <input
-                                                            type="text"
-                                                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                            placeholder="Apply for all branches"
-                                                            disabled
-                                                        />
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={brand.apply_all_branches}
-                                                            onChange={(e) => updateBrand(brandIndex, 'apply_all_branches', e.target.checked)}
-                                                            className="ml-2 w-4 h-4"
-                                                            style={{ accentColor: '#E91E8C' }}
-                                                        />
-                                                    </div>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2">
+                                                        Status
+                                                    </label>
+                                                    <select
+                                                        value={brand.status}
+                                                        onChange={(e) => updateBrand(brandIndex, 'status', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                    >
+                                                        <option value="draft">Draft</option>
+                                                        <option value="publish">Published</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Discount Period */}
+                                        {/* Brand Media */}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                                Discount Period
-                                            </label>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                Brand Media
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <MediaUploader
+                                                    label="Brand Logo"
+                                                    value={brand.logo}
+                                                    onChange={(media) => updateBrand(brandIndex, 'logo', media)}
+                                                    accept="image/*"
+                                                    maxSize={5}
+                                                    placeholder="Upload brand logo"
+                                                    previewSize="medium"
+                                                />
+                                                <MediaGallery
+                                                    label="Gallery Images"
+                                                    value={brand.gallery}
+                                                    onChange={(media) => updateBrand(brandIndex, 'gallery', media)}
+                                                    accept="image/*"
+                                                    maxSize={5}
+                                                    maxFiles={10}
+                                                    columns={3}
+                                                    placeholder="Upload gallery images"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* English Content */}
+                                        {activeTab === 0 && (
+                                            <div className="space-y-4">
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Start</label>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2">Title (English)</label>
                                                     <input
-                                                        type="date"
-                                                        value={brand.start_date}
-                                                        onChange={(e) => updateBrand(brandIndex, 'start_date', e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                                        type="text"
+                                                        value={brand.title}
+                                                        onChange={(e) => updateBrand(brandIndex, 'title', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                        placeholder="e.g. Premium Fashion Store"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">End</label>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2">Description (English)</label>
+                                                    <textarea
+                                                        value={brand.description}
+                                                        onChange={(e) => updateBrand(brandIndex, 'description', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all resize-none"
+                                                        rows="3"
+                                                        placeholder="Describe this brand..."
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Arabic Content */}
+                                        {activeTab === 1 && (
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2">Title (Arabic)</label>
                                                     <input
-                                                        type="date"
-                                                        value={brand.end_date}
-                                                        onChange={(e) => updateBrand(brandIndex, 'end_date', e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                                        type="text"
+                                                        value={brand.title_ar}
+                                                        onChange={(e) => updateBrand(brandIndex, 'title_ar', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                        placeholder="العنوان بالعربية"
+                                                        dir="rtl"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2">Description (Arabic)</label>
+                                                    <textarea
+                                                        value={brand.description_ar}
+                                                        onChange={(e) => updateBrand(brandIndex, 'description_ar', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all resize-none"
+                                                        rows="3"
+                                                        placeholder="وصف العلامة التجارية..."
+                                                        dir="rtl"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Contact Information */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                                Contact Information
+                                            </h4>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-2">Phone Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={brand.phone_number}
+                                                    onChange={(e) => updateBrand(brandIndex, 'phone_number', e.target.value)}
+                                                    className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                    placeholder="+962 7XX XXX XXX"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Social Links */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                </svg>
+                                                Social Links
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                                        </svg>
+                                                        Website
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        value={brand.website_link}
+                                                        onChange={(e) => updateBrand(brandIndex, 'website_link', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                        placeholder="https://example.com"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                                        </svg>
+                                                        Instagram
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        value={brand.insta_link}
+                                                        onChange={(e) => updateBrand(brandIndex, 'insta_link', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                        placeholder="https://instagram.com/..."
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                        </svg>
+                                                        Facebook
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        value={brand.facebook_link}
+                                                        onChange={(e) => updateBrand(brandIndex, 'facebook_link', e.target.value)}
+                                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                                                        placeholder="https://facebook.com/..."
                                                     />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Branches/Locations */}
+                                        {/* Branch Locations */}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                                Location
-                                            </label>
-                                            <div className="flex flex-wrap gap-4 mb-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    </svg>
+                                                    Branch Locations
+                                                </h4>
+                                                <span className="text-xs text-gray-400">{brand.branches?.length || 0} branches</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {brand.branches.map((branch, branchIndex) => (
-                                                    <div key={branchIndex} className="relative">
-                                                        <div className="w-40 h-32 bg-gray-100 rounded-lg overflow-hidden">
-                                                            <div className="h-24 bg-gray-200 flex items-center justify-center">
-                                                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                </svg>
+                                                    <div key={branchIndex} className="relative group">
+                                                        <div
+                                                            className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-pink-200 transition-colors cursor-pointer"
+                                                            onClick={() => openEditBranchLocation(brandIndex, branchIndex)}
+                                                        >
+                                                            <div className="h-28 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+                                                                {branch.lat && branch.lng ? (
+                                                                    <img
+                                                                        src={`https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+e8347e(${branch.lng},${branch.lat})/${branch.lng},${branch.lat},14,0/300x150@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw`}
+                                                                        alt="Map"
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                        <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                        </svg>
+                                                                    </div>
+                                                                )}
+                                                                <div className="absolute top-2 right-2 bg-white/90 rounded-lg px-2 py-1 flex items-center gap-1">
+                                                                    <svg className="w-3 h-3 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                    </svg>
+                                                                    <span className="text-xs text-gray-600">Edit</span>
+                                                                </div>
                                                             </div>
-                                                            <div className="p-2 text-center">
-                                                                <input
-                                                                    type="text"
-                                                                    value={branch.name}
-                                                                    onChange={(e) => updateBranch(brandIndex, branchIndex, 'name', e.target.value)}
-                                                                    className="w-full text-xs text-center border-none focus:outline-none bg-transparent"
-                                                                    placeholder="Branch name"
-                                                                />
+                                                            <div className="p-3">
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <p className="text-sm font-medium text-gray-800">{branch.name || 'Unnamed Branch'}</p>
+                                                                    <select
+                                                                        value={branch.status || 'draft'}
+                                                                        onChange={(e) => { e.stopPropagation(); updateBranchStatus(brandIndex, branchIndex, e.target.value); }}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${branch.status === 'publish' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                                                                    >
+                                                                        <option value="draft">Draft</option>
+                                                                        <option value="publish">Published</option>
+                                                                    </select>
+                                                                </div>
+                                                                {branch.location && (
+                                                                    <p className="text-xs text-gray-500 line-clamp-1">{branch.location}</p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <button
-                                                            onClick={() => removeBranch(brandIndex, branchIndex)}
-                                                            className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 p-2 rounded-full text-white"
-                                                            style={{ backgroundColor: '#E91E8C' }}
+                                                            onClick={(e) => { e.stopPropagation(); removeBranch(brandIndex, branchIndex); }}
+                                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-lg"
                                                         >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                                             </svg>
                                                         </button>
                                                     </div>
                                                 ))}
                                                 <button
                                                     onClick={() => addBranch(brandIndex)}
-                                                    className="w-40 h-32 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-pink-300 hover:text-pink-500"
+                                                    className="min-h-[160px] border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-pink-300 hover:text-pink-500 hover:bg-pink-50/50 transition-all"
                                                 >
                                                     <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     </svg>
-                                                    <span className="text-xs px-3 py-1 rounded-full" style={{ backgroundColor: '#E91E8C', color: 'white' }}>
-                                                        Add Branch
-                                                    </span>
+                                                    <span className="text-sm font-medium">Add Branch</span>
                                                 </button>
                                             </div>
-
-                                            {/* Branch-specific discounts */}
-                                            {!brand.apply_all_branches && brand.branches.map((branch, branchIndex) => (
-                                                <div key={branchIndex} className="mt-4 p-4 bg-gray-50 rounded-lg">
-                                                    <h4 className="text-sm font-medium text-gray-700 mb-3">
-                                                        {branch.name || `Branch ${branchIndex + 1}`}
-                                                    </h4>
-                                                    <div className="grid grid-cols-2 gap-4 mb-3">
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">Percentage %</label>
-                                                            <input
-                                                                type="text"
-                                                                value={branch.discount_value}
-                                                                onChange={(e) => updateBranch(brandIndex, branchIndex, 'discount_value', e.target.value)}
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                                placeholder="%"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">Buy one Get</label>
-                                                            <div className="flex items-center">
-                                                                <input
-                                                                    type="text"
-                                                                    value={branch.buy_one_get}
-                                                                    onChange={(e) => updateBranch(brandIndex, branchIndex, 'buy_one_get', e.target.value)}
-                                                                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                                    placeholder="Buy 1 Get 1"
-                                                                />
-                                                                <input type="checkbox" className="ml-2 w-4 h-4" style={{ accentColor: '#E91E8C' }} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Discount Period</label>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div className="flex items-center">
-                                                                <span className="text-xs text-gray-500 mr-2">Start</span>
-                                                                <input
-                                                                    type="date"
-                                                                    value={branch.start_date}
-                                                                    onChange={(e) => updateBranch(brandIndex, branchIndex, 'start_date', e.target.value)}
-                                                                    className="flex-1 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                                />
-                                                            </div>
-                                                            <div className="flex items-center">
-                                                                <span className="text-xs text-gray-500 mr-2">End</span>
-                                                                <input
-                                                                    type="date"
-                                                                    value={branch.end_date}
-                                                                    onChange={(e) => updateBranch(brandIndex, branchIndex, 'end_date', e.target.value)}
-                                                                    className="flex-1 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
                                         </div>
                                     </div>
                                 )}
                             </div>
                         ))}
                     </div>
-
-                    {/* Brand List Sidebar */}
-                    <div className="space-y-2">
-                        {brandList.map((brand, index) => (
-                            <div
-                                key={index}
-                                className="flex items-center justify-between p-3 rounded-lg text-white cursor-pointer"
-                                style={{ backgroundColor: '#E91E8C' }}
-                                onClick={() => {
-                                    setExpandedBrands([index]);
-                                    document.querySelector(`[data-brand-index="${index}"]`)?.scrollIntoView({ behavior: 'smooth' });
-                                }}
-                            >
-                                <span className="font-medium">{brand.name || 'Unnamed Brand'}</span>
-                                <div className="flex items-center space-x-1">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            removeBrand(index);
-                                        }}
-                                        className="p-1 rounded-full bg-white/20 hover:bg-white/30"
-                                    >
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </div>
-                        ))}
-                        <button
-                            onClick={addBrand}
-                            className="w-full p-3 border-2 border-dashed border-pink-300 rounded-lg text-pink-500 font-medium hover:bg-pink-50"
-                        >
-                            + Add Brand
-                        </button>
-                    </div>
                 </div>
             </div>
+
+            <LocationPickerModal
+                isOpen={locationModal.open}
+                onClose={() => setLocationModal({ open: false, brandIndex: null, branchIndex: null })}
+                onSave={handleLocationSave}
+                initialLocation={getCurrentBranchLocation()}
+            />
         </AdminLayout>
     );
 }

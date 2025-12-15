@@ -8,6 +8,7 @@ use Modules\Notification\app\Models\NotificationMessage;
 use Modules\Notification\app\Models\NotificationProvider;
 use Modules\Notification\app\Models\NotificationTemplate;
 use Modules\Notification\app\Services\NotificationService;
+use Modules\Notification\app\Services\AsyncNotificationService;
 use Illuminate\Support\Facades\Validator;
 
 class AdminNotificationController extends Controller
@@ -135,14 +136,14 @@ class AdminNotificationController extends Controller
             ]
         ));
 
-        // Send immediately if not scheduled
+        // Queue notification for sending if not scheduled
         if (!$request->has('scheduled_at')) {
-            $this->notificationService->sendNotification($notification);
+            AsyncNotificationService::sendBulkNotification($notification);
         }
 
         return response()->json([
-            'message' => 'Notification created successfully',
-            'notification' => $notification->load('deliveries'),
+            'message' => 'Notification queued successfully',
+            'notification' => $notification,
         ], 201);
     }
 

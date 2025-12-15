@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client';
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { ToastProvider } from '@/Components/Toast';
+import { ConfirmProvider } from '@/Components/ConfirmDialog';
 
 // Configure Inertia to send CSRF token with every request
 router.on('before', (event) => {
@@ -30,7 +32,13 @@ createInertiaApp({
         return page;
     },
     setup({ el, App, props }) {
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(
+            <ToastProvider>
+                <ConfirmProvider>
+                    <App {...props} />
+                </ConfirmProvider>
+            </ToastProvider>
+        );
     },
     progress: {
         color: '#E91E8C',

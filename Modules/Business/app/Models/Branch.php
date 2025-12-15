@@ -13,7 +13,22 @@ class Branch extends Model
     /**
      * The attributes that are mass assignable.
      */
-    protected $fillable = ['brand_id', 'name'];
+    protected $fillable = [
+        'brand_id',
+        'name',
+        'location',
+        'lat',
+        'lng',
+        'phone',
+        'is_main',
+        'status',
+    ];
+
+    protected $casts = [
+        'lat' => 'decimal:8',
+        'lng' => 'decimal:8',
+        'is_main' => 'boolean',
+    ];
 
     // protected static function newFactory(): BranchFactory
     // {

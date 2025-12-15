@@ -9,7 +9,9 @@ use Modules\Media\Repositories\MediaRepository;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Modules\Media\Helpers\FileHelper;
-use Intervention\Image\ImageManager as Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Imagick;
 
@@ -29,7 +31,14 @@ class MediaService extends Service
         285 => [285, 350]
     ];
 
-    public function __construct(protected MediaRepository $mediaRepository) {}
+    protected ImageManager $imageManager;
+
+    public function __construct(protected MediaRepository $mediaRepository)
+    {
+        // Use Imagick driver if available, otherwise fall back to GD
+        $driver = extension_loaded('imagick') ? new ImagickDriver() : new GdDriver();
+        $this->imageManager = new ImageManager($driver);
+    }
 
 
     public function imageOptimizer():static
@@ -89,33 +98,22 @@ class MediaService extends Service
     }
 
     public function heicExtension($folder, $newFileName2, $file){
+        $extension = strtolower($file->getClientOriginalExtension());
 
-        Image::configure(['driver' => 'imagick']);
+        // Only process HEIC/HEIF files
+        if (!in_array($extension, ['heic', 'heif'])) {
+            return;
+        }
+
         $heicEx = $folder . '/' . $newFileName2 . '.png';
 
         $imagick = new Imagick($file->path());
         $imagick->setImageFormat('png');
-
-        $imagick = new Imagick($file->path());
-        //    $imagick->setResourceLimit(Imagick::RESOURCETYPE_MEMORY, 256); // Set memory limit in MB
-        //$imagick->setResourceLimit(Imagick::RESOURCETYPE_CPU, 2);       // Set CPU limit in seconds
-        //    $imagick->setImageFormat('png');
-        //    $imagick->thumbnailImage(100, 100);
-        //$imagick->setImageCompression(Imagick::COMPRESSION_JPEG);
-        //$imagick->setImageCompressionQuality(75); 
-        // Convert to PNG
-        //$pngData = $imagick->getImageBlob();
-    
-
-        // Compress the PNG (adjust the compression quality as needed)
         $imagick->setImageCompression(Imagick::COMPRESSION_JPEG);
-        $imagick->setImageCompressionQuality(75); //
-        // Perform any image manipulation here, e.g., resizing, filters, etc.
-        // Example: $imagick->resizeImage(200, 200, Imagick::FILTER_LANCZOS, 1);
+        $imagick->setImageCompressionQuality(75);
 
         $imagick->writeImage(public_path('storage/'.$heicEx));
         $imagick->destroy();
-        
     }
 
     public function prepareFileData():static
@@ -133,12 +131,10 @@ class MediaService extends Service
 
     public function saveFile():static
     {
-        // dd($file = $this->getInput('file')->extension(), $this->getInput('file_name'));
         $file_name = $this->getInput('file_name');
-        $img = Image::make($this->getInput('file')->path());
+        $filePath = $this->getInput('file')->path();
         $destinationPath = public_path('/storage/presets');
 
-       
         $check = $this->getInput('file_path');
         if ($check) {
             if (FileHelper::checkMimeIsImage($this->getInput('file_type'))) {
@@ -147,36 +143,48 @@ class MediaService extends Service
                 $this->setInput('file_height', $height);
             }
             $mediaFile = $this->mediaRepository->create($this->getInputs());
+
             if(Storage::disk('public')->exists($mediaFile->file_path)) {
-                if($mediaFile->file_extension != 'svg' &&  FileHelper::isImage($mediaFile)) {
-                    $image = Storage::disk('public')->get($mediaFile->file_path);
+                if($mediaFile->file_extension != 'svg' && FileHelper::isImage($mediaFile)) {
+                    // Create WebP version using Intervention Image v3
                     if($mediaFile->file_type != 'image/webp') {
-                        Image::configure(['driver' => 'imagick']);
-                        $image = Image::make($image)->stream("webp", 70);
-                    }
-                    Storage::disk('public')->put(dirname($mediaFile->file_path)
-                        . '/' . str_replace(['.jpg', '.jpeg',''], '', $mediaFile->file_name) . '.webp', $image);
+                        try {
+                            $image = $this->imageManager->read(storage_path('app/public' . $mediaFile->file_path));
+                            $webpData = $image->toWebp(70);
+                            $webpFileName = str_replace(['.jpg', '.jpeg', '.png'], '', $mediaFile->file_name) . '.webp';
+                            Storage::disk('public')->put(
+                                dirname($mediaFile->file_path) . '/' . $webpFileName,
+                                $webpData
+                            );
 
-                    if (env('FILESYSTEM_DRIVER') == 's3') {
-                        Storage::disk('s3')->put('public/' . dirname($mediaFile->file_path) . '/' .  str_replace(['.jpg', '.jpeg',''], '', $mediaFile->file_name) . '.webp',Storage::disk('public')->get(dirname($mediaFile->file_path) . '/' .  str_replace(['.jpg', '.jpeg',''], '', $mediaFile->file_name) . '.webp'));
+                            if (env('FILESYSTEM_DRIVER') == 's3') {
+                                Storage::disk('s3')->put(
+                                    'public/' . dirname($mediaFile->file_path) . '/' . $webpFileName,
+                                    Storage::disk('public')->get(dirname($mediaFile->file_path) . '/' . $webpFileName)
+                                );
+                            }
+                        } catch (\Exception $e) {
+                            // WebP conversion failed, continue without it
+                        }
+                    }
+
+                    // Create preset sizes using Intervention Image v3
+                    foreach ($this->presets as $preset) {
+                        $directory = "$preset[0]-$preset[1]";
+                        Storage::disk('public')->makeDirectory('presets/' . $directory, intval('0775', 8), true);
+
+                        try {
+                            $img = $this->imageManager->read($filePath);
+                            $img->cover($preset[0], $preset[1]);
+                            $img->save($destinationPath . '/' . $directory . '/' . $this->getInput('file_name'));
+                        } catch (\Exception $e) {
+                            // Preset creation failed, continue
+                        }
                     }
                 }
             }
-            foreach ($this->presets as $preset) {
-                $directory = "$preset[0]-$preset[1]";
-                $response = Storage::disk('public')->makeDirectory('presets/' . $directory, intval('0775', 8), true);
-                if($response){
-                    $img->fit($preset[0], $preset[1], function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
 
-                    },'left')->save($destinationPath.'/'.$directory.'/'.$this->getInput('file_name'));
-                }
-                
-            }
-
-            // Sizes use for uploaderAdapter:
-            // https://ckeditor.com/docs/ckeditor5/latest/framework/guides/deep-dive/upload-adapter.html#the-anatomy-of-the-adapter
+            // Sizes use for uploaderAdapter
             $mediaFile->sizes = [
                 'default' => asset('public/' . $mediaFile->file_path),
                 '150'     => url('media/preview/'.$mediaFile->id .'/thumb'),

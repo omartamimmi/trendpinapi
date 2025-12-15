@@ -137,7 +137,6 @@ class LocationController extends Controller
         TestData::create($result);
         return response()->json($result);
         }catch(Throwable $e){
-            dd($e);
             $data = [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),

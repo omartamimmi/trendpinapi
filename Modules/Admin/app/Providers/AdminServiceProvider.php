@@ -2,8 +2,27 @@
 
 namespace Modules\Admin\app\Providers;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Admin\app\Repositories\Contracts\OnboardingRepositoryInterface;
+use Modules\Admin\app\Repositories\Contracts\PlanRepositoryInterface;
+use Modules\Admin\app\Repositories\Contracts\UserRepositoryInterface;
+use Modules\Admin\app\Repositories\OnboardingRepository;
+use Modules\Admin\app\Repositories\PlanRepository;
+use Modules\Admin\app\Repositories\UserRepository;
+use Modules\Admin\app\Services\AuthService;
+use Modules\Admin\app\Services\Contracts\AuthServiceInterface;
+use Modules\Admin\app\Services\Contracts\DashboardServiceInterface;
+use Modules\Admin\app\Services\Contracts\OnboardingServiceInterface;
+use Modules\Admin\app\Services\Contracts\PlanServiceInterface;
+use Modules\Admin\app\Services\Contracts\UserServiceInterface;
+use Modules\Admin\app\Services\DashboardService;
+use Modules\Admin\app\Services\OnboardingService;
+use Modules\Admin\app\Services\PlanService;
+use Modules\Admin\app\Services\UserService;
+use Modules\RetailerOnboarding\app\Models\RetailerOnboarding;
+use Modules\RetailerOnboarding\app\Models\SubscriptionPlan;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -36,6 +55,39 @@ class AdminServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+
+        $this->registerRepositories();
+        $this->registerServices();
+    }
+
+    /**
+     * Register repository bindings.
+     */
+    protected function registerRepositories(): void
+    {
+        $this->app->bind(UserRepositoryInterface::class, function ($app) {
+            return new UserRepository(new User());
+        });
+
+        $this->app->bind(PlanRepositoryInterface::class, function ($app) {
+            return new PlanRepository(new SubscriptionPlan());
+        });
+
+        $this->app->bind(OnboardingRepositoryInterface::class, function ($app) {
+            return new OnboardingRepository(new RetailerOnboarding());
+        });
+    }
+
+    /**
+     * Register service bindings.
+     */
+    protected function registerServices(): void
+    {
+        $this->app->bind(AuthServiceInterface::class, AuthService::class);
+        $this->app->bind(UserServiceInterface::class, UserService::class);
+        $this->app->bind(PlanServiceInterface::class, PlanService::class);
+        $this->app->bind(OnboardingServiceInterface::class, OnboardingService::class);
+        $this->app->bind(DashboardServiceInterface::class, DashboardService::class);
     }
 
     /**

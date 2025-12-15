@@ -1,8 +1,13 @@
 import { router } from '@inertiajs/react';
 import RetailerLayout from '@/Layouts/RetailerLayout';
 import Pagination from '@/Components/Pagination';
+import { useToast } from '@/Components/Toast';
+import { useConfirm } from '@/Components/ConfirmDialog';
 
 export default function Brands({ brands, groups }) {
+    const toast = useToast();
+    const confirm = useConfirm();
+
     // Group brands by group name
     const groupedBrands = (brands.data || brands).reduce((acc, brand) => {
         const groupName = brand.group?.name || 'Ungrouped';
@@ -14,9 +19,19 @@ export default function Brands({ brands, groups }) {
     }, {});
 
     const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this brand?')) {
-            router.delete(`/retailer/brands/${id}`);
-        }
+        confirm({
+            title: 'Delete Brand',
+            message: 'Are you sure you want to delete this brand? This will also delete all associated branches and offers.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: () => {
+                router.delete(`/retailer/brands/${id}`, {
+                    onSuccess: () => toast.success('Brand deleted successfully'),
+                    onError: () => toast.error('Failed to delete brand'),
+                });
+            },
+        });
     };
 
     return (
