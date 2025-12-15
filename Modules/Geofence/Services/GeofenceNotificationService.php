@@ -48,7 +48,7 @@ class GeofenceNotificationService implements GeofenceNotificationServiceInterfac
         }
 
         // Update user location
-        $this->userLocationRepository->updateUserLocation(
+        $this->userLocationRepository->updateLocation(
             $userId,
             $event->lat,
             $event->lng,
