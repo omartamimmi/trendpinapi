@@ -12,5 +12,6 @@
     "RetailerOnboarding": true,
     "Admin": true,
     "Notification": true,
-    "Log": true
+    "Log": true,
+    "Geofence": true
 }

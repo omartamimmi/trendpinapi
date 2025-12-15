@@ -1,0 +1,15 @@
+{
+    "name": "nwidart/geofence",
+    "description": "Location-based notifications using Radar.io integration with smart throttling",
+    "keywords": ["geofence", "location", "radar", "notifications"],
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Geofence\\": ".",
+            "Modules\\Geofence\\app\\": "app/",
+            "Modules\\Geofence\\database\\": "database/"
+        }
+    },
+    "require": {}
+}
