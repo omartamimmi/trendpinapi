@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\User\app\Http\Controllers\AuthController;
+use Modules\User\app\Http\Controllers\InterestController;
 use Modules\User\app\Http\Controllers\WishlistController;
 use Modules\User\app\Http\Controllers\NotificationController;
 
@@ -67,4 +68,22 @@ Route::prefix('v1')
                 Route::get('set-user-interest-to-shop', 'userInterestToShop')
                     ->name('userInterestToShop');
             });
+    });
+
+// Interest routes
+Route::prefix('v1/interests')
+    ->as('v1.interests.')
+    ->middleware(['api'])
+    ->controller(InterestController::class)
+    ->group(function () {
+        // Public route - get all interests
+        Route::get('/', 'index')->name('index');
+
+        // Protected routes - require authentication
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::get('/user', 'getUserInterests')->name('user');
+            Route::post('/set', 'setInterests')->name('set');
+            Route::post('/add', 'addInterests')->name('add');
+            Route::post('/remove', 'removeInterests')->name('remove');
+        });
     });

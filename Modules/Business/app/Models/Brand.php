@@ -83,6 +83,25 @@ class Brand extends Model
         return $this->hasOne(BrandMeta::class, "brand_id", 'id');
     }
 
+    public function offers()
+    {
+        return $this->hasMany(\Modules\RetailerOnboarding\app\Models\Offer::class);
+    }
+
+    public function activeOffers()
+    {
+        return $this->hasMany(\Modules\RetailerOnboarding\app\Models\Offer::class)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            });
+    }
+
     public function save(array $options = [])
     {
         $this->featured_mobile = $this->getFeaturedImage()[0]['featured_mobile'] ?? $this->featured_mobile;

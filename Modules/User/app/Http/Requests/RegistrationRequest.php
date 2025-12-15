@@ -42,6 +42,12 @@ class RegistrationRequest extends FormRequest
                 'required_with:phone_number',
                 'string',
                 'size:6',
+            ],
+            'profile_image' => [
+                'nullable',
+                'file',
+                'max:5120',
+                'mimes:jpeg,jpg,png,gif,webp',
             ]
         ];
     }

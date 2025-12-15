@@ -3,6 +3,7 @@
 namespace Modules\User\Transformers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Media\Helpers\FileHelper;
 
 class UserProfileResource extends JsonResource
 {
@@ -22,6 +23,7 @@ class UserProfileResource extends JsonResource
             'first_name' => $this['user']->first_name,
             'last_name' =>  $this['user']->last_name,
             'email' => $this['user']->email,
+            'profile_image' => $this->getProfileImageUrl(),
             'zip_code' =>  $this['user']->zip_code ?? '',
             'time_zone' => $this['user']->time_zone ?? '',
             'address2' =>  $this['user']->address2 ?? '',
@@ -32,7 +34,20 @@ class UserProfileResource extends JsonResource
             'contact_email' => $this['user']->contact_email ?? '',
             'birthday' => $this['user']->birthday ?? '',
             'location_id' => $this['user']->location_id ?? '',
-
         ];
+    }
+
+    /**
+     * Get the profile image URL from image_id
+     */
+    private function getProfileImageUrl(): ?string
+    {
+        $imageId = $this['user']->image_id ?? null;
+
+        if (!$imageId) {
+            return null;
+        }
+
+        return FileHelper::url($imageId, 'medium');
     }
 }

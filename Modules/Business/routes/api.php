@@ -1,8 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Business\app\Http\Controllers\BrandController;
 
-// Business API routes - managed via RetailerOnboarding and Admin modules
-Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
-    // Brand routes are now handled by RetailerOnboarding module
+// Public Brand API routes (no authentication required)
+Route::prefix('v1')->group(function () {
+    Route::prefix('brands')->group(function () {
+        Route::get('/', [BrandController::class, 'index'])->name('api.v1.brands.index');
+        Route::get('/slug/{slug}', [BrandController::class, 'showBySlug'])->name('api.v1.brands.show.slug');
+        Route::get('/{id}', [BrandController::class, 'show'])->name('api.v1.brands.show');
+    });
 });

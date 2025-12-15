@@ -8,18 +8,22 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Modules\User\Repositories\UserRepository;
+use Modules\Media\Services\MediaService;
 
 class AuthService extends Service
 {
     protected $userRepository;
     protected $logoutUserService;
-    // protected $otpService;
+    protected $mediaService;
 
-    public function __construct(UserRepository $userRepository, LogoutUserService $logoutUserService)
-    {
+    public function __construct(
+        UserRepository $userRepository,
+        LogoutUserService $logoutUserService,
+        MediaService $mediaService
+    ) {
         $this->userRepository = $userRepository;
         $this->logoutUserService = $logoutUserService;
-        // $this->otpService = $otpService;
+        $this->mediaService = $mediaService;
     }
 
 
@@ -32,10 +36,42 @@ class AuthService extends Service
     public function persistUserBasicInfo():static
     {
         $data = $this->getInputs();
-        // $phone = $this->otpService->verify($data['phone_number'], $data['code']);
+
+        // Handle profile image upload if provided
+        if (isset($data['profile_image']) && $data['profile_image'] instanceof \Illuminate\Http\UploadedFile) {
+            $imageId = $this->uploadProfileImage($data['profile_image']);
+            if ($imageId) {
+                $data['image_id'] = $imageId;
+            }
+            unset($data['profile_image']);
+        }
+
         $user = $this->userRepository->create($data);
         $this->setOutput('user', $user);
         return $this;
+    }
+
+    /**
+     * Upload profile image and return the media file ID
+     */
+    protected function uploadProfileImage(\Illuminate\Http\UploadedFile $file): ?int
+    {
+        try {
+            $this->mediaService
+                ->setInput('file', $file)
+                ->folderGenerate(0) // Use 0 for new users, will be organized by date
+                ->storeFile()
+                ->prepareFileData()
+                ->imageOptimizer()
+                ->saveFile()
+                ->collectOutput('media', $media);
+
+            return $media->id ?? null;
+        } catch (\Exception $e) {
+            // Log the error but don't fail registration
+            \Log::warning('Failed to upload profile image during registration: ' . $e->getMessage());
+            return null;
+        }
     }
 
     public function assignRoleToUser():static
@@ -105,6 +141,7 @@ class AuthService extends Service
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'profile_image' => $this->getProfileImageUrl($user->image_id),
                 'role' => $user->getRoleNames()[0] ?? null,
                 'type' => 'Bearer',
                 'access_token' => $token->plainTextToken,
@@ -113,6 +150,18 @@ class AuthService extends Service
         ];
         $this->setOutputs($loginArray);
         return $this;
+    }
+
+    /**
+     * Get profile image URL from image_id
+     */
+    protected function getProfileImageUrl(?int $imageId): ?string
+    {
+        if (!$imageId) {
+            return null;
+        }
+
+        return \Modules\Media\Helpers\FileHelper::url($imageId, 'medium');
     }
 
     public function getUserData(): static

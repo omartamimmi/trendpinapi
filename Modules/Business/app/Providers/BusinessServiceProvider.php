@@ -4,6 +4,10 @@ namespace Modules\Business\app\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Business\Repositories\BrandRepository;
+use Modules\Business\Repositories\Contracts\BrandRepositoryInterface;
+use Modules\Business\Services\BrandApiService;
+use Modules\Business\Services\Contracts\BrandApiServiceInterface;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -36,6 +40,24 @@ class BusinessServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+
+        $this->registerBindings();
+    }
+
+    /**
+     * Register interface bindings
+     */
+    private function registerBindings(): void
+    {
+        $this->app->bind(
+            BrandRepositoryInterface::class,
+            BrandRepository::class
+        );
+
+        $this->app->bind(
+            BrandApiServiceInterface::class,
+            BrandApiService::class
+        );
     }
 
     /**

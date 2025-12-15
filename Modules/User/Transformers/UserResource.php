@@ -19,12 +19,10 @@ class UserResource extends JsonResource
             'name' => $this['name'],
             'phone' => $this['phone'],
             'email' => $this['email'],
+            'profile_image' => $this['profile_image'] ?? null,
             'role' => $this['role'],
-            // 'avatar'=>$this->avatar,
             'access_token' => $this['access_token'],
             'expires_at'=>$this['expires_at'],
-            // 'provider_id'=>$this->provider_id,
-            // 'created_at' => $this['created_at'],
         ];
     }
 }

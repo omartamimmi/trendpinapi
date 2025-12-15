@@ -4,6 +4,10 @@ namespace Modules\User\app\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\User\Repositories\Contracts\InterestRepositoryInterface;
+use Modules\User\Repositories\InterestRepository;
+use Modules\User\Services\Contracts\InterestServiceInterface;
+use Modules\User\Services\InterestService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -36,6 +40,24 @@ class UserServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+
+        $this->registerBindings();
+    }
+
+    /**
+     * Register interface bindings
+     */
+    private function registerBindings(): void
+    {
+        $this->app->bind(
+            InterestRepositoryInterface::class,
+            InterestRepository::class
+        );
+
+        $this->app->bind(
+            InterestServiceInterface::class,
+            InterestService::class
+        );
     }
 
     /**
