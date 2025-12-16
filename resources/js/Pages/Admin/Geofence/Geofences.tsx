@@ -72,6 +72,14 @@ const XIcon = () => (
     </svg>
 );
 
+// Location Icon
+const LocationIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
 // Geofence Modal Component
 const GeofenceModal = ({
     isOpen,
@@ -94,6 +102,8 @@ const GeofenceModal = ({
         is_active: geofence?.is_active ?? true,
     });
     const [saving, setSaving] = useState(false);
+    const [gettingLocation, setGettingLocation] = useState(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
 
     if (!isOpen) return null;
 
@@ -102,6 +112,48 @@ const GeofenceModal = ({
         setSaving(true);
         await onSave(formData);
         setSaving(false);
+    };
+
+    const handleGetCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setGettingLocation(true);
+        setLocationError(null);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setFormData(prev => ({
+                    ...prev,
+                    latitude: position.coords.latitude.toString(),
+                    longitude: position.coords.longitude.toString(),
+                }));
+                setGettingLocation(false);
+            },
+            (error) => {
+                setGettingLocation(false);
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        setLocationError('Location permission denied. Please allow location access.');
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        setLocationError('Location information unavailable.');
+                        break;
+                    case error.TIMEOUT:
+                        setLocationError('Location request timed out.');
+                        break;
+                    default:
+                        setLocationError('An error occurred getting your location.');
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
     };
 
     return (
@@ -127,28 +179,45 @@ const GeofenceModal = ({
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={formData.latitude}
-                                onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                            />
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-sm font-medium text-gray-700">Location</label>
+                            <button
+                                type="button"
+                                onClick={handleGetCurrentLocation}
+                                disabled={gettingLocation}
+                                className="flex items-center gap-1 text-sm text-pink-600 hover:text-pink-700 disabled:opacity-50"
+                            >
+                                <LocationIcon />
+                                {gettingLocation ? 'Getting location...' : 'Use My Location'}
+                            </button>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={formData.longitude}
-                                onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                            />
+                        {locationError && (
+                            <p className="text-xs text-red-600 mb-2">{locationError}</p>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={formData.latitude}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                                    placeholder="Latitude"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={formData.longitude}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                                    placeholder="Longitude"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                />
+                            </div>
                         </div>
                     </div>
 
