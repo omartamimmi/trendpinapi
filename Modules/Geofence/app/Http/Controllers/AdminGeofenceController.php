@@ -91,8 +91,21 @@ class AdminGeofenceController extends Controller
 
         $geofences = $query->orderByDesc('geofences.created_at')->paginate($perPage);
 
+        // Get brands and branches for the form
+        $brands = DB::table('brands')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        $branches = DB::table('branches')
+            ->select('id', 'name', 'brand_id')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Admin/Geofence/Geofences', [
             'geofences' => $geofences,
+            'brands' => $brands,
+            'branches' => $branches,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
@@ -245,17 +258,25 @@ class AdminGeofenceController extends Controller
         $geofence = $this->geofenceRepository->create($data);
 
         // Sync to Radar.io
+        $radarSynced = false;
         $radarId = $this->radarService->createGeofence($geofence);
         if ($radarId) {
             $this->geofenceRepository->update($geofence->id, [
                 'radar_geofence_id' => $radarId,
-                'synced_at' => now(),
+                'last_synced_at' => now(),
             ]);
+            $radarSynced = true;
+        }
+
+        $message = 'Geofence created successfully';
+        if (!$radarSynced) {
+            $message .= '. Note: Radar.io sync skipped (API key not configured or sync failed)';
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Geofence created successfully',
+            'message' => $message,
+            'radar_synced' => $radarSynced,
             'geofence' => new GeofenceResource($geofence->fresh()),
         ]);
     }
@@ -284,11 +305,22 @@ class AdminGeofenceController extends Controller
         $geofence = $this->geofenceRepository->update($id, $data);
 
         // Sync to Radar.io
-        $this->radarService->updateGeofence($geofence);
+        $radarSynced = $this->radarService->updateGeofence($geofence);
+        if ($radarSynced) {
+            $this->geofenceRepository->update($geofence->id, [
+                'last_synced_at' => now(),
+            ]);
+        }
+
+        $message = 'Geofence updated successfully';
+        if (!$radarSynced) {
+            $message .= '. Note: Radar.io sync skipped (API key not configured or sync failed)';
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Geofence updated successfully',
+            'message' => $message,
+            'radar_synced' => $radarSynced,
             'geofence' => new GeofenceResource($geofence->fresh()),
         ]);
     }

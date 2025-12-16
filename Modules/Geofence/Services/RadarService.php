@@ -190,7 +190,7 @@ class RadarService implements RadarServiceInterface
                 if ($radarId) {
                     $this->geofenceRepository->update($geofence->id, [
                         'radar_geofence_id' => $radarId,
-                        'synced_at' => now(),
+                        'last_synced_at' => now(),
                     ]);
                     $results['created']++;
                 } else {
@@ -199,7 +199,7 @@ class RadarService implements RadarServiceInterface
             } else {
                 if ($this->updateGeofence($geofence)) {
                     $this->geofenceRepository->update($geofence->id, [
-                        'synced_at' => now(),
+                        'last_synced_at' => now(),
                     ]);
                     $results['updated']++;
                 } else {
