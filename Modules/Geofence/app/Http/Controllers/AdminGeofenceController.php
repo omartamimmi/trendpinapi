@@ -578,8 +578,8 @@ class AdminGeofenceController extends Controller
         $thisMonth = now()->startOfMonth();
 
         return [
-            'total_geofences' => DB::table('geofences')->count(),
-            'active_geofences' => DB::table('geofences')->where('is_active', true)->count(),
+            'total_geofences' => DB::table('geofences')->whereNull('deleted_at')->count(),
+            'active_geofences' => DB::table('geofences')->whereNull('deleted_at')->where('is_active', true)->count(),
             'notifications_today' => DB::table('notification_throttle_logs')
                 ->where('created_at', '>=', $today)
                 ->count(),
