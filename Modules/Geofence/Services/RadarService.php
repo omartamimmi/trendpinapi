@@ -56,6 +56,14 @@ class RadarService implements RadarServiceInterface
         }
 
         try {
+            // Build metadata, filtering out null values (Radar doesn't accept nulls)
+            $metadata = array_filter([
+                'geofence_id' => $geofence->id,
+                'location_id' => $geofence->location_id,
+                'brand_id' => $geofence->brand_id,
+                'branch_id' => $geofence->branch_id,
+            ], fn($value) => $value !== null);
+
             $response = Http::withHeaders([
                 'Authorization' => $this->secretKey,
             ])->post("{$this->baseUrl}/geofences", [
@@ -66,12 +74,7 @@ class RadarService implements RadarServiceInterface
                 'coordinates' => [(float)$geofence->lng, (float)$geofence->lat],
                 'radius' => $geofence->radius,
                 'enabled' => $geofence->is_active,
-                'metadata' => [
-                    'geofence_id' => $geofence->id,
-                    'location_id' => $geofence->location_id,
-                    'brand_id' => $geofence->brand_id,
-                    'branch_id' => $geofence->branch_id,
-                ],
+                'metadata' => $metadata,
             ]);
 
             Log::info('Radar geofence creation request', [
@@ -131,6 +134,14 @@ class RadarService implements RadarServiceInterface
             $tag = $this->getGeofenceTag($geofence);
             $externalId = $this->getExternalId($geofence);
 
+            // Build metadata, filtering out null values (Radar doesn't accept nulls)
+            $metadata = array_filter([
+                'geofence_id' => $geofence->id,
+                'location_id' => $geofence->location_id,
+                'brand_id' => $geofence->brand_id,
+                'branch_id' => $geofence->branch_id,
+            ], fn($value) => $value !== null);
+
             $response = Http::withHeaders([
                 'Authorization' => $this->secretKey,
             ])->put("{$this->baseUrl}/geofences/{$tag}/{$externalId}", [
@@ -138,12 +149,7 @@ class RadarService implements RadarServiceInterface
                 'coordinates' => [(float)$geofence->lng, (float)$geofence->lat],
                 'radius' => $geofence->radius,
                 'enabled' => $geofence->is_active,
-                'metadata' => [
-                    'geofence_id' => $geofence->id,
-                    'location_id' => $geofence->location_id,
-                    'brand_id' => $geofence->brand_id,
-                    'branch_id' => $geofence->branch_id,
-                ],
+                'metadata' => $metadata,
             ]);
 
             Log::info('Radar geofence update request', [
@@ -207,10 +213,20 @@ class RadarService implements RadarServiceInterface
             'created' => 0,
             'updated' => 0,
             'failed' => 0,
+            'failures' => [],
         ];
+
+        Log::info('Starting geofence sync', ['total_geofences' => $geofences->count()]);
 
         foreach ($geofences as $geofence) {
             if (!$geofence->radar_geofence_id) {
+                Log::info('Attempting to create geofence in Radar', [
+                    'geofence_id' => $geofence->id,
+                    'name' => $geofence->name,
+                    'tag' => $this->getGeofenceTag($geofence),
+                    'externalId' => $this->getExternalId($geofence),
+                ]);
+
                 $radarId = $this->createGeofence($geofence);
                 if ($radarId) {
                     $this->geofenceRepository->update($geofence->id, [
@@ -218,8 +234,23 @@ class RadarService implements RadarServiceInterface
                         'last_synced_at' => now(),
                     ]);
                     $results['created']++;
+                    Log::info('Geofence created in Radar successfully', [
+                        'geofence_id' => $geofence->id,
+                        'radar_id' => $radarId,
+                    ]);
                 } else {
                     $results['failed']++;
+                    $results['failures'][] = [
+                        'geofence_id' => $geofence->id,
+                        'name' => $geofence->name,
+                        'action' => 'create',
+                        'tag' => $this->getGeofenceTag($geofence),
+                        'externalId' => $this->getExternalId($geofence),
+                    ];
+                    Log::error('Failed to create geofence in Radar', [
+                        'geofence_id' => $geofence->id,
+                        'name' => $geofence->name,
+                    ]);
                 }
             } else {
                 if ($this->updateGeofence($geofence)) {
@@ -229,9 +260,22 @@ class RadarService implements RadarServiceInterface
                     $results['updated']++;
                 } else {
                     $results['failed']++;
+                    $results['failures'][] = [
+                        'geofence_id' => $geofence->id,
+                        'name' => $geofence->name,
+                        'action' => 'update',
+                        'tag' => $this->getGeofenceTag($geofence),
+                        'externalId' => $this->getExternalId($geofence),
+                    ];
+                    Log::error('Failed to update geofence in Radar', [
+                        'geofence_id' => $geofence->id,
+                        'name' => $geofence->name,
+                    ]);
                 }
             }
         }
+
+        Log::info('Geofence sync completed', $results);
 
         return $results;
     }
