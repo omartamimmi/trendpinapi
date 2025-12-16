@@ -18,8 +18,23 @@ class RadarService implements RadarServiceInterface
     public function __construct(
         private GeofenceRepositoryInterface $geofenceRepository
     ) {
-        $this->secretKey = config('geofence.radar.secret_key', '');
-        $this->publishableKey = config('geofence.radar.publishable_key', '');
+        // Load from database first, fall back to config
+        $this->secretKey = $this->getSettingFromDb('radar_secret_key')
+            ?? config('geofence.radar.secret_key', '');
+        $this->publishableKey = $this->getSettingFromDb('radar_publishable_key')
+            ?? config('geofence.radar.publishable_key', '');
+    }
+
+    /**
+     * Get setting from database
+     */
+    private function getSettingFromDb(string $key): ?string
+    {
+        $value = \Illuminate\Support\Facades\DB::table('settings')
+            ->where('key', "geofence.{$key}")
+            ->value('value');
+
+        return $value ?: null;
     }
 
     /**
@@ -48,7 +63,7 @@ class RadarService implements RadarServiceInterface
                 'tag' => $this->getGeofenceTag($geofence),
                 'externalId' => $this->getExternalId($geofence),
                 'type' => 'circle',
-                'coordinates' => [$geofence->longitude, $geofence->latitude],
+                'coordinates' => [(float)$geofence->lng, (float)$geofence->lat],
                 'radius' => $geofence->radius,
                 'enabled' => $geofence->is_active,
                 'metadata' => [
@@ -103,7 +118,7 @@ class RadarService implements RadarServiceInterface
                 'Authorization' => $this->secretKey,
             ])->put("{$this->baseUrl}/geofences/{$tag}/{$externalId}", [
                 'description' => $geofence->name,
-                'coordinates' => [$geofence->longitude, $geofence->latitude],
+                'coordinates' => [(float)$geofence->lng, (float)$geofence->lat],
                 'radius' => $geofence->radius,
                 'enabled' => $geofence->is_active,
                 'metadata' => [
@@ -230,7 +245,8 @@ class RadarService implements RadarServiceInterface
      */
     public function verifyWebhookSignature(string $payload, string $signature): bool
     {
-        $webhookSecret = config('geofence.radar.webhook_secret');
+        $webhookSecret = $this->getSettingFromDb('radar_webhook_secret')
+            ?? config('geofence.radar.webhook_secret');
 
         if (!$webhookSecret) {
             // If no secret configured, skip verification (not recommended for production)
