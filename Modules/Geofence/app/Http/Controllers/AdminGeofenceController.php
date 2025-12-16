@@ -58,6 +58,7 @@ class AdminGeofenceController extends Controller
 
         $query = DB::table('geofences')
             ->leftJoin('locations', 'geofences.location_id', '=', 'locations.id')
+            ->whereNull('geofences.deleted_at') // Respect soft deletes
             ->select(
                 'geofences.id',
                 'geofences.name',
@@ -311,6 +312,13 @@ class AdminGeofenceController extends Controller
 
         $geofence = $this->geofenceRepository->update($id, $data);
 
+        if (!$geofence) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Geofence not found',
+            ], 404);
+        }
+
         // Sync to Radar.io
         $radarSynced = $this->radarService->updateGeofence($geofence);
         if ($radarSynced) {
@@ -339,11 +347,32 @@ class AdminGeofenceController extends Controller
     {
         $geofence = $this->geofenceRepository->find($id);
 
-        if ($geofence && $geofence->radar_geofence_id) {
+        if (!$geofence) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Geofence not found',
+            ], 404);
+        }
+
+        \Illuminate\Support\Facades\Log::info('Deleting geofence', [
+            'id' => $id,
+            'name' => $geofence->name,
+            'radar_geofence_id' => $geofence->radar_geofence_id,
+        ]);
+
+        // Delete from Radar.io first
+        if ($geofence->radar_geofence_id) {
             $this->radarService->deleteGeofence($geofence->radar_geofence_id);
         }
 
-        $this->geofenceRepository->delete($id);
+        $deleted = $this->geofenceRepository->delete($id);
+
+        if (!$deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete geofence',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
