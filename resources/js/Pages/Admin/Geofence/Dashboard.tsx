@@ -313,7 +313,7 @@ export default function GeofenceDashboard({ stats, recentNotifications, geofence
                                             </span>
                                         </div>
                                         <p className="mt-1 text-xs text-gray-400">
-                                            {geofence.latitude.toFixed(6)}, {geofence.longitude.toFixed(6)}
+                                            {parseFloat(String(geofence.latitude)).toFixed(6)}, {parseFloat(String(geofence.longitude)).toFixed(6)}
                                         </p>
                                     </div>
                                 ))

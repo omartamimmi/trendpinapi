@@ -429,10 +429,10 @@ export default function GeofencesList({ geofences, filters }: Props) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-600">
-                                            {geofence.latitude.toFixed(6)},
+                                            {parseFloat(String(geofence.latitude)).toFixed(6)},
                                         </div>
                                         <div className="text-sm text-gray-600">
-                                            {geofence.longitude.toFixed(6)}
+                                            {parseFloat(String(geofence.longitude)).toFixed(6)}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">

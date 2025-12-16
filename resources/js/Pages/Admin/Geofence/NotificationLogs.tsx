@@ -263,7 +263,7 @@ export default function NotificationLogs({ notifications, brands, filters }: Pro
                                             <div className="flex items-center gap-1 text-sm text-gray-600">
                                                 <MapPinIcon />
                                                 <span>
-                                                    {notification.latitude?.toFixed(4)}, {notification.longitude?.toFixed(4)}
+                                                    {notification.latitude ? parseFloat(String(notification.latitude)).toFixed(4) : '-'}, {notification.longitude ? parseFloat(String(notification.longitude)).toFixed(4) : '-'}
                                                 </span>
                                             </div>
                                         </td>
