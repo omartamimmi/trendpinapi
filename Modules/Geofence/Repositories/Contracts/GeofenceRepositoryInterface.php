@@ -27,7 +27,7 @@ interface GeofenceRepositoryInterface
 
     public function create(array $data): Geofence;
 
-    public function update(int $id, array $data): Geofence;
+    public function update(int $id, array $data): ?Geofence;
 
     public function delete(int $id): bool;
 

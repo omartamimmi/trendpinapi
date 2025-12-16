@@ -63,16 +63,27 @@ class GeofenceRepository implements GeofenceRepositoryInterface
         return $this->model->create($data);
     }
 
-    public function update(int $id, array $data): Geofence
+    public function update(int $id, array $data): ?Geofence
     {
-        $geofence = $this->findById($id);
+        $geofence = $this->model->find($id);
+
+        if (!$geofence) {
+            return null;
+        }
+
         $geofence->update($data);
         return $geofence->fresh();
     }
 
     public function delete(int $id): bool
     {
-        return $this->model->findOrFail($id)->delete();
+        $geofence = $this->model->find($id);
+
+        if (!$geofence) {
+            return false;
+        }
+
+        return $geofence->delete();
     }
 
     public function markAsSynced(int $id, string $radarGeofenceId): void
