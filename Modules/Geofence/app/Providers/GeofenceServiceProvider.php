@@ -12,11 +12,13 @@ use RecursiveIteratorIterator;
 use Modules\Geofence\Repositories\Contracts\GeofenceRepositoryInterface;
 use Modules\Geofence\Repositories\Contracts\UserLocationRepositoryInterface;
 use Modules\Geofence\Repositories\Contracts\ThrottleLogRepositoryInterface;
+use Modules\Geofence\Repositories\Contracts\LocationRepositoryInterface;
 
 // Repository implementations
 use Modules\Geofence\Repositories\GeofenceRepository;
 use Modules\Geofence\Repositories\UserLocationRepository;
 use Modules\Geofence\Repositories\ThrottleLogRepository;
+use Modules\Geofence\Repositories\LocationRepository;
 
 // Service interfaces
 use Modules\Geofence\Services\Contracts\RadarServiceInterface;
@@ -29,6 +31,7 @@ use Modules\Geofence\Services\RadarService;
 use Modules\Geofence\Services\ThrottleService;
 use Modules\Geofence\Services\InterestMatchingService;
 use Modules\Geofence\Services\GeofenceNotificationService;
+use Modules\Geofence\Services\BranchGeofenceService;
 
 // Console commands
 use Modules\Geofence\Console\SyncGeofencesCommand;
@@ -85,6 +88,11 @@ class GeofenceServiceProvider extends ServiceProvider
             ThrottleLogRepository::class
         );
 
+        $this->app->bind(
+            LocationRepositoryInterface::class,
+            LocationRepository::class
+        );
+
         // Services
         $this->app->bind(
             RadarServiceInterface::class,
@@ -105,6 +113,9 @@ class GeofenceServiceProvider extends ServiceProvider
             GeofenceNotificationServiceInterface::class,
             GeofenceNotificationService::class
         );
+
+        // BranchGeofenceService (concrete class, no interface needed)
+        $this->app->singleton(BranchGeofenceService::class);
     }
 
     /**

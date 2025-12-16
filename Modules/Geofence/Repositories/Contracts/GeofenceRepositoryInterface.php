@@ -7,6 +7,8 @@ use Modules\Geofence\app\Models\Geofence;
 
 interface GeofenceRepositoryInterface
 {
+    public function find(int $id): ?Geofence;
+
     public function findById(int $id): ?Geofence;
 
     public function findByRadarId(string $radarId): ?Geofence;
@@ -16,6 +18,8 @@ interface GeofenceRepositoryInterface
     public function findByBranchId(int $branchId): ?Geofence;
 
     public function findByBrandId(int $brandId): Collection;
+
+    public function findByLocation(int $locationId): ?Geofence;
 
     public function getAllActive(): Collection;
 

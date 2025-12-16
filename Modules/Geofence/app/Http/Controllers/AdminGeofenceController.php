@@ -57,29 +57,27 @@ class AdminGeofenceController extends Controller
         $status = $request->get('status');
 
         $query = DB::table('geofences')
-            ->leftJoin('brands', 'geofences.brand_id', '=', 'brands.id')
-            ->leftJoin('branches', 'geofences.branch_id', '=', 'branches.id')
+            ->leftJoin('locations', 'geofences.location_id', '=', 'locations.id')
             ->select(
                 'geofences.id',
                 'geofences.name',
-                'geofences.brand_id',
-                'geofences.branch_id',
-                'geofences.lat as latitude',
-                'geofences.lng as longitude',
+                'geofences.tag',
+                'geofences.location_id',
+                'geofences.lat',
+                'geofences.lng',
                 'geofences.radius',
                 'geofences.is_active',
                 'geofences.radar_geofence_id',
-                'geofences.last_synced_at as synced_at',
+                'geofences.last_synced_at',
                 'geofences.created_at',
-                'brands.name as brand_name',
-                'branches.name as branch_name'
+                'locations.name as location_name'
             );
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('geofences.name', 'like', "%{$search}%")
-                    ->orWhere('brands.name', 'like', "%{$search}%")
-                    ->orWhere('branches.name', 'like', "%{$search}%");
+                    ->orWhere('geofences.tag', 'like', "%{$search}%")
+                    ->orWhere('locations.name', 'like', "%{$search}%");
             });
         }
 
@@ -91,21 +89,8 @@ class AdminGeofenceController extends Controller
 
         $geofences = $query->orderByDesc('geofences.created_at')->paginate($perPage);
 
-        // Get brands and branches for the form
-        $brands = DB::table('brands')
-            ->select('id', 'name')
-            ->orderBy('name')
-            ->get();
-
-        $branches = DB::table('branches')
-            ->select('id', 'name', 'brand_id')
-            ->orderBy('name')
-            ->get();
-
         return Inertia::render('Admin/Geofence/Geofences', [
             'geofences' => $geofences,
-            'brands' => $brands,
-            'branches' => $branches,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
@@ -241,8 +226,7 @@ class AdminGeofenceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'brand_id' => 'nullable|exists:brands,id',
-            'branch_id' => 'nullable|exists:branches,id',
+            'tag' => 'nullable|string|max:100',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'radius' => 'required|numeric|min:50|max:5000',
@@ -253,13 +237,37 @@ class AdminGeofenceController extends Controller
         $data = $validated;
         $data['lat'] = $validated['latitude'];
         $data['lng'] = $validated['longitude'];
+        $data['type'] = 'circle';
+        // Ensure tag has a default value
+        if (empty($data['tag'])) {
+            $data['tag'] = 'custom';
+        }
         unset($data['latitude'], $data['longitude']);
 
+        \Illuminate\Support\Facades\Log::info('Creating geofence directly', [
+            'name' => $data['name'],
+            'tag' => $data['tag'],
+            'lat' => $data['lat'],
+            'lng' => $data['lng'],
+        ]);
+
         $geofence = $this->geofenceRepository->create($data);
+
+        \Illuminate\Support\Facades\Log::info('Geofence created, syncing to Radar', [
+            'geofence_id' => $geofence->id,
+            'geofence_name' => $geofence->name,
+            'tag' => $geofence->tag,
+        ]);
 
         // Sync to Radar.io
         $radarSynced = false;
         $radarId = $this->radarService->createGeofence($geofence);
+
+        \Illuminate\Support\Facades\Log::info('Radar sync result for direct geofence', [
+            'geofence_id' => $geofence->id,
+            'radar_id' => $radarId,
+        ]);
+
         if ($radarId) {
             $this->geofenceRepository->update($geofence->id, [
                 'radar_geofence_id' => $radarId,
@@ -288,8 +296,7 @@ class AdminGeofenceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'brand_id' => 'nullable|exists:brands,id',
-            'branch_id' => 'nullable|exists:branches,id',
+            'tag' => 'nullable|string|max:100',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'radius' => 'required|numeric|min:50|max:5000',

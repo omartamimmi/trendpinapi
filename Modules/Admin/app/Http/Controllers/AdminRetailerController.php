@@ -132,9 +132,14 @@ class AdminRetailerController extends Controller
                 ];
             });
 
+        $locations = \Modules\Geofence\app\Models\Location::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'city', 'lat', 'lng']);
+
         return Inertia::render('Admin/RetailerBrands', [
             'retailer' => $retailer,
             'brands' => $brands,
+            'locations' => $locations,
         ]);
     }
 
@@ -160,8 +165,12 @@ class AdminRetailerController extends Controller
             'brands.*.branches.*.location' => 'nullable|string',
             'brands.*.branches.*.lat' => 'nullable|numeric',
             'brands.*.branches.*.lng' => 'nullable|numeric',
+            'brands.*.branches.*.location_id' => 'nullable|integer|exists:locations,id',
             'brands.*.branches.*.status' => 'nullable|in:draft,publish',
         ]);
+
+        // Get geofence service for branch geofence handling
+        $branchGeofenceService = app(\Modules\Geofence\Services\BranchGeofenceService::class);
 
         $brandsData = $request->input('brands', []);
 
@@ -199,6 +208,11 @@ class AdminRetailerController extends Controller
                 $brand = Brand::find($brandData['id']);
                 if ($brand && $brand->create_user == $retailerId) {
                     $brand->update($brandFields);
+                    // Remove geofences for existing branches before deleting
+                    $existingBranches = Branch::where('brand_id', $brand->id)->get();
+                    foreach ($existingBranches as $existingBranch) {
+                        $branchGeofenceService->removeBranchGeofence($existingBranch);
+                    }
                     // Delete existing branches and recreate
                     Branch::where('brand_id', $brand->id)->delete();
                 }
@@ -228,14 +242,21 @@ class AdminRetailerController extends Controller
                 if (!empty($brandData['branches'])) {
                     foreach ($brandData['branches'] as $branchData) {
                         if (!empty($branchData['name']) || !empty($branchData['location'])) {
-                            Branch::create([
+                            $branch = Branch::create([
                                 'brand_id' => $brand->id,
                                 'name' => $branchData['name'] ?? 'Branch',
                                 'location' => $branchData['location'] ?? null,
+                                'location_id' => $branchData['location_id'] ?? null,
                                 'lat' => $branchData['lat'] ?? null,
                                 'lng' => $branchData['lng'] ?? null,
                                 'status' => $branchData['status'] ?? 'draft',
                             ]);
+
+                            // Handle geofence creation/linking
+                            $branchGeofenceService->handleBranchGeofence(
+                                $branch,
+                                $branchData['location_id'] ?? null
+                            );
                         }
                     }
                 }
@@ -272,10 +293,15 @@ class AdminRetailerController extends Controller
             ])->toArray(),
         ];
 
+        $locations = \Modules\Geofence\app\Models\Location::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'city', 'lat', 'lng']);
+
         return Inertia::render('Admin/BrandEdit', [
             'brand' => $brandData,
             'retailer' => $retailer,
             'categories' => $categories,
+            'locations' => $locations,
         ]);
     }
 
@@ -341,18 +367,34 @@ class AdminRetailerController extends Controller
         }
 
         if ($request->has('branches')) {
+            // Get geofence service for branch geofence handling
+            $branchGeofenceService = app(\Modules\Geofence\Services\BranchGeofenceService::class);
+
+            // Remove geofences for existing branches before deleting
+            $existingBranches = Branch::where('brand_id', $brand->id)->get();
+            foreach ($existingBranches as $existingBranch) {
+                $branchGeofenceService->removeBranchGeofence($existingBranch);
+            }
+
             Branch::where('brand_id', $brand->id)->delete();
 
             foreach ($request->branches as $branchData) {
                 if (!empty($branchData['name']) || !empty($branchData['location'])) {
-                    Branch::create([
+                    $branch = Branch::create([
                         'brand_id' => $brand->id,
                         'name' => $branchData['name'] ?? 'Branch',
                         'location' => $branchData['location'] ?? null,
+                        'location_id' => $branchData['location_id'] ?? null,
                         'lat' => $branchData['lat'] ?? null,
                         'lng' => $branchData['lng'] ?? null,
                         'status' => $branchData['status'] ?? 'draft',
                     ]);
+
+                    // Handle geofence creation/linking
+                    $branchGeofenceService->handleBranchGeofence(
+                        $branch,
+                        $branchData['location_id'] ?? null
+                    );
                 }
             }
         }

@@ -100,6 +100,17 @@ class RadarEventDTO
         return $this->metadata['geofence_id'] ?? null;
     }
 
+    public function getLocationId(): ?int
+    {
+        // Try to extract from externalId first (format: location_123)
+        if ($this->externalId && str_starts_with($this->externalId, 'location_')) {
+            return (int) str_replace('location_', '', $this->externalId);
+        }
+
+        // Try from metadata
+        return $this->metadata['location_id'] ?? null;
+    }
+
     public function toArray(): array
     {
         return [

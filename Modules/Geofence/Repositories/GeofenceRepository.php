@@ -38,6 +38,16 @@ class GeofenceRepository implements GeofenceRepositoryInterface
         return $this->model->where('brand_id', $brandId)->get();
     }
 
+    public function findByLocation(int $locationId): ?Geofence
+    {
+        return $this->model->where('location_id', $locationId)->first();
+    }
+
+    public function find(int $id): ?Geofence
+    {
+        return $this->findById($id);
+    }
+
     public function getAllActive(): Collection
     {
         return $this->model->active()->get();

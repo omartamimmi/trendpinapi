@@ -163,12 +163,13 @@ function LocationSearch({ onSelect }) {
 }
 
 // Location Picker Modal
-function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }) {
+function LocationPickerModal({ isOpen, onClose, onSave, initialLocation, availableLocations = [] }) {
     const [location, setLocation] = useState(initialLocation || {
         name: '',
         location: '',
         lat: 31.963158,
-        lng: 35.930359
+        lng: 35.930359,
+        location_id: null
     });
     const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -177,6 +178,23 @@ function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }) {
             setLocation(initialLocation);
         }
     }, [initialLocation]);
+
+    const handleAreaChange = (areaId) => {
+        const selectedArea = availableLocations.find(a => a.id === parseInt(areaId));
+        if (selectedArea) {
+            setLocation({
+                ...location,
+                location_id: selectedArea.id,
+                lat: parseFloat(selectedArea.lat) || 31.963158,
+                lng: parseFloat(selectedArea.lng) || 35.930359,
+            });
+        } else {
+            setLocation({
+                ...location,
+                location_id: null,
+            });
+        }
+    };
 
     const handleLatChange = (value) => {
         const lat = parseFloat(value);
@@ -209,19 +227,48 @@ function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }) {
                     </div>
                 </div>
                 <div className="p-6 space-y-4">
-                    <LocationSearch onSelect={(loc) => setLocation({ ...location, ...loc })} />
+                    {/* Area/Location Selector */}
+                    {availableLocations.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-2">
+                                Is this branch inside a mall or shopping area?
+                            </label>
+                            <select
+                                value={location.location_id || ''}
+                                onChange={(e) => handleAreaChange(e.target.value)}
+                                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-gray-700 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                            >
+                                <option value="">No, standalone location</option>
+                                {availableLocations.map((area) => (
+                                    <option key={area.id} value={area.id}>
+                                        {area.name} {area.city ? `(${area.city})` : ''} - {area.type}
+                                    </option>
+                                ))}
+                            </select>
+                            {location.location_id && (
+                                <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Branch will use the area's geofence for notifications
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    <LocationSearch onSelect={(loc) => setLocation({ ...location, ...loc, location_id: location.location_id })} />
                     <div className="h-[250px] rounded-xl overflow-hidden border border-gray-200 relative z-0">
                         <MapContainer
-                            center={[location.lat, location.lng]}
+                            center={[parseFloat(location.lat) || 31.963158, parseFloat(location.lng) || 35.930359]}
                             zoom={13}
                             style={{ height: '100%', width: '100%' }}
                             zoomControl={false}
                         >
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <ZoomControl position="bottomright" />
-                            <Marker position={[location.lat, location.lng]} />
-                            <MapController center={[location.lat, location.lng]} />
-                            <MapClickHandler onLocationSelect={(loc) => setLocation({ ...location, ...loc })} />
+                            <Marker position={[parseFloat(location.lat) || 31.963158, parseFloat(location.lng) || 35.930359]} />
+                            <MapController center={[parseFloat(location.lat) || 31.963158, parseFloat(location.lng) || 35.930359]} />
+                            <MapClickHandler onLocationSelect={(loc) => setLocation({ ...location, ...loc, location_id: location.location_id })} />
                         </MapContainer>
                     </div>
 
@@ -305,7 +352,7 @@ function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }) {
     );
 }
 
-export default function BrandEdit({ brand, categories = [] }) {
+export default function BrandEdit({ brand, categories = [], locations = [] }) {
     const toast = useToast();
     const form = useForm({
         name: brand.name || '',
@@ -323,8 +370,9 @@ export default function BrandEdit({ brand, categories = [] }) {
             location: b.location || '',
             lat: b.lat || null,
             lng: b.lng || null,
+            location_id: b.location_id || null,
             status: b.status || 'draft'
-        })) || [{ name: '', location: '', lat: null, lng: null, status: 'draft' }],
+        })) || [{ name: '', location: '', lat: null, lng: null, location_id: null, status: 'draft' }],
         category_ids: brand.categories ? brand.categories.map(c => c.id) : [],
         status: brand.status || 'draft',
     });
@@ -333,12 +381,12 @@ export default function BrandEdit({ brand, categories = [] }) {
     const [error, setError] = useState(null);
 
     const addBranch = () => {
-        form.setData('branches', [...form.data.branches, { name: '', location: '', lat: null, lng: null, status: 'draft' }]);
+        form.setData('branches', [...form.data.branches, { name: '', location: '', lat: null, lng: null, location_id: null, status: 'draft' }]);
     };
 
     const removeBranch = (index) => {
         const branches = form.data.branches.filter((_, i) => i !== index);
-        form.setData('branches', branches.length ? branches : [{ name: '', location: '', lat: null, lng: null, status: 'draft' }]);
+        form.setData('branches', branches.length ? branches : [{ name: '', location: '', lat: null, lng: null, location_id: null, status: 'draft' }]);
     };
 
     const updateBranch = (index, data) => {
@@ -748,6 +796,14 @@ export default function BrandEdit({ brand, categories = [] }) {
                                                     <p className="font-medium text-gray-800">
                                                         {branch.name || `Branch ${index + 1}`}
                                                     </p>
+                                                    {branch.location_id && locations?.find(l => l.id === branch.location_id) && (
+                                                        <p className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                            </svg>
+                                                            {locations?.find(l => l.id === branch.location_id)?.name}
+                                                        </p>
+                                                    )}
                                                     {branch.location ? (
                                                         <p className="text-sm text-gray-500 line-clamp-1">{branch.location}</p>
                                                     ) : (
@@ -836,11 +892,13 @@ export default function BrandEdit({ brand, categories = [] }) {
                     isOpen={locationModal.open}
                     onClose={() => setLocationModal({ open: false, branchIndex: null })}
                     onSave={handleLocationSave}
+                    availableLocations={locations}
                     initialLocation={locationModal.branchIndex !== null ? {
                         name: form.data.branches[locationModal.branchIndex]?.name || '',
                         location: form.data.branches[locationModal.branchIndex]?.location || '',
                         lat: form.data.branches[locationModal.branchIndex]?.lat ? parseFloat(form.data.branches[locationModal.branchIndex].lat) : 31.963158,
-                        lng: form.data.branches[locationModal.branchIndex]?.lng ? parseFloat(form.data.branches[locationModal.branchIndex].lng) : 35.930359
+                        lng: form.data.branches[locationModal.branchIndex]?.lng ? parseFloat(form.data.branches[locationModal.branchIndex].lng) : 35.930359,
+                        location_id: form.data.branches[locationModal.branchIndex]?.location_id || null
                     } : null}
                 />
             </div>

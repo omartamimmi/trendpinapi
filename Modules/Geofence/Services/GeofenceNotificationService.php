@@ -59,14 +59,21 @@ class GeofenceNotificationService implements GeofenceNotificationServiceInterfac
         $branchId = $event->getBranchId();
         $brandId = $event->getBrandId();
         $geofenceDbId = $event->getGeofenceDbId();
+        $locationId = $event->getLocationId();
 
-        // If we have a geofence DB ID, get brand from there
-        if ($geofenceDbId && !$brandId) {
+        // If we have a geofence DB ID, get location/brand from there
+        if ($geofenceDbId && !$brandId && !$locationId) {
             $geofence = $this->geofenceRepository->find($geofenceDbId);
             if ($geofence) {
+                $locationId = $geofence->location_id;
                 $brandId = $geofence->brand_id;
                 $branchId = $branchId ?: $geofence->branch_id;
             }
+        }
+
+        // If this is a location-based geofence, handle differently
+        if ($locationId) {
+            return $this->processLocationEvent($userId, $locationId, $event, $geofenceDbId);
         }
 
         // If we have branch but no brand, get brand from branch
@@ -118,6 +125,123 @@ class GeofenceNotificationService implements GeofenceNotificationServiceInterfac
             ]);
 
             $result['notification_sent'] = true;
+        } else {
+            $result['reason'] = 'notification_send_failed';
+        }
+
+        return $result;
+    }
+
+    /**
+     * Process a location-based geofence event (mall, shopping district, etc.)
+     * Finds all branches at the location and sends the best matching offer
+     */
+    private function processLocationEvent(int $userId, int $locationId, RadarEventDTO $event, ?int $geofenceDbId): array
+    {
+        $result = [
+            'processed' => true,
+            'notification_sent' => false,
+            'reason' => null,
+            'location_id' => $locationId,
+        ];
+
+        // Get all branches at this location
+        $branches = DB::table('branches')
+            ->where('location_id', $locationId)
+            ->where('status', 'publish')
+            ->select('id', 'brand_id', 'name')
+            ->get();
+
+        if ($branches->isEmpty()) {
+            $result['reason'] = 'no_branches_at_location';
+            return $result;
+        }
+
+        // Get unique brand IDs
+        $brandIds = $branches->pluck('brand_id')->unique()->filter()->values()->toArray();
+
+        if (empty($brandIds)) {
+            $result['reason'] = 'no_brands_at_location';
+            return $result;
+        }
+
+        // Check user preferences
+        $user = DB::table('users')->find($userId);
+        if (!$user) {
+            $result['reason'] = 'user_not_found';
+            return $result;
+        }
+
+        if (isset($user->notifications_enabled) && !$user->notifications_enabled) {
+            $result['reason'] = 'notifications_disabled';
+            return $result;
+        }
+
+        // Find matching brands based on user interests
+        $matchingBrands = [];
+        foreach ($brandIds as $brandId) {
+            if ($this->interestMatchingService->userMatchesBrand($userId, $brandId)) {
+                $matchingBrands[] = $brandId;
+            }
+        }
+
+        if (empty($matchingBrands)) {
+            $result['reason'] = 'no_interest_match_at_location';
+            return $result;
+        }
+
+        // Find best offer from all matching brands
+        $bestOffer = null;
+        $bestBrandId = null;
+        $bestBranchId = null;
+
+        foreach ($matchingBrands as $brandId) {
+            // Check throttling for this brand
+            $throttleReason = $this->throttleService->canSendNotification($userId, $brandId, null, null);
+            if ($throttleReason) {
+                continue; // Skip throttled brands
+            }
+
+            $offer = $this->interestMatchingService->getBestMatchingOffer($userId, $brandId);
+            if ($offer) {
+                // Compare offers - prefer higher discount value
+                if (!$bestOffer || ($offer->discount_value ?? 0) > ($bestOffer->discount_value ?? 0)) {
+                    $bestOffer = $offer;
+                    $bestBrandId = $brandId;
+                    // Find branch for this brand at this location
+                    $branch = $branches->firstWhere('brand_id', $brandId);
+                    $bestBranchId = $branch ? $branch->id : null;
+                }
+            }
+        }
+
+        if (!$bestOffer) {
+            $result['reason'] = 'no_matching_offers_at_location';
+            return $result;
+        }
+
+        // Send notification
+        $sent = $this->sendOfferNotification($userId, $bestOffer, $bestBranchId ?? 0);
+
+        if ($sent) {
+            // Log the notification
+            $this->throttleLogRepository->create([
+                'user_id' => $userId,
+                'brand_id' => $bestBrandId,
+                'branch_id' => $bestBranchId,
+                'offer_id' => $bestOffer->id,
+                'geofence_id' => $geofenceDbId,
+                'event_type' => 'entry',
+                'latitude' => $event->lat,
+                'longitude' => $event->lng,
+                'radar_event_id' => $event->eventId,
+            ]);
+
+            $result['notification_sent'] = true;
+            $result['brand_id'] = $bestBrandId;
+            $result['offer_id'] = $bestOffer->id;
+            $result['branches_at_location'] = $branches->count();
+            $result['matching_brands'] = count($matchingBrands);
         } else {
             $result['reason'] = 'notification_send_failed';
         }

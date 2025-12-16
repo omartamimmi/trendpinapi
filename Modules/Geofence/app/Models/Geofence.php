@@ -13,6 +13,7 @@ class Geofence extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'location_id',
         'radar_geofence_id',
         'external_id',
         'tag',
@@ -41,6 +42,14 @@ class Geofence extends Model
         'synced_to_radar' => 'boolean',
         'last_synced_at' => 'datetime',
     ];
+
+    /**
+     * Get the location associated with this geofence
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
 
     /**
      * Get the branch associated with this geofence
@@ -87,6 +96,10 @@ class Geofence extends Model
      */
     public function getRadarExternalId(): string
     {
+        if ($this->location_id) {
+            return "location_{$this->location_id}";
+        }
+
         if ($this->branch_id) {
             return "branch_{$this->branch_id}";
         }
@@ -123,6 +136,7 @@ class Geofence extends Model
             'enabled' => $this->is_active,
             'metadata' => array_merge($this->metadata ?? [], [
                 'geofence_id' => $this->id,
+                'location_id' => $this->location_id,
                 'branch_id' => $this->branch_id,
                 'brand_id' => $this->brand_id,
             ]),

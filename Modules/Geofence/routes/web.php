@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Geofence\app\Http\Controllers\AdminGeofenceController;
+use Modules\Geofence\app\Http\Controllers\AdminLocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,4 +39,15 @@ Route::prefix('admin/geofence')->middleware(['auth', 'role:admin'])->name('admin
     Route::get('/test', [AdminGeofenceController::class, 'test'])->name('test');
     Route::post('/test/simulate', [AdminGeofenceController::class, 'simulateEvent'])->name('test.simulate');
     Route::post('/test/eligibility', [AdminGeofenceController::class, 'checkEligibility'])->name('test.eligibility');
+
+    // Locations CRUD
+    Route::get('/locations', [AdminLocationController::class, 'index'])->name('locations');
+    Route::get('/locations/all-branches', [AdminLocationController::class, 'allBranches'])->name('locations.all-branches');
+    Route::get('/locations/{id}', [AdminLocationController::class, 'show'])->name('locations.show');
+    Route::post('/locations', [AdminLocationController::class, 'store'])->name('locations.store');
+    Route::put('/locations/{id}', [AdminLocationController::class, 'update'])->name('locations.update');
+    Route::delete('/locations/{id}', [AdminLocationController::class, 'destroy'])->name('locations.destroy');
+    Route::get('/locations/{id}/branches', [AdminLocationController::class, 'branches'])->name('locations.branches');
+    Route::post('/locations/{id}/branches', [AdminLocationController::class, 'assignBranches'])->name('locations.assign-branches');
+    Route::post('/locations/{id}/sync', [AdminLocationController::class, 'sync'])->name('locations.sync');
 });

@@ -68,18 +68,35 @@ class RadarService implements RadarServiceInterface
                 'enabled' => $geofence->is_active,
                 'metadata' => [
                     'geofence_id' => $geofence->id,
+                    'location_id' => $geofence->location_id,
                     'brand_id' => $geofence->brand_id,
                     'branch_id' => $geofence->branch_id,
                 ],
             ]);
 
+            Log::info('Radar geofence creation request', [
+                'geofence_id' => $geofence->id,
+                'name' => $geofence->name,
+                'tag' => $this->getGeofenceTag($geofence),
+                'externalId' => $this->getExternalId($geofence),
+            ]);
+
             if ($response->successful()) {
                 $data = $response->json();
-                return $data['geofence']['_id'] ?? null;
+                $radarId = $data['geofence']['_id'] ?? null;
+
+                Log::info('Radar geofence creation successful', [
+                    'geofence_id' => $geofence->id,
+                    'radar_id' => $radarId,
+                    'response_status' => $response->status(),
+                ]);
+
+                return $radarId;
             }
 
             Log::error('Radar geofence creation failed', [
                 'geofence_id' => $geofence->id,
+                'response_status' => $response->status(),
                 'response' => $response->json(),
             ]);
 
@@ -123,9 +140,17 @@ class RadarService implements RadarServiceInterface
                 'enabled' => $geofence->is_active,
                 'metadata' => [
                     'geofence_id' => $geofence->id,
+                    'location_id' => $geofence->location_id,
                     'brand_id' => $geofence->brand_id,
                     'branch_id' => $geofence->branch_id,
                 ],
+            ]);
+
+            Log::info('Radar geofence update request', [
+                'geofence_id' => $geofence->id,
+                'name' => $geofence->name,
+                'tag' => $tag,
+                'externalId' => $externalId,
             ]);
 
             if ($response->successful()) {
@@ -292,6 +317,14 @@ class RadarService implements RadarServiceInterface
      */
     private function getGeofenceTag(Geofence $geofence): string
     {
+        // Use stored tag if available
+        if (!empty($geofence->tag)) {
+            return $geofence->tag;
+        }
+
+        if ($geofence->location_id) {
+            return 'location';
+        }
         if ($geofence->branch_id) {
             return 'branch';
         }
@@ -306,6 +339,9 @@ class RadarService implements RadarServiceInterface
      */
     private function getExternalId(Geofence $geofence): string
     {
+        if ($geofence->location_id) {
+            return "location_{$geofence->location_id}";
+        }
         if ($geofence->branch_id) {
             return "branch_{$geofence->branch_id}";
         }

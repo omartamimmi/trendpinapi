@@ -6,28 +6,16 @@ import axios from 'axios';
 interface Geofence {
     id: number;
     name: string;
-    brand_id: number | null;
-    branch_id: number | null;
-    brand_name: string | null;
-    branch_name: string | null;
-    latitude: number;
-    longitude: number;
+    tag: string | null;
+    location_id: number | null;
+    location_name: string | null;
+    lat: number;
+    lng: number;
     radius: number;
     is_active: boolean;
     radar_geofence_id: string | null;
-    synced_at: string | null;
+    last_synced_at: string | null;
     created_at: string;
-}
-
-interface Brand {
-    id: number;
-    name: string;
-}
-
-interface Branch {
-    id: number;
-    name: string;
-    brand_id: number;
 }
 
 interface Pagination {
@@ -40,8 +28,6 @@ interface Pagination {
 
 interface Props {
     geofences: Pagination;
-    brands: Brand[];
-    branches: Branch[];
     filters: {
         search: string | null;
         status: string | null;
@@ -85,7 +71,6 @@ const XIcon = () => (
     </svg>
 );
 
-// Location Icon
 const LocationIcon = () => (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -98,21 +83,16 @@ const GeofenceModal = ({
     isOpen,
     onClose,
     geofence,
-    brands,
-    branches,
     onSave
 }: {
     isOpen: boolean;
     onClose: () => void;
     geofence: Geofence | null;
-    brands: Brand[];
-    branches: Branch[];
     onSave: (data: any) => void;
 }) => {
     const [formData, setFormData] = useState({
         name: '',
-        brand_id: '' as number | '',
-        branch_id: '' as number | '',
+        tag: '',
         latitude: '',
         longitude: '',
         radius: 200,
@@ -122,26 +102,19 @@ const GeofenceModal = ({
     const [gettingLocation, setGettingLocation] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
 
-    // Reset form when geofence changes or modal opens
     useEffect(() => {
         if (isOpen) {
             setFormData({
                 name: geofence?.name || '',
-                brand_id: geofence?.brand_id || '',
-                branch_id: geofence?.branch_id || '',
-                latitude: geofence?.latitude?.toString() || '',
-                longitude: geofence?.longitude?.toString() || '',
+                tag: geofence?.tag || '',
+                latitude: geofence?.lat?.toString() || '',
+                longitude: geofence?.lng?.toString() || '',
                 radius: geofence?.radius || 200,
                 is_active: geofence?.is_active ?? true,
             });
             setLocationError(null);
         }
     }, [isOpen, geofence]);
-
-    // Filter branches based on selected brand
-    const filteredBranches = formData.brand_id
-        ? branches.filter(b => b.brand_id === formData.brand_id)
-        : branches;
 
     if (!isOpen) return null;
 
@@ -150,14 +123,6 @@ const GeofenceModal = ({
         setSaving(true);
         await onSave(formData);
         setSaving(false);
-    };
-
-    const handleBrandChange = (brandId: number | '') => {
-        setFormData(prev => ({
-            ...prev,
-            brand_id: brandId,
-            branch_id: '', // Reset branch when brand changes
-        }));
     };
 
     const handleGetCurrentLocation = () => {
@@ -182,30 +147,26 @@ const GeofenceModal = ({
                 setGettingLocation(false);
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        setLocationError('Location permission denied. Please allow location access.');
+                        setLocationError('Location permission denied');
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        setLocationError('Location information unavailable.');
+                        setLocationError('Location unavailable');
                         break;
                     case error.TIMEOUT:
-                        setLocationError('Location request timed out.');
+                        setLocationError('Location request timed out');
                         break;
                     default:
-                        setLocationError('An error occurred getting your location.');
+                        setLocationError('Error getting location');
                 }
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
+                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-900">
                         {geofence ? 'Edit Geofence' : 'Create Geofence'}
                     </h3>
@@ -221,52 +182,26 @@ const GeofenceModal = ({
                             value={formData.name}
                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                             required
-                            placeholder="e.g., Mall of Emirates Entrance"
+                            placeholder="e.g., Mall of Emirates"
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                         />
                     </div>
 
-                    {/* Brand Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
-                        <select
-                            value={formData.brand_id}
-                            onChange={(e) => handleBrandChange(e.target.value ? parseInt(e.target.value) : '')}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tag</label>
+                        <input
+                            type="text"
+                            value={formData.tag}
+                            onChange={(e) => setFormData(prev => ({ ...prev, tag: e.target.value }))}
+                            placeholder="e.g., shopping, downtown, mall"
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        >
-                            <option value="">-- Select Brand (Optional) --</option>
-                            {brands.map((brand) => (
-                                <option key={brand.id} value={brand.id}>
-                                    {brand.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Branch Selection */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                        <select
-                            value={formData.branch_id}
-                            onChange={(e) => setFormData(prev => ({ ...prev, branch_id: e.target.value ? parseInt(e.target.value) : '' }))}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                            disabled={!formData.brand_id && filteredBranches.length === 0}
-                        >
-                            <option value="">-- Select Branch (Optional) --</option>
-                            {filteredBranches.map((branch) => (
-                                <option key={branch.id} value={branch.id}>
-                                    {branch.name}
-                                </option>
-                            ))}
-                        </select>
-                        {formData.brand_id && filteredBranches.length === 0 && (
-                            <p className="mt-1 text-xs text-amber-600">No branches found for this brand</p>
-                        )}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Optional tag for categorizing geofences</p>
                     </div>
 
                     <div>
                         <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-medium text-gray-700">Location *</label>
+                            <label className="block text-sm font-medium text-gray-700">Coordinates *</label>
                             <button
                                 type="button"
                                 onClick={handleGetCurrentLocation}
@@ -274,35 +209,31 @@ const GeofenceModal = ({
                                 className="flex items-center gap-1 text-sm text-pink-600 hover:text-pink-700 disabled:opacity-50"
                             >
                                 <LocationIcon />
-                                {gettingLocation ? 'Getting location...' : 'Use My Location'}
+                                {gettingLocation ? 'Getting...' : 'Use My Location'}
                             </button>
                         </div>
                         {locationError && (
                             <p className="text-xs text-red-600 mb-2">{locationError}</p>
                         )}
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={formData.latitude}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
-                                    placeholder="Latitude"
-                                    required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={formData.longitude}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
-                                    placeholder="Longitude"
-                                    required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                />
-                            </div>
+                            <input
+                                type="number"
+                                step="any"
+                                value={formData.latitude}
+                                onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                                placeholder="Latitude"
+                                required
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            />
+                            <input
+                                type="number"
+                                step="any"
+                                value={formData.longitude}
+                                onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                                placeholder="Longitude"
+                                required
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            />
                         </div>
                     </div>
 
@@ -353,7 +284,7 @@ const GeofenceModal = ({
     );
 };
 
-export default function GeofencesList({ geofences, brands = [], branches = [], filters }: Props) {
+export default function GeofencesList({ geofences, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const [modalOpen, setModalOpen] = useState(false);
@@ -415,7 +346,7 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Geofences</h1>
                         <p className="text-sm text-gray-500 mt-1">
-                            Manage location-based notification zones
+                            Manage geofence zones for location-based notifications
                         </p>
                     </div>
                     <button
@@ -425,6 +356,14 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                         <PlusIcon />
                         Add Geofence
                     </button>
+                </div>
+
+                {/* Info Banner */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-blue-800">
+                        <strong>Tip:</strong> Geofences are automatically created when you add a Location (mall, shopping district, etc.).
+                        Use the <Link href="/admin/geofence/locations" className="underline font-medium">Locations</Link> page to manage areas with multiple branches.
+                    </p>
                 </div>
 
                 {/* Filters */}
@@ -474,12 +413,12 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                                     Name
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Brand / Branch
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Location
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Coordinates
+                                </th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Radius
                                 </th>
                                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -498,29 +437,31 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                                 <tr key={geofence.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="font-medium text-gray-900">{geofence.name}</div>
-                                        <div className="text-xs text-gray-500">
-                                            Created {formatDate(geofence.created_at)}
-                                        </div>
+                                        {geofence.tag && (
+                                            <span className="inline-flex px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded mt-1">
+                                                {geofence.tag}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">
-                                            {geofence.brand_name || '-'}
-                                        </div>
-                                        {geofence.branch_name && (
-                                            <div className="text-xs text-gray-500">
-                                                {geofence.branch_name}
-                                            </div>
+                                        {geofence.location_name ? (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-full">
+                                                <LocationIcon />
+                                                {geofence.location_name}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-600">
-                                            {parseFloat(String(geofence.latitude)).toFixed(6)},
+                                            {parseFloat(String(geofence.lat)).toFixed(6)},
                                         </div>
                                         <div className="text-sm text-gray-600">
-                                            {parseFloat(String(geofence.longitude)).toFixed(6)}
+                                            {parseFloat(String(geofence.lng)).toFixed(6)}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">
                                         <span className="text-sm text-gray-900">{geofence.radius}m</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -534,9 +475,13 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                         {geofence.radar_geofence_id ? (
-                                            <span className="text-green-500"><CheckIcon /></span>
+                                            <span className="text-green-500" title="Synced to Radar.io">
+                                                <CheckIcon />
+                                            </span>
                                         ) : (
-                                            <span className="text-gray-400"><XIcon /></span>
+                                            <span className="text-gray-400" title="Not synced">
+                                                <XIcon />
+                                            </span>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -544,12 +489,14 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                                             <button
                                                 onClick={() => handleEdit(geofence)}
                                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                                                title="Edit"
                                             >
                                                 <EditIcon />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(geofence.id)}
                                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                title="Delete"
                                             >
                                                 <TrashIcon />
                                             </button>
@@ -562,7 +509,7 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
 
                     {geofences.data.length === 0 && (
                         <div className="px-6 py-12 text-center text-gray-500">
-                            No geofences found
+                            No geofences found. Create a Location to automatically generate geofences.
                         </div>
                     )}
 
@@ -601,8 +548,6 @@ export default function GeofencesList({ geofences, brands = [], branches = [], f
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 geofence={selectedGeofence}
-                brands={brands}
-                branches={branches}
                 onSave={handleSave}
             />
         </AdminLayout>

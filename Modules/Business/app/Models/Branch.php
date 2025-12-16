@@ -4,7 +4,7 @@ namespace Modules\Business\app\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Business\Database\Factories\BranchFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Branch extends Model
 {
@@ -15,6 +15,7 @@ class Branch extends Model
      */
     protected $fillable = [
         'brand_id',
+        'location_id',
         'name',
         'location',
         'lat',
@@ -30,13 +31,18 @@ class Branch extends Model
         'is_main' => 'boolean',
     ];
 
-    // protected static function newFactory(): BranchFactory
-    // {
-    //     // return BranchFactory::new();
-    // }
-
-    public function brand() {
+    public function brand(): BelongsTo
+    {
         return $this->belongsTo(Brand::class);
     }
 
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Geofence\app\Models\Location::class, 'location_id');
+    }
+
+    public function geofence(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Geofence\app\Models\Geofence::class, 'id', 'branch_id');
+    }
 }
