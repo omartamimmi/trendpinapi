@@ -118,13 +118,22 @@ class AuthController extends Controller
     public function saveToken(StoreUserFcmRequest $request, UserService $userService)
     {
         try {
+            // Get location from IP as fallback
+            $location = getLocation();
+
+            // Override with device location if provided
+            if ($request->has('lat') && $request->has('lng')) {
+                $location['ip_lat'] = $request->validated('lat');
+                $location['ip_lng'] = $request->validated('lng');
+            }
+
             $userService
                 ->setAuthUser(Auth::user())
-                ->setInputs(getLocation())
+                ->setInputs($location)
                 ->setInput('fcm_token', $request->validated('token'))
                 ->saveFcmToken();
 
-            return response()->json(['token saved successfully.'])->setStatusCode(200);
+            return response()->json(['message' => 'Token saved successfully.'])->setStatusCode(200);
         } catch (Exception $e) {
             return $this->getErrorResponse($e->getMessage(), $e->getCode());
         }
