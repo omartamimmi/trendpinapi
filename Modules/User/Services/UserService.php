@@ -137,25 +137,33 @@ class UserService extends Service
     public function saveFcmToken():static
     {
         $this->collectOutput('user', $user);
+
+        if (empty($user)) {
+            return $this;
+        }
+
+        $fcmToken = $this->getInput('fcm_token');
+
+        // Update user's fcm_token
+        $this->userRepository->update($user->id, ['fcm_token' => $fcmToken]);
+
+        // Prepare data for user_locations table
         $data = [
-            'lat'=>$this->getInput('ip_lat'),
-            'lng'=>$this->getInput('ip_lng'),
-            'fcm_token'=>$this->getInput('fcm_token'),
-            'country'=>$this->getInput('country'),
-            'city'=>$this->getInput('city'),
-            'countryCode'=>$this->getInput('countryCode')
+            'user_id' => $user->id,
+            'lat' => $this->getInput('ip_lat') ?? 0,
+            'lng' => $this->getInput('ip_lng') ?? 0,
+            'fcm_token' => $fcmToken,
         ];
 
-        if(!empty($user)){
-            $data['user_id'] =$user->id;
-        }
-        $check = $this->userRepository->findFcmToken($this->getInput('fcm_token'));
-        $this->userRepository->update($user->id,['fcm_token'=>$this->getInput('fcm_token')]);
+        // Check if user already has a location record
+        $existingLocation = $this->userRepository->findUserLocation($user->id);
 
-        if(empty($check)){
+        if (empty($existingLocation)) {
+            // Create new record
             $this->userRepository->saveFcmToken($data);
-        }else{
-            $this->userRepository->updateFcmToken($check->id, $data);
+        } else {
+            // Update existing record
+            $this->userRepository->updateFcmToken($existingLocation->id, $data);
         }
 
         return $this;

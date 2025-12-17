@@ -602,6 +602,89 @@ class AdminGeofenceController extends Controller
     }
 
     /**
+     * Test FCM configuration (dry run - no device needed)
+     */
+    public function testFcm(): JsonResponse
+    {
+        $fcmService = new \Modules\Geofence\Services\FcmService();
+        $dryRunResult = $fcmService->dryRunTest();
+
+        return response()->json([
+            'success' => $dryRunResult['success'],
+            'message' => $dryRunResult['message'],
+            'configuration' => $dryRunResult['details'],
+            'instructions' => $this->getFcmSetupInstructions($dryRunResult['details']),
+        ]);
+    }
+
+    /**
+     * Send a test FCM notification
+     */
+    public function sendTestNotification(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'title' => 'nullable|string|max:255',
+            'body' => 'nullable|string|max:500',
+        ]);
+
+        $user = DB::table('users')
+            ->select('id', 'name', 'fcm_token')
+            ->find($validated['user_id']);
+
+        if (!$user->fcm_token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User does not have an FCM token',
+            ], 400);
+        }
+
+        $fcmService = new \Modules\Geofence\Services\FcmService();
+        $sent = $fcmService->send($user->fcm_token, [
+            'title' => $validated['title'] ?? 'Test Notification',
+            'body' => $validated['body'] ?? 'This is a test notification from TrendPin',
+            'data' => [
+                'type' => 'test',
+                'timestamp' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return response()->json([
+            'success' => $sent,
+            'message' => $sent ? 'Test notification sent successfully' : 'Failed to send notification. Check logs for details.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'has_fcm_token' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * Get FCM setup instructions based on current configuration
+     */
+    private function getFcmSetupInstructions(array $config): array
+    {
+        $instructions = [];
+
+        if ($config['recommended_api'] === 'none') {
+            $instructions[] = 'FCM is not configured. Please set up Firebase credentials.';
+            $instructions[] = 'For FCM v1 API (recommended):';
+            $instructions[] = '  1. Set FIREBASE_PROJECT_ID in .env';
+            $instructions[] = '  2. Either set FIREBASE_CREDENTIALS_PATH to your service account JSON file path';
+            $instructions[] = '  3. Or set FIREBASE_CREDENTIALS_JSON with the JSON content';
+            $instructions[] = 'For Legacy API (simpler but deprecated):';
+            $instructions[] = '  1. Set FIREBASE_SERVER_KEY in .env';
+        } elseif ($config['recommended_api'] === 'legacy') {
+            $instructions[] = 'Using Legacy FCM API. Consider upgrading to v1 API for better security.';
+        } else {
+            $instructions[] = 'FCM v1 API is configured and ready to use.';
+        }
+
+        return $instructions;
+    }
+
+    /**
      * Get configuration from database
      */
     private function getConfigFromDatabase(): array

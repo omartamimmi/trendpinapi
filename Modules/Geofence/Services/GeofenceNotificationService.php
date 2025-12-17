@@ -11,17 +11,20 @@ use Modules\Geofence\Repositories\Contracts\ThrottleLogRepositoryInterface;
 use Modules\Geofence\DTO\RadarEventDTO;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 
 class GeofenceNotificationService implements GeofenceNotificationServiceInterface
 {
+    private FcmService $fcmService;
+
     public function __construct(
         private ThrottleServiceInterface $throttleService,
         private InterestMatchingServiceInterface $interestMatchingService,
         private GeofenceRepositoryInterface $geofenceRepository,
         private UserLocationRepositoryInterface $userLocationRepository,
         private ThrottleLogRepositoryInterface $throttleLogRepository,
-    ) {}
+    ) {
+        $this->fcmService = new FcmService();
+    }
 
     /**
      * Process a geofence event from Radar.io
@@ -329,28 +332,35 @@ class GeofenceNotificationService implements GeofenceNotificationServiceInterfac
                 ->select('id', 'name', 'logo')
                 ->find($offer->brand_id);
 
+            // Build notification content using templates or fallback
+            $content = $this->buildNotificationContent($offer, $brand);
+
             // Prepare notification data
             $notificationData = [
-                'title' => $brand->name ?? 'Special Offer',
-                'body' => $this->buildNotificationBody($offer),
+                'title' => $content['title'],
+                'body' => $content['body'],
                 'data' => [
                     'type' => 'geofence_offer',
-                    'offer_id' => $offer->id,
-                    'brand_id' => $offer->brand_id,
-                    'branch_id' => $branchId,
+                    'offer_id' => (string) $offer->id,
+                    'brand_id' => (string) $offer->brand_id,
+                    'branch_id' => (string) $branchId,
+                    'deep_link' => $content['deep_link'] ?? "trendpin://offer/{$offer->id}",
                 ],
             ];
 
             // Send FCM notification
-            $this->sendFcmNotification($user->fcm_token, $notificationData);
+            $sent = $this->sendFcmNotification($user->fcm_token, $notificationData);
 
-            Log::info('Geofence notification sent', [
-                'user_id' => $userId,
-                'offer_id' => $offer->id,
-                'brand_id' => $offer->brand_id,
-            ]);
+            if ($sent) {
+                Log::info('Geofence notification sent', [
+                    'user_id' => $userId,
+                    'offer_id' => $offer->id,
+                    'brand_id' => $offer->brand_id,
+                    'template_used' => $this->getNotificationTemplate($offer) !== null,
+                ]);
+            }
 
-            return true;
+            return $sent;
         } catch (\Exception $e) {
             Log::error('Failed to send geofence notification', [
                 'user_id' => $userId,
@@ -362,7 +372,79 @@ class GeofenceNotificationService implements GeofenceNotificationServiceInterfac
     }
 
     /**
-     * Build notification body text
+     * Build notification content using templates or fallback to programmatic
+     */
+    private function buildNotificationContent(object $offer, ?object $brand = null): array
+    {
+        // Try to use template system first
+        $template = $this->getNotificationTemplate($offer);
+
+        if ($template) {
+            $data = [
+                'brand_name' => $brand->name ?? 'Special Offer',
+                'offer_name' => $offer->name ?? '',
+                'offer_description' => $this->truncateText($offer->description ?? '', 50),
+                'discount_value' => $offer->discount_value ?? '',
+                'offer_id' => $offer->id,
+                'brand_id' => $offer->brand_id,
+            ];
+
+            return $this->renderTemplate($template, $data);
+        }
+
+        // Fallback to programmatic approach
+        return [
+            'title' => $brand->name ?? 'Special Offer',
+            'body' => $this->buildNotificationBody($offer),
+            'deep_link' => "trendpin://offer/{$offer->id}",
+        ];
+    }
+
+    /**
+     * Render a notification template with data
+     */
+    private function renderTemplate(object $template, array $data): array
+    {
+        $title = $template->title_template;
+        $body = $template->body_template;
+        $deepLink = $template->deep_link_template;
+
+        foreach ($data as $key => $value) {
+            $placeholder = "{{" . $key . "}}";
+            $title = str_replace($placeholder, (string) $value, $title);
+            $body = str_replace($placeholder, (string) $value, $body);
+            if ($deepLink) {
+                $deepLink = str_replace($placeholder, (string) $value, $deepLink);
+            }
+        }
+
+        return [
+            'title' => $title,
+            'body' => $body,
+            'deep_link' => $deepLink,
+        ];
+    }
+
+    /**
+     * Get appropriate notification template based on offer type
+     */
+    private function getNotificationTemplate(object $offer): ?object
+    {
+        $tag = match($offer->discount_type ?? 'percentage') {
+            'percentage' => 'geofence_offer',
+            'fixed' => 'geofence_offer_fixed',
+            'bogo' => 'geofence_offer_bogo',
+            default => 'geofence_offer',
+        };
+
+        return DB::table('notification_templates')
+            ->where('tag', $tag)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Build notification body text (fallback method)
      */
     private function buildNotificationBody(object $offer): string
     {
@@ -384,45 +466,36 @@ class GeofenceNotificationService implements GeofenceNotificationServiceInterfac
         }
 
         if (!empty($offer->description)) {
-            $description = strlen($offer->description) > 50
-                ? substr($offer->description, 0, 47) . '...'
-                : $offer->description;
-            $parts[] = $description;
+            $parts[] = $this->truncateText($offer->description, 50);
         }
 
         return implode(' - ', $parts) ?: 'Check out this special offer!';
     }
 
     /**
-     * Send FCM notification
+     * Truncate text to specified length
      */
-    private function sendFcmNotification(string $fcmToken, array $notificationData): void
+    private function truncateText(string $text, int $length): string
     {
-        $serverKey = config('services.firebase.server_key');
-
-        if (!$serverKey) {
-            Log::warning('Firebase server key not configured');
-            return;
+        if (strlen($text) <= $length) {
+            return $text;
         }
+        return substr($text, 0, $length - 3) . '...';
+    }
 
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => 'key=' . $serverKey,
-            'Content-Type' => 'application/json',
-        ])->post('https://fcm.googleapis.com/fcm/send', [
-            'to' => $fcmToken,
-            'notification' => [
-                'title' => $notificationData['title'],
-                'body' => $notificationData['body'],
-                'sound' => 'default',
-            ],
-            'data' => $notificationData['data'],
-            'priority' => 'high',
-        ]);
+    /**
+     * Send FCM notification using the FcmService
+     */
+    private function sendFcmNotification(string $fcmToken, array $notificationData): bool
+    {
+        return $this->fcmService->send($fcmToken, $notificationData);
+    }
 
-        if (!$response->successful()) {
-            Log::error('FCM notification failed', [
-                'response' => $response->json(),
-            ]);
-        }
+    /**
+     * Test FCM configuration (for debugging)
+     */
+    public function testFcmConfiguration(): array
+    {
+        return $this->fcmService->testConfiguration();
     }
 }

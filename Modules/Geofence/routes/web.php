@@ -40,6 +40,10 @@ Route::prefix('admin/geofence')->middleware(['auth', 'role:admin'])->name('admin
     Route::post('/test/simulate', [AdminGeofenceController::class, 'simulateEvent'])->name('test.simulate');
     Route::post('/test/eligibility', [AdminGeofenceController::class, 'checkEligibility'])->name('test.eligibility');
 
+    // FCM Testing
+    Route::get('/fcm/test', [AdminGeofenceController::class, 'testFcm'])->name('fcm.test');
+    Route::post('/fcm/send-test', [AdminGeofenceController::class, 'sendTestNotification'])->name('fcm.send-test');
+
     // Locations CRUD
     Route::get('/locations', [AdminLocationController::class, 'index'])->name('locations');
     Route::get('/locations/all-branches', [AdminLocationController::class, 'allBranches'])->name('locations.all-branches');
