@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
+import "react-international-phone/style.css";
 
 interface Props {
   data: {

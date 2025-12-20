@@ -1,3 +1,4 @@
+import { Link, usePage, router } from '@inertiajs/react';
 import { Link, usePage } from '@inertiajs/react';
 
 const scrollbarStyles = `
@@ -146,6 +147,11 @@ export default function AdminLayout({ children }) {
 
     const isActive = (href) => currentPath.startsWith(href);
 
+    const handleLogout = (e) => {
+        e.preventDefault();
+        router.get('/logout');
+    };
+
     return (
         <div className="min-h-screen flex">
             <style>{scrollbarStyles}</style>
@@ -196,6 +202,26 @@ export default function AdminLayout({ children }) {
                             })}
                         </nav>
 
+                {/* User Info at Bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-sm font-medium">
+                                {auth?.user?.name?.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="ml-3 text-white text-sm truncate">{auth?.user?.name}</span>
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="text-gray-400 hover:text-white transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
                         {/* User Info at Bottom - Fixed */}
                         <div className="p-4 border-t border-white/10">
                             <div className="flex items-center justify-between">
