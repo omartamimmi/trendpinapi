@@ -94,7 +94,7 @@ export default function PendingApproval({ status, admin_notes }: Props) {
 
               <Link
                 href="/logout"
-                method="post"
+                method="get"
                 as="button"
                 className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center"
               >

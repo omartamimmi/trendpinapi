@@ -19,26 +19,24 @@ export default function Register() {
         <div className="h-screen flex overflow-hidden" style={{ backgroundColor: '#3D3A5C' }}>
             <div className="flex items-center w-full h-full">
                 {/* Left side - Logo and Register Form */}
-                <div className="flex-1 flex flex-col items-center justify-center py-6 px-8 h-full">
-                    <div className="w-full max-w-md flex flex-col" style={{ maxHeight: 'calc(100vh - 3rem)' }}>
+                <div className="flex-1 flex flex-col items-center justify-center py-8 px-8 overflow-y-auto">
+                    <div className="w-full max-w-md flex flex-col">
                         {/* Logo */}
                         <div className="flex items-center justify-center mb-6">
                             <Link href="/" className="flex items-center space-x-2">
                                 <img src="/images/logo.png" alt="logo" className='w-1/4' />
-
                                 <span className="text-3xl font-bold text-white">Trenpin</span>
                             </Link>
                         </div>
 
                         {/* Register Card */}
-                        <div className="bg-white rounded-2xl shadow-xl p-6 w-full ">
+                        <div className="bg-white rounded-2xl shadow-xl p-6 w-full">
                             <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">
                                 Retailer Registration
                             </h2>
                             <p className="text-gray-400 text-xs mb-4 text-center">
                                 Creating your account is easy
                             </p>
-
 
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-2.5">
@@ -161,7 +159,7 @@ export default function Register() {
                     <img
                         src="/images/landing/phone-mockups.png"
                         alt="Trendpin App Mockups"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full p-4"
                     />
                 </div>
             </div>

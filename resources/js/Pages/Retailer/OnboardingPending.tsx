@@ -101,7 +101,7 @@ export default function OnboardingPending({ onboarding, user }: OnboardingPendin
           <div className="mt-8">
             <Link
               href="/logout"
-              method="post"
+              method="get"
               as="button"
               className="inline-block px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
             >

@@ -1,5 +1,4 @@
 import { Link, usePage, router } from '@inertiajs/react';
-import { Link, usePage } from '@inertiajs/react';
 
 const scrollbarStyles = `
     .custom-scrollbar::-webkit-scrollbar {
@@ -155,55 +154,56 @@ export default function AdminLayout({ children }) {
     return (
         <div className="min-h-screen flex">
             <style>{scrollbarStyles}</style>
+
             {/* Sidebar */}
             <div className="w-64 fixed h-full flex flex-col" style={{ backgroundColor: '#2D2A4A' }}>
-                        {/* Logo - Fixed at top */}
-                        <div className="flex items-center justify-center px-6 py-6 border-b border-white/10">
-                            <img src="/images/logo.png" alt="Trendpin" className="h-8" />
-                            <span className="text-white text-xl font-semibold ml-2">Trendpin</span>
-                        </div>
+                {/* Logo - Fixed at top */}
+                <div className="flex items-center justify-center px-6 py-6 border-b border-white/10">
+                    <img src="/images/logo.png" alt="Trendpin" className="h-8" />
+                    <span className="text-white text-xl font-semibold ml-2">Trendpin</span>
+                </div>
 
-                        {/* Navigation - Scrollable */}
-                        <nav className="flex-1 overflow-y-auto mt-2 px-4 py-2 custom-scrollbar">
-                            {navigation.map((item, index) => {
-                                // Render divider
-                                if (item.type === 'divider') {
-                                    return (
-                                        <div key={index} className="mt-6 mb-3 px-4">
-                                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                                {item.label}
-                                            </span>
-                                        </div>
-                                    );
-                                }
+                {/* Navigation - Scrollable */}
+                <nav className="flex-1 overflow-y-auto mt-2 px-4 py-2 custom-scrollbar">
+                    {navigation.map((item, index) => {
+                        // Render divider
+                        if (item.type === 'divider') {
+                            return (
+                                <div key={index} className="mt-6 mb-3 px-4">
+                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        {item.label}
+                                    </span>
+                                </div>
+                            );
+                        }
 
-                                // Render nav item
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        className={`flex items-center px-4 py-3 mb-1 rounded-lg text-sm font-medium transition-all ${
-                                            isActive(item.href)
-                                                ? 'bg-pink-500/20 text-white border-l-4 border-pink-500'
-                                                : item.highlight
-                                                    ? 'text-gray-200 hover:bg-pink-500/10 hover:text-white'
-                                                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                                        }`}
-                                    >
-                                        <span className={`${isActive(item.href) ? 'text-pink-400' : item.highlight ? 'text-pink-400' : ''}`}>
-                                            {item.icon}
-                                        </span>
-                                        <span className="ml-3">{item.name}</span>
-                                        {item.highlight && !isActive(item.href) && (
-                                            <span className="ml-auto w-2 h-2 bg-pink-500 rounded-full"></span>
-                                        )}
-                                    </Link>
-                                );
-                            })}
-                        </nav>
+                        // Render nav item
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`flex items-center px-4 py-3 mb-1 rounded-lg text-sm font-medium transition-all ${
+                                    isActive(item.href)
+                                        ? 'bg-pink-500/20 text-white border-l-4 border-pink-500'
+                                        : item.highlight
+                                            ? 'text-gray-200 hover:bg-pink-500/10 hover:text-white'
+                                            : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                                }`}
+                            >
+                                <span className={`${isActive(item.href) ? 'text-pink-400' : item.highlight ? 'text-pink-400' : ''}`}>
+                                    {item.icon}
+                                </span>
+                                <span className="ml-3">{item.name}</span>
+                                {item.highlight && !isActive(item.href) && (
+                                    <span className="ml-auto w-2 h-2 bg-pink-500 rounded-full"></span>
+                                )}
+                            </Link>
+                        );
+                    })}
+                </nav>
 
-                {/* User Info at Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+                {/* User Info at Bottom - Fixed */}
+                <div className="p-4 border-t border-white/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
                             <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-sm font-medium">
@@ -222,28 +222,6 @@ export default function AdminLayout({ children }) {
                     </div>
                 </div>
             </div>
-                        {/* User Info at Bottom - Fixed */}
-                        <div className="p-4 border-t border-white/10">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-sm font-medium">
-                                        {auth?.user?.name?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="ml-3 text-white text-sm truncate">{auth?.user?.name}</span>
-                                </div>
-                                <Link
-                                    href="/logout"
-                                    method="post"
-                                    as="button"
-                                    className="text-gray-400 hover:text-white"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
 
             {/* Main Content */}
             <div className="flex-1 ml-64">
