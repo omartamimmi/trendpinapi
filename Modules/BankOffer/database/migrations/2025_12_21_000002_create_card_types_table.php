@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('name_ar')->nullable();
             $table->unsignedBigInteger('logo_id')->nullable();
             $table->enum('card_network', ['visa', 'mastercard', 'amex', 'other'])->default('other');
+            $table->json('bin_prefixes')->nullable()->comment('Array of BIN prefixes (first 6 digits) for this card type');
+            $table->string('card_color', 100)->nullable()->comment('Gradient or solid color for card display');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
 
