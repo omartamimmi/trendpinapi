@@ -150,10 +150,14 @@ class Brand extends Model
             return $this->gallery;
         $list_item = [];
         if ($featuredIncluded and $this->image_id) {
-            $list_item[] = [
-                'large' => str_replace(['.png', '.jpg', '.jpeg'], '.webp', FileHelper::url($this->image_id, 'full')),
-                'thumb' => FileHelper::url($this->image_id, 'thumb')
-            ];
+            $featuredUrl = FileHelper::url($this->image_id, 'full');
+            $thumbUrl = FileHelper::url($this->image_id, 'thumb');
+            if ($featuredUrl) {
+                $list_item[] = [
+                    'large' => str_replace(['.png', '.jpg', '.jpeg'], '.webp', $featuredUrl),
+                    'thumb' => $thumbUrl ?: null
+                ];
+            }
         }
 
         $items = explode(",", $this->gallery);
@@ -163,11 +167,14 @@ class Brand extends Model
                 $thumb = FileHelper::url($item, 'thumb');
                 $medium = FileHelper::url($item, 'medium');
 
-                $list_item[] = [
-                    'large' => $large,
-                    'thumb' => $thumb,
-                    'medium' => $medium
-                ];
+                // Only add if at least one URL is valid
+                if ($large || $thumb || $medium) {
+                    $list_item[] = [
+                        'large' => $large ?: null,
+                        'thumb' => $thumb ?: null,
+                        'medium' => $medium ?: null
+                    ];
+                }
             }
         }
         return $list_item;
@@ -218,7 +225,9 @@ class Brand extends Model
 
         // Fallback to legacy logo field
         if ($this->logo) {
-            return FileHelper::url($this->logo, 'thumb');
+            $url = FileHelper::url($this->logo, 'thumb');
+            // FileHelper::url returns false if file not found
+            return $url ?: null;
         }
 
         return null;

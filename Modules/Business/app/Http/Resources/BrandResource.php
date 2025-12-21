@@ -22,7 +22,7 @@ class BrandResource extends JsonResource
             'description' => $this->description,
             'description_ar' => $this->description_ar,
             'logo' => $this->logo_url,
-            'featured_image' => $this->featured_mobile ? FileHelper::url($this->image_id, 'full') : null,
+            'featured_image' => $this->image_id ? FileHelper::url($this->image_id, 'full') : null,
             'gallery' => $this->gallery_images,
             'phone_number' => $this->phone_number,
             'website_link' => $this->website_link,

@@ -16,7 +16,12 @@ Route::prefix('v1')
     ->group(function () {
         // Public authentication routes
         Route::post('login', 'login')->name('login');
+        Route::post('login-with-phone', 'loginWithPhone')->name('loginWithPhone');
         Route::post('register', 'register')->name('register');
+
+        // Two-step registration
+        Route::post('register/init', 'registerInit')->name('registerInit');
+        Route::post('register/complete', 'registerComplete')->name('registerComplete');
 
         // Social login routes
         Route::get('/login/{provider}', 'redirectToProvider');

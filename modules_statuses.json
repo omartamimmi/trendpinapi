@@ -13,5 +13,6 @@
     "Admin": true,
     "Notification": true,
     "Log": true,
-    "Geofence": true
+    "Geofence": true,
+    "BankOffer": true
 }

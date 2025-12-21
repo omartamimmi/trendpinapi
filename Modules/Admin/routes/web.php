@@ -12,6 +12,7 @@ use Modules\Admin\app\Http\Controllers\AdminCategoryController;
 use Modules\Admin\app\Http\Controllers\AdminInterestController;
 use Modules\Admin\app\Http\Controllers\AdminNotificationPageController;
 use Modules\Admin\app\Http\Controllers\AdminOfferController;
+use Modules\Admin\app\Http\Controllers\AdminBankOfferPageController;
 
 // Redirect old admin login to unified login
 Route::prefix('admin')->middleware('guest')->group(function () {
@@ -101,4 +102,35 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/offers/{id}', [AdminOfferController::class, 'update'])->name('admin.offers.update');
     Route::delete('/offers/{id}', [AdminOfferController::class, 'destroy'])->name('admin.offers.destroy');
     Route::get('/offers/brands/{retailerId}', [AdminOfferController::class, 'getBrands'])->name('admin.offers.brands');
+
+    // Bank Offers Module
+    Route::prefix('bank-offer')->group(function () {
+        // Banks
+        Route::get('/banks', [AdminBankOfferPageController::class, 'banks'])->name('admin.bank-offer.banks');
+        Route::get('/banks/create', [AdminBankOfferPageController::class, 'createBank'])->name('admin.bank-offer.banks.create');
+        Route::post('/banks', [AdminBankOfferPageController::class, 'storeBank'])->name('admin.bank-offer.banks.store');
+        Route::get('/banks/{id}/edit', [AdminBankOfferPageController::class, 'editBank'])->name('admin.bank-offer.banks.edit');
+        Route::put('/banks/{id}', [AdminBankOfferPageController::class, 'updateBank'])->name('admin.bank-offer.banks.update');
+        Route::delete('/banks/{id}', [AdminBankOfferPageController::class, 'destroyBank'])->name('admin.bank-offer.banks.destroy');
+
+        // Card Types
+        Route::get('/card-types', [AdminBankOfferPageController::class, 'cardTypes'])->name('admin.bank-offer.card-types');
+        Route::get('/card-types/create', [AdminBankOfferPageController::class, 'createCardType'])->name('admin.bank-offer.card-types.create');
+        Route::post('/card-types', [AdminBankOfferPageController::class, 'storeCardType'])->name('admin.bank-offer.card-types.store');
+        Route::get('/card-types/{id}/edit', [AdminBankOfferPageController::class, 'editCardType'])->name('admin.bank-offer.card-types.edit');
+        Route::put('/card-types/{id}', [AdminBankOfferPageController::class, 'updateCardType'])->name('admin.bank-offer.card-types.update');
+        Route::delete('/card-types/{id}', [AdminBankOfferPageController::class, 'destroyCardType'])->name('admin.bank-offer.card-types.destroy');
+
+        // Bank Offers
+        Route::get('/offers', [AdminBankOfferPageController::class, 'offers'])->name('admin.bank-offer.offers');
+        Route::get('/offers/{id}', [AdminBankOfferPageController::class, 'showOffer'])->name('admin.bank-offer.offers.show');
+        Route::put('/offers/{id}/approve', [AdminBankOfferPageController::class, 'approveOffer'])->name('admin.bank-offer.offers.approve');
+        Route::put('/offers/{id}/reject', [AdminBankOfferPageController::class, 'rejectOffer'])->name('admin.bank-offer.offers.reject');
+        Route::put('/offers/{id}/status', [AdminBankOfferPageController::class, 'updateOfferStatus'])->name('admin.bank-offer.offers.status');
+
+        // Participation Requests
+        Route::get('/requests', [AdminBankOfferPageController::class, 'requests'])->name('admin.bank-offer.requests');
+        Route::put('/requests/{id}/approve', [AdminBankOfferPageController::class, 'approveRequest'])->name('admin.bank-offer.requests.approve');
+        Route::put('/requests/{id}/reject', [AdminBankOfferPageController::class, 'rejectRequest'])->name('admin.bank-offer.requests.reject');
+    });
 });

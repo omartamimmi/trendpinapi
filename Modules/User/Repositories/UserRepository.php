@@ -35,6 +35,11 @@ class UserRepository
         return User::where('appleId',$appleId)->first();
     }
 
+    public function findUserByPhone($phone)
+    {
+        return User::where('phone', $phone)->first();
+    }
+
     public function changePassword($user)
     {
         $user->save();

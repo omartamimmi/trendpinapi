@@ -1,0 +1,11 @@
+{
+    "name": "BankOffer",
+    "alias": "bankoffer",
+    "description": "Bank Card Offers Management",
+    "keywords": ["bank", "offer", "card", "discount"],
+    "priority": 0,
+    "providers": [
+        "Modules\\BankOffer\\app\\Providers\\BankOfferServiceProvider"
+    ],
+    "files": []
+}
