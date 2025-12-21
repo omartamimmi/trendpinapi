@@ -12,6 +12,7 @@ use Modules\Category\Models\Category;
 use LamaLama\Wishlist\Wishlistable;
 use Modules\Media\Helpers\FileHelper;
 use Modules\Media\Traits\HasMedia;
+use Modules\BankOffer\app\Models\BankOfferBrand;
 
 class Brand extends Model
 {
@@ -99,6 +100,28 @@ class Brand extends Model
             ->where(function ($query) {
                 $query->whereNull('end_date')
                     ->orWhere('end_date', '>=', now());
+            });
+    }
+
+    /**
+     * Get all bank offer brand participations
+     */
+    public function bankOfferBrands()
+    {
+        return $this->hasMany(BankOfferBrand::class);
+    }
+
+    /**
+     * Get approved bank offer participations with active offers
+     */
+    public function activeBankOfferBrands()
+    {
+        return $this->hasMany(BankOfferBrand::class)
+            ->where('status', 'approved')
+            ->whereHas('bankOffer', function ($query) {
+                $query->where('status', 'active')
+                    ->where('start_date', '<=', now())
+                    ->where('end_date', '>=', now());
             });
     }
 

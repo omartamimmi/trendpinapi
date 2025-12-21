@@ -105,7 +105,9 @@ class BrandRepository implements BrandRepositoryInterface
                     ->orderBy('name'),
                 'categories',
                 'tags',
-                'activeOffers'
+                'activeOffers',
+                'activeBankOfferBrands.bankOffer.bank.logo',
+                'activeBankOfferBrands.bankOffer.cardType',
             ])
             ->where('status', self::STATUS_PUBLISH)
             ->find($id);
@@ -123,7 +125,9 @@ class BrandRepository implements BrandRepositoryInterface
                     ->orderBy('name'),
                 'categories',
                 'tags',
-                'activeOffers'
+                'activeOffers',
+                'activeBankOfferBrands.bankOffer.bank.logo',
+                'activeBankOfferBrands.bankOffer.cardType',
             ])
             ->where('status', self::STATUS_PUBLISH)
             ->where('slug', $slug)

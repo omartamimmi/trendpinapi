@@ -25,18 +25,7 @@ class BrandResource extends JsonResource
             'featured_image' => $this->image_id ? FileHelper::url($this->image_id, 'full') : null,
             'gallery' => $this->gallery_images,
             'phone_number' => $this->phone_number,
-            'website_link' => $this->website_link,
-            'insta_link' => $this->insta_link,
-            'facebook_link' => $this->facebook_link,
-            'location' => $this->location,
-            'lat' => $this->lat,
-            'lng' => $this->lng,
             'distance' => $this->when(isset($this->distance), fn() => round($this->distance, 2)),
-            'status' => $this->status,
-            'open_status' => $this->open_status,
-            'days' => $this->days,
-            'featured' => (bool) $this->featured,
-            'is_wishlisted' => $this->isWishList() === '-solid',
             'categories' => $this->whenLoaded('categories', function () {
                 return $this->categories->map(fn($cat) => [
                     'id' => $cat->id,
@@ -46,9 +35,20 @@ class BrandResource extends JsonResource
             }),
             'branches_count' => $this->whenCounted('branches'),
             'branches' => BranchResource::collection($this->whenLoaded('branches')),
-            'active_offers_count' => $this->whenCounted('activeOffers'),
             'offers' => OfferResource::collection($this->whenLoaded('activeOffers')),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'participating_banks' => $this->whenLoaded('activeBankOfferBrands', function () {
+                $banks = $this->activeBankOfferBrands
+                    ->map(fn($item) => $item->bankOffer?->bank)
+                    ->filter()
+                    ->unique('id')
+                    ->values();
+                return $banks->map(fn($bank) => [
+                    'id' => $bank->id,
+                    'name' => $bank->name,
+                    'name_ar' => $bank->name_ar,
+                    'logo' => $bank->logo?->url,
+                ]);
+            }),
         ];
     }
 }
