@@ -14,5 +14,6 @@
     "Notification": true,
     "Log": true,
     "Geofence": true,
-    "BankOffer": true
+    "BankOffer": true,
+    "Payment": true
 }

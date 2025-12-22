@@ -13,6 +13,7 @@ use Modules\Admin\app\Http\Controllers\AdminInterestController;
 use Modules\Admin\app\Http\Controllers\AdminNotificationPageController;
 use Modules\Admin\app\Http\Controllers\AdminOfferController;
 use Modules\Admin\app\Http\Controllers\AdminBankOfferPageController;
+use Modules\Admin\app\Http\Controllers\AdminQrPaymentController;
 
 // Redirect old admin login to unified login
 Route::prefix('admin')->middleware('guest')->group(function () {
@@ -132,5 +133,25 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/requests', [AdminBankOfferPageController::class, 'requests'])->name('admin.bank-offer.requests');
         Route::put('/requests/{id}/approve', [AdminBankOfferPageController::class, 'approveRequest'])->name('admin.bank-offer.requests.approve');
         Route::put('/requests/{id}/reject', [AdminBankOfferPageController::class, 'rejectRequest'])->name('admin.bank-offer.requests.reject');
+    });
+
+    // QR Payment System
+    Route::prefix('qr-payment')->group(function () {
+        // Settings (gateways & methods)
+        Route::get('/settings', [AdminQrPaymentController::class, 'settings'])->name('admin.qr-payment.settings');
+        Route::put('/gateways/{gateway}', [AdminQrPaymentController::class, 'updateGateway'])->name('admin.qr-payment.gateways.update');
+        Route::post('/gateways/{gateway}/test', [AdminQrPaymentController::class, 'testGateway'])->name('admin.qr-payment.gateways.test');
+        Route::post('/methods/{method}/toggle', [AdminQrPaymentController::class, 'toggleMethod'])->name('admin.qr-payment.methods.toggle');
+        Route::put('/settings/general', [AdminQrPaymentController::class, 'updateGeneralSettings'])->name('admin.qr-payment.settings.general');
+
+        // Analytics
+        Route::get('/analytics', [AdminQrPaymentController::class, 'analytics'])->name('admin.qr-payment.analytics');
+
+        // Transactions
+        Route::get('/transactions', [AdminQrPaymentController::class, 'transactions'])->name('admin.qr-payment.transactions');
+        Route::get('/transactions/{id}', [AdminQrPaymentController::class, 'transactionDetails'])->name('admin.qr-payment.transactions.show');
+
+        // Sessions
+        Route::get('/sessions', [AdminQrPaymentController::class, 'sessions'])->name('admin.qr-payment.sessions');
     });
 });
