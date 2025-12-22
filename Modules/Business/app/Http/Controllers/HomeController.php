@@ -23,7 +23,7 @@ class HomeController extends Controller
      * - lng: User longitude
      * - sort_by: How to sort brands (best_offer, ending_soon, most_popular, nearest, bank, default)
      * - category_ids: Filter by categories (comma-separated, e.g., "1,2,3")
-     * - bank_id: Filter by bank offers
+     * - bank_ids: Filter by bank offers (comma-separated, e.g., "1,2,3")
      * - search: Search brands by name/title
      * - per_page: Number of brands per page (default 10)
      * - page: Page number (default 1)
@@ -34,12 +34,12 @@ class HomeController extends Controller
         $lng = $request->query('lng');
         $sortBy = $request->query('sort_by', 'default');
         $categoryIds = $this->parseIds($request->query('category_ids'));
-        $bankId = $request->query('bank_id');
+        $bankIds = $this->parseIds($request->query('bank_ids'));
         $search = $request->query('search');
         $perPage = (int) $request->query('per_page', 10);
         $page = (int) $request->query('page', 1);
 
-        $brandsData = $this->getBrands($lat, $lng, $sortBy, $categoryIds, $bankId, $search, $perPage, $page);
+        $brandsData = $this->getBrands($lat, $lng, $sortBy, $categoryIds, $bankIds, $search, $perPage, $page);
 
         return response()->json([
             'success' => true,
@@ -109,14 +109,14 @@ class HomeController extends Controller
     /**
      * Get brands with filtering and sorting
      */
-    private function getBrands(?string $lat, ?string $lng, string $sortBy, array $categoryIds, ?string $bankId, ?string $search, int $perPage, int $page): array
+    private function getBrands(?string $lat, ?string $lng, string $sortBy, array $categoryIds, array $bankIds, ?string $search, int $perPage, int $page): array
     {
         $query = Brand::where('status', 'publish')
             ->with([
                 'branches' => fn($q) => $q->where('status', 'publish'),
                 'categories',
                 'activeOffers',
-                'activeBankOfferBrands.bankOffer.bank'
+                'activeBankOfferBrands.bankOffer.bank.logo'
             ]);
 
         // Search by name/title
@@ -133,9 +133,9 @@ class HomeController extends Controller
             $query->whereHas('categories', fn($q) => $q->whereIn('categories.id', $categoryIds));
         }
 
-        // Filter by bank (brands that have offers from this bank)
-        if ($bankId) {
-            $query->whereHas('activeBankOfferBrands.bankOffer', fn($q) => $q->where('bank_id', $bankId));
+        // Filter by banks (brands that have offers from these banks)
+        if (!empty($bankIds)) {
+            $query->whereHas('activeBankOfferBrands.bankOffer', fn($q) => $q->whereIn('bank_id', $bankIds));
         }
 
         // Filter to only brands with bank offers when sort_by=bank
@@ -201,6 +201,18 @@ class HomeController extends Controller
                     'name' => $cat->name,
                     'name_ar' => $cat->name_ar ?? null,
                 ]),
+                'participating_banks' => $brand->activeBankOfferBrands
+                    ->map(fn($item) => $item->bankOffer?->bank)
+                    ->filter()
+                    ->unique('id')
+                    ->values()
+                    ->map(fn($bank) => [
+                        'id' => $bank->id,
+                        'name' => $bank->name,
+                        'name_ar' => $bank->name_ar,
+                        'logo' => $bank->logo?->url,
+                    ])
+                    ->toArray(),
                 'nearest_branch' => $brand->_nearest_branch ? [
                     'id' => $brand->_nearest_branch['branch']->id,
                     'name' => $brand->_nearest_branch['branch']->name,
@@ -210,12 +222,16 @@ class HomeController extends Controller
                 'best_offer' => $brand->_best_offer ? [
                     'id' => $brand->_best_offer->id,
                     'name' => $brand->_best_offer->name,
+                    'discount_type' => $brand->_best_offer->discount_type,
+                    'discount_value' => $brand->_best_offer->discount_value,
                     'label' => $this->getOfferLabel($brand->_best_offer->discount_type, $brand->_best_offer->discount_value),
                     'end_date' => $brand->_best_offer->end_date?->toDateString(),
                 ] : null,
                 'best_bank_offer' => $brand->_best_bank_offer ? [
                     'id' => $brand->_best_bank_offer->id,
                     'title' => $brand->_best_bank_offer->title,
+                    'offer_type' => $brand->_best_bank_offer->offer_type,
+                    'offer_value' => $brand->_best_bank_offer->offer_value,
                     'label' => $this->getOfferLabel($brand->_best_bank_offer->offer_type, $brand->_best_bank_offer->offer_value),
                     'end_date' => $brand->_best_bank_offer->end_date?->toDateString(),
                     'bank' => $brand->_best_bank_offer->bank ? [
