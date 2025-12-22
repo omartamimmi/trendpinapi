@@ -125,6 +125,52 @@ class Brand extends Model
             });
     }
 
+    /**
+     * Get the best brand offer based on criteria
+     *
+     * @param string $criteria 'highest_value', 'ending_soon', 'most_popular'
+     */
+    public function getBestOffer(string $criteria = 'highest_value')
+    {
+        $offers = $this->activeOffers;
+
+        if ($offers->isEmpty()) {
+            return null;
+        }
+
+        return match ($criteria) {
+            'ending_soon' => $offers->sortBy('end_date')->first(),
+            'most_popular' => $offers->sortByDesc('claims_count')->first(),
+            default => $offers->sortByDesc('discount_value')->first(), // highest_value
+        };
+    }
+
+    /**
+     * Get the best bank offer based on criteria
+     *
+     * @param string $criteria 'highest_value', 'ending_soon', 'most_popular'
+     */
+    public function getBestBankOffer(string $criteria = 'highest_value')
+    {
+        $bankOfferBrands = $this->activeBankOfferBrands()->with('bankOffer.bank')->get();
+
+        if ($bankOfferBrands->isEmpty()) {
+            return null;
+        }
+
+        $bankOffers = $bankOfferBrands->map(fn($bob) => $bob->bankOffer)->filter();
+
+        if ($bankOffers->isEmpty()) {
+            return null;
+        }
+
+        return match ($criteria) {
+            'ending_soon' => $bankOffers->sortBy('end_date')->first(),
+            'most_popular' => $bankOffers->sortByDesc('total_claims')->first(),
+            default => $bankOffers->sortByDesc('offer_value')->first(), // highest_value
+        };
+    }
+
     public function save(array $options = [])
     {
         $this->featured_mobile = $this->getFeaturedImage()[0]['featured_mobile'] ?? $this->featured_mobile;

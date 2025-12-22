@@ -13,6 +13,8 @@ class BrandResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $bestBy = $request->query('best_by', 'highest_value');
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -25,6 +27,7 @@ class BrandResource extends JsonResource
             'featured_image' => $this->image_id ? FileHelper::url($this->image_id, 'full') : null,
             'gallery' => $this->gallery_images,
             'phone_number' => $this->phone_number,
+            'is_wishlisted' => $this->isWishList() === '-solid',
             'distance' => $this->when(isset($this->distance), fn() => round($this->distance, 2)),
             'categories' => $this->whenLoaded('categories', function () {
                 return $this->categories->map(fn($cat) => [
@@ -33,6 +36,8 @@ class BrandResource extends JsonResource
                     'name_ar' => $cat->name_ar ?? null,
                 ]);
             }),
+            'best_offer' => $this->formatBestOffer($this->getBestOffer($bestBy)),
+            'best_bank_offer' => $this->formatBestBankOffer($this->getBestBankOffer($bestBy)),
             'branches_count' => $this->whenCounted('branches'),
             'branches' => BranchResource::collection($this->whenLoaded('branches')),
             'offers' => OfferResource::collection($this->whenLoaded('activeOffers')),
@@ -50,5 +55,64 @@ class BrandResource extends JsonResource
                 ]);
             }),
         ];
+    }
+
+    /**
+     * Format best brand offer for display
+     */
+    private function formatBestOffer($offer): ?array
+    {
+        if (!$offer) {
+            return null;
+        }
+
+        return [
+            'id' => $offer->id,
+            'name' => $offer->name,
+            'discount_type' => $offer->discount_type,
+            'discount_value' => $offer->discount_value,
+            'label' => $this->getOfferLabel($offer->discount_type, $offer->discount_value),
+            'end_date' => $offer->end_date?->toDateString(),
+        ];
+    }
+
+    /**
+     * Format best bank offer for display
+     */
+    private function formatBestBankOffer($offer): ?array
+    {
+        if (!$offer) {
+            return null;
+        }
+
+        return [
+            'id' => $offer->id,
+            'title' => $offer->title,
+            'title_ar' => $offer->title_ar,
+            'offer_type' => $offer->offer_type,
+            'offer_value' => $offer->offer_value,
+            'label' => $this->getOfferLabel($offer->offer_type, $offer->offer_value),
+            'end_date' => $offer->end_date?->toDateString(),
+            'bank' => $offer->bank ? [
+                'id' => $offer->bank->id,
+                'name' => $offer->bank->name,
+                'name_ar' => $offer->bank->name_ar,
+                'logo' => $offer->bank->logo?->url,
+            ] : null,
+        ];
+    }
+
+    /**
+     * Generate a display label for offer
+     */
+    private function getOfferLabel(string $type, $value): string
+    {
+        return match ($type) {
+            'percentage' => "{$value}% Off",
+            'fixed' => "JOD {$value} Off",
+            'cashback' => "{$value}% Cashback",
+            'bogo' => 'Buy 1 Get 1',
+            default => "{$value}% Off",
+        };
     }
 }
