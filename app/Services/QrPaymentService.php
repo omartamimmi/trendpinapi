@@ -20,17 +20,24 @@ class QrPaymentService
         float $amount,
         ?string $description = null,
         int $expiryMinutes = 15,
-        array $metadata = []
+        array $metadata = [],
+        ?int $brandId = null
     ): QrPayment {
         // Verify branch exists
         $branch = Branch::findOrFail($branchId);
-        
+
+        // If brand_id not provided, get it from branch
+        if (!$brandId) {
+            $brandId = $branch->brand_id;
+        }
+
         $reference = QrPayment::generateReference();
         $expiresAt = Carbon::now()->addMinutes($expiryMinutes);
-        
+
         // Create QR payment record
-        $qrPayment = QrPayment::create([
+        $data = [
             'branch_id' => $branchId,
+            'merchant_id' => $user->id,
             'user_id' => $user->id,
             'qr_code_reference' => $reference,
             'amount' => $amount,
@@ -39,7 +46,14 @@ class QrPaymentService
             'status' => 'pending',
             'expires_at' => $expiresAt,
             'metadata' => $metadata,
-        ]);
+        ];
+
+        // Only add brand_id if column exists (migration applied)
+        if ($brandId && \Schema::hasColumn('qr_payments', 'brand_id')) {
+            $data['brand_id'] = $brandId;
+        }
+
+        $qrPayment = QrPayment::create($data);
 
         // Generate QR code data (JSON payload)
         $qrData = [

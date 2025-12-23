@@ -22,6 +22,7 @@ class MerchantQrPaymentController extends Controller
     {
         $validated = $request->validate([
             'branch_id' => 'required|exists:branches,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'amount' => 'required|numeric|min:0.01|max:999999.99',
             'description' => 'nullable|string|max:500',
             'expiry_minutes' => 'nullable|integer|min:1|max:1440',
@@ -35,7 +36,8 @@ class MerchantQrPaymentController extends Controller
                 amount: $validated['amount'],
                 description: $validated['description'] ?? null,
                 expiryMinutes: $validated['expiry_minutes'] ?? 15,
-                metadata: $validated['metadata'] ?? []
+                metadata: $validated['metadata'] ?? [],
+                brandId: $validated['brand_id'] ?? null
             );
 
             $qrCodeImage = $this->qrPaymentService->getQrCodeBase64($qrPayment);

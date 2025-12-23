@@ -35,7 +35,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('api.v1.logout');
         Route::get('/me', [AuthController::class, 'me'])->name('api.v1.me');
 
-        // Branch routes
+        // Brand routes
+        Route::prefix('brands')->group(function () {
+            Route::get('/', [BranchController::class, 'getUserBrands'])->name('api.v1.brands.index');
+            Route::get('/{brandId}/branches', [BranchController::class, 'getBrandBranches'])->name('api.v1.brands.branches');
+        });
+
+        // Branch routes (legacy)
         Route::prefix('branches')->group(function () {
             Route::get('/', [BranchController::class, 'getUserBranches'])->name('api.v1.branches.index');
             Route::get('/{id}', [BranchController::class, 'show'])->name('api.v1.branches.show');

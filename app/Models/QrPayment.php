@@ -11,6 +11,8 @@ class QrPayment extends Model
 {
     protected $fillable = [
         'branch_id',
+        'brand_id',
+        'merchant_id',
         'user_id',
         'customer_id',
         'qr_code_reference',
@@ -31,6 +33,14 @@ class QrPayment extends Model
         'expires_at' => 'datetime',
         'paid_at' => 'datetime',
     ];
+
+    /**
+     * Brand where the payment was generated
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Business\app\Models\Brand::class, 'brand_id');
+    }
 
     /**
      * Branch where the payment was generated
