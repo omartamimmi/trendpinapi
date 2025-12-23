@@ -13,15 +13,15 @@ use Modules\Shop\Http\Controllers\ShopController;
 |
 */
 
-Route::prefix('user')->as('user.')->group( function () {
-    Route::prefix('shop')->as('shop.')->middleware('auth')->controller(ShopController::class)->group(function() {
-        Route::get('index','index')->name('shop-list');
-        Route::get('create','create')->name('shop-create');
-        Route::post('store', 'store')->name('shop-store');
-        Route::get('edit/{id}', 'edit')->name('shop-edit');
-        Route::post('update/{id}', 'update')->name('shop-update');
-        Route::post('destroy/{id}', 'destroy')->name('shop-destroy');
-        Route::get('getForSelect2', 'getForSelect2')->name('getForSelect2');
-    });
-});
+// Route::prefix('user')->as('user.')->group( function () {
+//     Route::prefix('shop')->as('shop.')->middleware('auth')->controller(ShopController::class)->group(function() {
+//         Route::get('index','index')->name('shop-list');
+//         Route::get('create','create')->name('shop-create');
+//         Route::post('store', 'store')->name('shop-store');
+//         Route::get('edit/{id}', 'edit')->name('shop-edit');
+//         Route::post('update/{id}', 'update')->name('shop-update');
+//         Route::post('destroy/{id}', 'destroy')->name('shop-destroy');
+//         Route::get('getForSelect2', 'getForSelect2')->name('getForSelect2');
+//     });
+// });
 

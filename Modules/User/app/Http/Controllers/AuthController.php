@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Modules\Notification\Services\NotificationService;
+use Modules\Notification\app\Services\AsyncNotificationService;
 use Modules\User\app\Http\Requests\SendNotificationBasedLocation;
 use Modules\User\app\Http\Requests\StoreUserFcmRequest;
 use Laravel\Socialite\Facades\Socialite;
@@ -25,6 +26,9 @@ use Modules\User\app\Http\Requests\RegistrationRequest;
 use Modules\User\app\Http\Requests\SocialLoginMobile;
 use Modules\User\app\Http\Requests\UpdateUserProfileRequest;
 use Modules\User\app\Http\Requests\UserProfileRequest;
+use Modules\User\app\Http\Requests\PhoneLoginRequest;
+use Modules\User\app\Http\Requests\RegisterInitRequest;
+use Modules\User\app\Http\Requests\RegisterCompleteRequest;
 use Modules\User\Transformers\UserProfileResource;
 use Exception;
 
@@ -50,6 +54,24 @@ class AuthController extends Controller
         }
     }
 
+    public function loginWithPhone(PhoneLoginRequest $request, AuthService $authService)
+    {
+        try {
+            $authService
+                ->setInputs($request->validated())
+                ->authenticateByPhone()
+                ->checkIfUserBlocked()
+                ->updateLastLogin()
+                ->createUserLoginToken()
+                ->collectOutput('data', $data);
+            return $this->getSuccessfulUserLoginResponse($data);
+
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return $this->getErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
     public function register(RegistrationRequest $request, AuthService $authService)
     {
         try {
@@ -62,6 +84,70 @@ class AuthController extends Controller
                 ->assignRoleToUser()
                 ->createUserLoginToken()
                 ->collectOutput('data', $data);
+
+            // Queue welcome notification to the new customer (non-blocking)
+            $userId = $data['id'] ?? null;
+            if ($userId) {
+                $user = \App\Models\User::find($userId);
+                if ($user) {
+                    AsyncNotificationService::sendNewCustomerNotification($user);
+                }
+            }
+
+            return $this->getSuccessfulUserCreationResponse($data);
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return $this->getErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * Step 1: Initialize registration - validate data and send OTP
+     */
+    public function registerInit(RegisterInitRequest $request, AuthService $authService)
+    {
+        try {
+            $authService
+                ->setInputs($request->validated())
+                ->setInput('password', Hash::make($request->input('password')))
+                ->storePendingRegistration()
+                ->collectOutput('expires_at', $expiresAt)
+                ->collectOutput('phone_number', $phoneNumber);
+
+            return response()->json([
+                'message' => __('otp::messages.otp_sent'),
+                'phone_number' => $phoneNumber,
+                'expires_at' => $expiresAt,
+            ])->setStatusCode(200);
+
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return $this->getErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * Step 2: Complete registration - verify OTP and create user
+     */
+    public function registerComplete(RegisterCompleteRequest $request, AuthService $authService)
+    {
+        try {
+            $authService
+                ->setInputs($request->validated())
+                ->completePendingRegistration()
+                ->setInput('role', 'customer')
+                ->assignRoleToUser()
+                ->createUserLoginToken()
+                ->collectOutput('data', $data);
+
+            // Queue welcome notification to the new customer (non-blocking)
+            $userId = $data['id'] ?? null;
+            if ($userId) {
+                $user = \App\Models\User::find($userId);
+                if ($user) {
+                    AsyncNotificationService::sendNewCustomerNotification($user);
+                }
+            }
 
             return $this->getSuccessfulUserCreationResponse($data);
         } catch (Exception $e) {
@@ -108,13 +194,22 @@ class AuthController extends Controller
     public function saveToken(StoreUserFcmRequest $request, UserService $userService)
     {
         try {
+            // Get location from IP as fallback
+            $location = getLocation();
+
+            // Override with device location if provided
+            if ($request->has('lat') && $request->has('lng')) {
+                $location['ip_lat'] = $request->validated('lat');
+                $location['ip_lng'] = $request->validated('lng');
+            }
+
             $userService
                 ->setAuthUser(Auth::user())
-                ->setInputs(getLocation())
+                ->setInputs($location)
                 ->setInput('fcm_token', $request->validated('token'))
                 ->saveFcmToken();
 
-            return response()->json(['token saved successfully.'])->setStatusCode(200);
+            return response()->json(['message' => 'Token saved successfully.'])->setStatusCode(200);
         } catch (Exception $e) {
             return $this->getErrorResponse($e->getMessage(), $e->getCode());
         }

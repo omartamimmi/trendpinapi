@@ -1,0 +1,13 @@
+{
+    "name": "Geofence",
+    "alias": "geofence",
+    "description": "Location-based notifications using Radar.io integration with smart throttling",
+    "keywords": ["geofence", "location", "radar", "notifications"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Geofence\\app\\Providers\\GeofenceServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

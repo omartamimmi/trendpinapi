@@ -17,6 +17,7 @@
         "mcamara/laravel-localization": "^2.3",
         "netsells/laravel-geoscope": "^2.0",
         "nwidart/laravel-modules": "^12.0",
+        "phpmailer/phpmailer": "^7.0",
         "propaganistas/laravel-phone": "^6.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-image-optimizer": "^1.8",
@@ -33,6 +34,9 @@
         "phpunit/phpunit": "^11.5.3"
     },
     "autoload": {
+        "files": [
+            "app/Helpers/AppHelper.php"
+        ],
         "psr-4": {
             "App\\": "app/",
             "Modules\\": "Modules/",

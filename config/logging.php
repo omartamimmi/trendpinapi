@@ -127,6 +127,23 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | Database Log Channel
+        |--------------------------------------------------------------------------
+        |
+        | This channel logs to the activity_logs database table for admin viewing.
+        | Use LOG_STACK=single,database to enable alongside file logging.
+        |
+        */
+        'database' => [
+            'driver' => 'custom',
+            'via' => \Modules\Log\app\Channels\DatabaseLogger::class,
+            'level' => env('LOG_DB_LEVEL', 'info'),
+            'channel' => 'application',
+            'fallback_to_file' => true,
+        ],
+
     ],
 
 ];

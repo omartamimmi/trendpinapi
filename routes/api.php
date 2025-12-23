@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\MerchantQrPaymentController;
 use App\Http\Controllers\Api\CustomerQrPaymentController;
@@ -11,9 +10,8 @@ use App\Http\Controllers\Api\CustomerQrPaymentController;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| Authentication routes (login, logout, register, etc.) are handled by
+| the User module at Modules/User/routes/api.php
 |
 */
 
@@ -25,23 +23,10 @@ Route::get('/health', function () {
 // API Version 1
 Route::prefix('v1')->group(function () {
 
-    // Public authentication routes
-    Route::post('/login', [AuthController::class, 'login'])->name('api.v1.login');
-
     // Protected API routes (require authentication)
     Route::middleware(['auth:sanctum'])->group(function () {
 
-        // Auth routes
-        Route::post('/logout', [AuthController::class, 'logout'])->name('api.v1.logout');
-        Route::get('/me', [AuthController::class, 'me'])->name('api.v1.me');
-
-        // Brand routes
-        Route::prefix('brands')->group(function () {
-            Route::get('/', [BranchController::class, 'getUserBrands'])->name('api.v1.brands.index');
-            Route::get('/{brandId}/branches', [BranchController::class, 'getBrandBranches'])->name('api.v1.brands.branches');
-        });
-
-        // Branch routes (legacy)
+        // Branch routes
         Route::prefix('branches')->group(function () {
             Route::get('/', [BranchController::class, 'getUserBranches'])->name('api.v1.branches.index');
             Route::get('/{id}', [BranchController::class, 'show'])->name('api.v1.branches.show');
@@ -65,3 +50,6 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
+
+// Include Notification Module Routes
+require __DIR__.'/../Modules/Notification/routes/api.php';

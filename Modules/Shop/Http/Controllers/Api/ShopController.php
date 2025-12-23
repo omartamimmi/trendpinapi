@@ -122,8 +122,6 @@ class ShopController extends Controller
             //by zaid
             return response()->json($shop)->setStatusCode(200);
         } catch (Exception $e) {
-            dd($e);
-
             return $this->getErrorResponse($e->getMessage(), $e->getCode());
         }
     }
@@ -150,7 +148,6 @@ class ShopController extends Controller
 
             return response()->json($shop)->setStatusCode(200);
         } catch (Exception $e) {
-            dd($e);
             return $this->getErrorResponse($e->getMessage(), $e->getCode());
         }
     }
@@ -230,7 +227,6 @@ class ShopController extends Controller
             ->collectOutput('shops',$shops);
             return $this->getSuccessfulIndexShopResponse($shops);
         } catch (Exception $e) {
-            dd($e);
             return $this->getErrorResponse($e->getMessage(), $e->getCode());
         }
     }

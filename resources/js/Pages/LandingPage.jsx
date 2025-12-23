@@ -98,7 +98,7 @@ export default function LandingPage() {
             </header>
 
             {/* Hero Section */}
-            <section className="py-12 px-6 lg:px-12">
+            <section className="py-12 px-1 lg:px-1">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         <div>

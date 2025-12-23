@@ -6,12 +6,10 @@ use Modules\Admin\app\Http\Controllers\UserController;
 use Modules\Admin\app\Http\Controllers\RoleController;
 use Modules\Admin\app\Http\Controllers\DashboardController;
 
-// Admin Auth (no auth required for login)
-Route::prefix('v1/admin')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->name('admin.login');
-});
+// Note: Login is handled by main API routes at POST /api/v1/login
+// This provides a unified authentication endpoint for all user types
 
-// Protected admin routes
+// Protected admin routes (require authentication + admin role)
 Route::prefix('v1/admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');

@@ -6,7 +6,7 @@ use App\Http\Controllers\Auth\AuthController;
 
 // Landing Page
 Route::get('/', function () {
-    return Inertia::render('LandingPage');
+    return Inertia::render('Home');
 });
 
 // Unified Authentication Routes

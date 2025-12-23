@@ -8,10 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Skip if qr_payments doesn't exist or branch_id column already exists
+        if (!Schema::hasTable('qr_payments') || Schema::hasColumn('qr_payments', 'branch_id')) {
+            return;
+        }
+
         Schema::table('qr_payments', function (Blueprint $table) {
-            // Add foreign key to branches table
-            $table->foreign('branch_id')->references('id')->on('branches')->cascadeOnDelete();
-            
+            // Add branch_id column first
+            $table->foreignId('branch_id')->nullable()->after('merchant_id')->constrained('branches')->cascadeOnDelete();
+
             // Add user_id to track which user generated the QR (optional, for audit)
             $table->foreignId('user_id')->nullable()->after('branch_id')->constrained('users')->nullOnDelete();
         });
@@ -22,7 +27,7 @@ return new class extends Migration
         Schema::table('qr_payments', function (Blueprint $table) {
             $table->dropForeign(['branch_id']);
             $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
+            $table->dropColumn(['branch_id', 'user_id']);
         });
     }
 };

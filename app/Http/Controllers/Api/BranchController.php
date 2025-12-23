@@ -86,10 +86,10 @@ class BranchController extends Controller
     public function getUserBranches(): JsonResponse
     {
         $user = Auth::user();
-
+        
         // Get user's brand (assuming user created the brand)
         $brand = Brand::where('create_user', $user->id)->first();
-
+        
         if (!$brand) {
             return response()->json([
                 'success' => false,

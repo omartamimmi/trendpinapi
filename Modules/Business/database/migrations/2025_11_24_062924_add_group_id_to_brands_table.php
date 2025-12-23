@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('brands', 'group_id')) {
+            return;
+        }
+
         Schema::table('brands', function (Blueprint $table) {
             $table->foreignId('group_id')->nullable()->after('business_id')->constrained('groups')->onDelete('set null');
         });

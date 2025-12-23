@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('retailer_onboardings', 'approval_status')) {
+            return;
+        }
+
         Schema::table('retailer_onboardings', function (Blueprint $table) {
             $table->enum('approval_status', ['pending', 'pending_approval', 'approved', 'changes_requested', 'rejected'])
                 ->default('pending')

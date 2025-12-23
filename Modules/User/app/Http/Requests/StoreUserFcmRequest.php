@@ -19,9 +19,9 @@ class StoreUserFcmRequest extends FormRequest
     public function rules()
     {
         return [
-            'token' => [
-                'required'
-            ],
+            'token' => ['required', 'string'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
 

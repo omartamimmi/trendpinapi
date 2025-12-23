@@ -1,8 +1,5 @@
 <?php
 
-use MaxMind\Db\Reader;
-
-
 //include '../../custom/Helpers/CustomHelper.php';
 
 define('MINUTE_IN_SECONDS', 60);
@@ -52,46 +49,37 @@ function get_client_ip()
  */
 function getLocation()
 {
-
     $ip = get_client_ip();
-    $db = resource_path() . '/geolite2/GeoLite2-City.mmdb';
-    $reader = new Reader($db);
     $country = null;
     $city = null;
     $countryCode = null;
     $ip_lat = null;
     $ip_lng = null;
-
     $continentCode = null;
     $continent = null;
 
-    if (filter_var($ip, FILTER_VALIDATE_IP)) {
+    // Check if MaxMind library and database are available
+    $db = resource_path() . '/geolite2/GeoLite2-City.mmdb';
+    if (class_exists('MaxMind\Db\Reader') && file_exists($db)) {
+        try {
+            $reader = new \MaxMind\Db\Reader($db);
 
-        if (!empty($reader->get($ip)['country'])) {
-            $country = $reader->get($ip)['country']['names']['en'];
-            !empty(['country']);
-        };
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                $res = $reader->get($ip);
 
-        if (!empty($reader->get($ip)['city'])) {
-            $city = $reader->get($ip)['city']['names']['en'];
-            !empty(['city']);
-        };
-
-        if (!empty($reader->get($ip)['country'])) {
-            $countryCode = $reader->get($ip)['country']['iso_code'];
-            !empty(['countryCode']);
+                if ($res) {
+                    $country = $res['country']['names']['en'] ?? null;
+                    $city = $res['city']['names']['en'] ?? null;
+                    $countryCode = $res['country']['iso_code'] ?? null;
+                    $ip_lat = $res['location']['latitude'] ?? null;
+                    $ip_lng = $res['location']['longitude'] ?? null;
+                    $continent = $res['continent']['names']['en'] ?? '';
+                    $continentCode = $res['continent']['code'] ?? '';
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently fail if GeoIP lookup fails
         }
-
-        if (!empty($reader->get($ip)['location'])) {
-            $ip_lat = $reader->get($ip)['location']['latitude'];
-            !empty(['ip_lat']);
-            $ip_lng = $reader->get($ip)['location']['longitude'];
-            !empty(['ip_lng']);
-        };
-
-        $res = $reader->get($ip);
-        $continent = $res['continent']['names']['en'] ?? '';
-        $continentCode = $res['continent']['code'] ?? '';
     }
 
     return [

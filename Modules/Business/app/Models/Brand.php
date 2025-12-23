@@ -11,16 +11,17 @@ use Illuminate\Support\Str;
 use Modules\Category\Models\Category;
 use LamaLama\Wishlist\Wishlistable;
 use Modules\Media\Helpers\FileHelper;
+use Modules\Media\Traits\HasMedia;
+use Modules\BankOffer\app\Models\BankOfferBrand;
 
 class Brand extends Model
 {
-    use HasFactory, Wishlistable, SoftDeletes;
+    use HasFactory, Wishlistable, SoftDeletes, HasMedia;
 
     /**
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'business_id',
         'name',
         'logo',
         'location',
@@ -57,16 +58,6 @@ class Brand extends Model
     protected $slugField = 'slug';
     protected $slugFromField = 'title';
 
-    public function business()
-    {
-        return $this->belongsTo(Business::class);
-    }
-
-    public function group()
-    {
-        return $this->belongsTo(Group::class);
-    }
-
     public function branches()
     {
         return $this->hasMany(Branch::class);
@@ -91,6 +82,93 @@ class Brand extends Model
     public function meta()
     {
         return $this->hasOne(BrandMeta::class, "brand_id", 'id');
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(\Modules\RetailerOnboarding\app\Models\Offer::class);
+    }
+
+    public function activeOffers()
+    {
+        return $this->hasMany(\Modules\RetailerOnboarding\app\Models\Offer::class)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            });
+    }
+
+    /**
+     * Get all bank offer brand participations
+     */
+    public function bankOfferBrands()
+    {
+        return $this->hasMany(BankOfferBrand::class);
+    }
+
+    /**
+     * Get approved bank offer participations with active offers
+     */
+    public function activeBankOfferBrands()
+    {
+        return $this->hasMany(BankOfferBrand::class)
+            ->where('status', 'approved')
+            ->whereHas('bankOffer', function ($query) {
+                $query->where('status', 'active')
+                    ->where('start_date', '<=', now())
+                    ->where('end_date', '>=', now());
+            });
+    }
+
+    /**
+     * Get the best brand offer based on criteria
+     *
+     * @param string $criteria 'highest_value', 'ending_soon', 'most_popular'
+     */
+    public function getBestOffer(string $criteria = 'highest_value')
+    {
+        $offers = $this->activeOffers;
+
+        if ($offers->isEmpty()) {
+            return null;
+        }
+
+        return match ($criteria) {
+            'ending_soon' => $offers->sortBy('end_date')->first(),
+            'most_popular' => $offers->sortByDesc('claims_count')->first(),
+            default => $offers->sortByDesc('discount_value')->first(), // highest_value
+        };
+    }
+
+    /**
+     * Get the best bank offer based on criteria
+     *
+     * @param string $criteria 'highest_value', 'ending_soon', 'most_popular'
+     */
+    public function getBestBankOffer(string $criteria = 'highest_value')
+    {
+        $bankOfferBrands = $this->activeBankOfferBrands()->with('bankOffer.bank')->get();
+
+        if ($bankOfferBrands->isEmpty()) {
+            return null;
+        }
+
+        $bankOffers = $bankOfferBrands->map(fn($bob) => $bob->bankOffer)->filter();
+
+        if ($bankOffers->isEmpty()) {
+            return null;
+        }
+
+        return match ($criteria) {
+            'ending_soon' => $bankOffers->sortBy('end_date')->first(),
+            'most_popular' => $bankOffers->sortByDesc('total_claims')->first(),
+            default => $bankOffers->sortByDesc('offer_value')->first(), // highest_value
+        };
     }
 
     public function save(array $options = [])
@@ -141,10 +219,14 @@ class Brand extends Model
             return $this->gallery;
         $list_item = [];
         if ($featuredIncluded and $this->image_id) {
-            $list_item[] = [
-                'large' => str_replace(['.png', '.jpg', '.jpeg'], '.webp', FileHelper::url($this->image_id, 'full')),
-                'thumb' => FileHelper::url($this->image_id, 'thumb')
-            ];
+            $featuredUrl = FileHelper::url($this->image_id, 'full');
+            $thumbUrl = FileHelper::url($this->image_id, 'thumb');
+            if ($featuredUrl) {
+                $list_item[] = [
+                    'large' => str_replace(['.png', '.jpg', '.jpeg'], '.webp', $featuredUrl),
+                    'thumb' => $thumbUrl ?: null
+                ];
+            }
         }
 
         $items = explode(",", $this->gallery);
@@ -154,11 +236,14 @@ class Brand extends Model
                 $thumb = FileHelper::url($item, 'thumb');
                 $medium = FileHelper::url($item, 'medium');
 
-                $list_item[] = [
-                    'large' => $large,
-                    'thumb' => $thumb,
-                    'medium' => $medium
-                ];
+                // Only add if at least one URL is valid
+                if ($large || $thumb || $medium) {
+                    $list_item[] = [
+                        'large' => $large ?: null,
+                        'thumb' => $thumb ?: null,
+                        'medium' => $medium ?: null
+                    ];
+                }
             }
         }
         return $list_item;
@@ -194,5 +279,47 @@ class Brand extends Model
             }
         }
         return '';
+    }
+
+    /**
+     * Get the logo URL using the Media module
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        // First check for media relationship
+        $logo = $this->getFirstMedia('logo');
+        if ($logo) {
+            return $logo->getPresetUrl('thumb');
+        }
+
+        // Fallback to legacy logo field
+        if ($this->logo) {
+            $url = FileHelper::url($this->logo, 'thumb');
+            // FileHelper::url returns false if file not found
+            return $url ?: null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the gallery images using the Media module
+     */
+    public function getGalleryImagesAttribute(): array
+    {
+        // First check for media relationship
+        $galleryMedia = $this->getMedia('gallery');
+        if ($galleryMedia->count() > 0) {
+            return $galleryMedia->map(fn($media) => [
+                'id' => $media->id,
+                'url' => $media->url,
+                'thumbnail_url' => $media->thumbnail_url,
+                'medium' => $media->getPresetUrl('medium'),
+                'large' => $media->getPresetUrl('large'),
+            ])->toArray();
+        }
+
+        // Fallback to legacy gallery field
+        return $this->getGallery(true) ?: [];
     }
 }

@@ -34,14 +34,21 @@ class RegistrationRequest extends FormRequest
                 'min:8'
             ],
             'phone_number' => [
-                'nullable',
+                'required',
                 'string',
                 'phone:AUTO',
+                'unique:users,phone',
             ],
             'code' => [
-                'required_with:phone_number',
+                'required',
                 'string',
                 'size:6',
+            ],
+            'profile_image' => [
+                'nullable',
+                'file',
+                'max:5120',
+                'mimes:jpeg,jpg,png,gif,webp',
             ]
         ];
     }
@@ -89,8 +96,10 @@ class RegistrationRequest extends FormRequest
             'password.min' => __('validation.password.min'),
             'term.required' => __('validation.term.required'),
             'term.boolean' => __('validation.term.boolean'),
+            'phone_number.required' => __('otp::messages.phone_required'),
             'phone_number.phone' => __('otp::messages.phone_invalid'),
-            'code.required_with' => __('otp::messages.code_required'),
+            'phone_number.unique' => __('validation.phone_already_registered'),
+            'code.required' => __('otp::messages.code_required'),
             'code.size' => __('otp::messages.code_invalid_length'),
         ];
     }

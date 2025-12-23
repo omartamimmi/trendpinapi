@@ -181,9 +181,27 @@ class OnboardingService extends Service
     public function saveBrandInformation(): static
     {
         $this->collectOutput('user', $user);
+        $brands = $this->getInput('brands');
+        $brandType = $this->getInput('brand_type');
 
-        // Brand creation logic would integrate with existing Business/Shop module
-        // For now, we just mark the step as completed
+        // Delete existing brands for this user first to avoid duplicates
+        if (!empty($brands)) {
+            \Modules\Business\app\Models\Brand::where('create_user', $user->id)->delete();
+
+            // Create fresh brand records
+            foreach ($brands as $brandData) {
+                \Modules\Business\app\Models\Brand::create([
+                    'name' => $brandData['name'],
+                    'description' => $brandData['description'] ?? null,
+                    'location' => json_encode([
+                        'lat' => $brandData['latitude'] ?? 0,
+                        'lng' => $brandData['longitude'] ?? 0,
+                    ]),
+                    'create_user' => $user->id,
+                    'type' => $brandType === 'group' ? 'group' : 'single',
+                ]);
+            }
+        }
 
         $onboarding = RetailerOnboarding::where('user_id', $user->id)
             ->where('status', 'in_progress')
@@ -218,19 +236,21 @@ class OnboardingService extends Service
 
         $plan = SubscriptionPlan::findOrFail($planId);
 
-        // Create subscription
+        // Update or create subscription (avoid duplicates when editing)
         $startsAt = now();
         $endsAt = $startsAt->copy()->addMonths($plan->duration_months);
         $trialEndsAt = $plan->trial_days > 0 ? $startsAt->copy()->addDays($plan->trial_days) : null;
 
-        $subscription = RetailerSubscription::create([
-            'user_id' => $user->id,
-            'subscription_plan_id' => $plan->id,
-            'starts_at' => $startsAt,
-            'ends_at' => $endsAt,
-            'trial_ends_at' => $trialEndsAt,
-            'status' => 'pending',
-        ]);
+        $subscription = RetailerSubscription::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'subscription_plan_id' => $plan->id,
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+                'trial_ends_at' => $trialEndsAt,
+                'status' => 'pending',
+            ]
+        );
 
         // Update onboarding
         $onboarding = RetailerOnboarding::where('user_id', $user->id)

@@ -67,12 +67,14 @@ class User extends Authenticatable
         return '';
     }
 
-    public function user_interests()
+    public function interests()
     {
-        return $this->belongsToMany(User::class,
-            "user_has_interests",
-            "user_id",
-            "interest_id")->withPivot('interest_id');
+        return $this->belongsToMany(
+            Interest::class,
+            'user_has_interests',
+            'user_id',
+            'interest_id'
+        );
     }
 
     public function user_interest_shop()

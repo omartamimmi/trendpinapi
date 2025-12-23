@@ -11,18 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('description');
-            $table->string('status')->default('draft');
-            $table->dateTime('publish_date')->nullable();
-            $table->bigInteger('create_user')->nullable();
-            $table->bigInteger('update_user')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('categories')) {
+
+            Schema::create('categories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->string('description');
+                $table->string('status')->default('draft');
+                $table->dateTime('publish_date')->nullable();
+                $table->bigInteger('create_user')->nullable();
+                $table->bigInteger('update_user')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import Pagination from '@/Components/Pagination';
 
 export default function OnboardingApprovals({ onboardings, currentStatus, counts }) {
     const [search, setSearch] = useState('');
@@ -37,6 +38,7 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
     };
 
     const tabs = [
+        { key: 'pending', label: 'Pending', count: counts.pending },
         { key: 'pending_approval', label: 'Pending Approval', count: counts.pending_approval },
         { key: 'approved', label: 'Approved', count: counts.approved },
         { key: 'changes_requested', label: 'Changes Requested', count: counts.changes_requested },
@@ -76,19 +78,37 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
                 </div>
 
                 {/* Search */}
-                <div className="mb-6">
-                    <form onSubmit={handleSearch} className="relative">
-                        <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
-                        <input
-                            type="text"
-                            placeholder="Search by name or email..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                        />
-                    </form>
+                        <h3 className="text-sm font-semibold text-gray-700">Search</h3>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <div className="flex-1 relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search by name or email..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-pink-500/20 transition-all"
+                            />
+                        </div>
+                        <button
+                            onClick={handleSearch}
+                            className="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-pink-600 rounded-xl hover:from-pink-600 hover:to-pink-700 shadow-sm hover:shadow transition-all"
+                        >
+                            Search
+                        </button>
+                    </div>
                 </div>
 
                 {/* Onboardings Table */}
@@ -114,8 +134,8 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {onboardings?.length > 0 ? (
-                                onboardings.map((onboarding) => (
+                            {(onboardings?.data || onboardings)?.length > 0 ? (
+                                (onboardings.data || onboardings).map((onboarding) => (
                                     <tr key={onboarding.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
@@ -168,6 +188,9 @@ export default function OnboardingApprovals({ onboardings, currentStatus, counts
                             )}
                         </tbody>
                     </table>
+
+                    {/* Pagination */}
+                    {onboardings.data && <Pagination data={onboardings} />}
                 </div>
             </div>
         </AdminLayout>

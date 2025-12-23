@@ -3,6 +3,12 @@
 namespace Modules\Admin\app\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Admin\app\Events\AdminLoggedIn;
+use Modules\Admin\app\Events\OnboardingApproved;
+use Modules\Admin\app\Events\OnboardingRejected;
+use Modules\Admin\app\Listeners\LogAdminActivity;
+use Modules\Admin\app\Listeners\SendOnboardingApprovedNotification;
+use Modules\Admin\app\Listeners\SendOnboardingRejectedNotification;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -11,7 +17,17 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<string, array<int, string>>
      */
-    protected $listen = [];
+    protected $listen = [
+        AdminLoggedIn::class => [
+            LogAdminActivity::class,
+        ],
+        OnboardingApproved::class => [
+            SendOnboardingApprovedNotification::class,
+        ],
+        OnboardingRejected::class => [
+            SendOnboardingRejectedNotification::class,
+        ],
+    ];
 
     /**
      * Indicates if events should be discovered.

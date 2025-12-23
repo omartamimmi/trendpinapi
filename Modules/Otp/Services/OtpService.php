@@ -3,6 +3,7 @@
 namespace Modules\Otp\Services;
 
 use Modules\Otp\app\Models\PhoneVerification;
+use Modules\Notification\app\Repositories\CredentialRepository;
 use Twilio\Rest\Client;
 use Twilio\Exceptions\TwilioException;
 use Exception;
@@ -11,9 +12,36 @@ class OtpService
 {
     protected ?Client $twilioClient = null;
     protected ?string $twilioFrom = null;
+    protected CredentialRepository $credentialRepository;
 
-    public function __construct()
+    public function __construct(CredentialRepository $credentialRepository)
     {
+        $this->credentialRepository = $credentialRepository;
+        $this->initializeTwilioClient();
+    }
+
+    /**
+     * Initialize Twilio client from database credentials
+     */
+    protected function initializeTwilioClient(): void
+    {
+        // First try to get credentials from database
+        $smsCredentials = $this->credentialRepository->getByChannel('sms');
+
+        if ($smsCredentials && $smsCredentials->isActive) {
+            $credentials = $smsCredentials->credentials;
+            $sid = $credentials['account_sid'] ?? null;
+            $token = $credentials['auth_token'] ?? null;
+            $from = $credentials['from_number'] ?? null;
+
+            if ($sid && $token && $from) {
+                $this->twilioClient = new Client($sid, $token);
+                $this->twilioFrom = $from;
+                return;
+            }
+        }
+
+        // Fallback to env config
         $sid = config('otp.twilio.sid');
         $token = config('otp.twilio.token');
         $from = config('otp.twilio.from');

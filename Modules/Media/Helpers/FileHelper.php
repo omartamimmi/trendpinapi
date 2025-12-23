@@ -5,8 +5,10 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Media\Models\MediaFile;
 // use Intervention\Image\ImageManagerStatic as Image;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
-use Intervention\Image\ImageManager as Image;
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+
 class FileHelper
 {
     public static $defaultSize = [
@@ -89,12 +91,14 @@ class FileHelper
                 return static::resizeSimple($fileObj,$size);
             }
 
-            // Start Resize
-            $img = Image::make($image_path)->resize($sizeData[0], null, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save(public_path('storage/' . $resizeFile));
+            // Start Resize - Using Intervention Image v3
+            $driver = extension_loaded('imagick') ? new ImagickDriver() : new GdDriver();
+            $manager = new ImageManager($driver);
+            $img = $manager->read($image_path);
+            $img->scale(width: $sizeData[0]);
+            $img->save(public_path('storage/' . $resizeFile));
 
-            return asset('public/' . $resizeFile);
+            return asset('storage/' . $resizeFile);
         }
     }
 

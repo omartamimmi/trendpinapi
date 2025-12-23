@@ -7,7 +7,6 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Modules\Business\app\Models\Brand;
 use Modules\Business\app\Models\Branch;
-use Modules\Business\app\Models\Group;
 use Modules\RetailerOnboarding\app\Models\RetailerOnboarding;
 use Modules\RetailerOnboarding\app\Models\SubscriptionPlan;
 use Modules\RetailerOnboarding\app\Models\RetailerSubscription;
@@ -15,7 +14,7 @@ use Modules\RetailerOnboarding\app\Models\RetailerSubscription;
 class SeedDemoRetailer extends Command
 {
     protected $signature = 'retailers:seed-demo';
-    protected $description = 'Create a demo retailer with groups, brands, and branches';
+    protected $description = 'Create a demo retailer with brands and branches';
 
     public function handle()
     {
@@ -66,31 +65,11 @@ class SeedDemoRetailer extends Command
 
         $this->info("Demo user created: {$user->email}");
 
-        // Create Groups
-        $this->info('Creating groups...');
-
-        $foodGroup = Group::firstOrCreate(
-            ['name' => 'Food & Beverages'],
-            ['business_id' => null]
-        );
-
-        $fashionGroup = Group::firstOrCreate(
-            ['name' => 'Fashion & Apparel'],
-            ['business_id' => null]
-        );
-
-        $electronicsGroup = Group::firstOrCreate(
-            ['name' => 'Electronics'],
-            ['business_id' => null]
-        );
-
         // Create Brands with Branches
         $this->info('Creating brands and branches...');
 
-        // Food & Beverages brands
         $brands = [
             [
-                'group' => $foodGroup,
                 'name' => 'Coffee House',
                 'title' => 'Coffee House',
                 'title_ar' => 'بيت القهوة',
@@ -101,7 +80,6 @@ class SeedDemoRetailer extends Command
                 'branches' => ['Abdoun Branch', 'Sweifieh Branch', 'Downtown Branch'],
             ],
             [
-                'group' => $foodGroup,
                 'name' => 'Fresh Bites',
                 'title' => 'Fresh Bites',
                 'title_ar' => 'فريش بايتس',
@@ -112,7 +90,6 @@ class SeedDemoRetailer extends Command
                 'branches' => ['Khalda Branch', 'Mecca Mall Branch'],
             ],
             [
-                'group' => $fashionGroup,
                 'name' => 'Urban Style',
                 'title' => 'Urban Style',
                 'title_ar' => 'أوربان ستايل',
@@ -123,7 +100,6 @@ class SeedDemoRetailer extends Command
                 'branches' => ['City Mall', 'Taj Mall', 'Galleria Mall'],
             ],
             [
-                'group' => $fashionGroup,
                 'name' => 'Kids Corner',
                 'title' => 'Kids Corner',
                 'title_ar' => 'ركن الأطفال',
@@ -134,7 +110,6 @@ class SeedDemoRetailer extends Command
                 'branches' => ['Abdali Mall'],
             ],
             [
-                'group' => $electronicsGroup,
                 'name' => 'Tech Zone',
                 'title' => 'Tech Zone',
                 'title_ar' => 'تك زون',
@@ -145,7 +120,6 @@ class SeedDemoRetailer extends Command
                 'branches' => ['Mecca Mall', 'City Mall', 'Taj Mall', 'Abdali Mall'],
             ],
             [
-                'group' => $electronicsGroup,
                 'name' => 'Mobile World',
                 'title' => 'Mobile World',
                 'title_ar' => 'عالم الموبايل',
@@ -170,7 +144,6 @@ class SeedDemoRetailer extends Command
                     'description_ar' => $brandData['description_ar'],
                     'phone_number' => $brandData['phone_number'],
                     'status' => $brandData['status'],
-                    'group_id' => $brandData['group']->id,
                     'is_main_branch' => 1,
                     'type' => 'in_person',
                 ]
@@ -194,7 +167,6 @@ class SeedDemoRetailer extends Command
         $this->info('Email: demo@trendpin.com');
         $this->info('Password: demo123');
         $this->info('Brands: 6');
-        $this->info('Groups: 3');
 
         return 0;
     }

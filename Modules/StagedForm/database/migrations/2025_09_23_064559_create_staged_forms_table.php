@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staged_forms', function (Blueprint $table) {
-            $table->id();
-            $table->integer('user_id')->nullable();
-            $table->string('stage_id');
-            $table->string('stage_type');
-            // $table->string('step');
-            // $table->json('submitted_form');
-            $table->timestamps();
-            $table->unique(['stage_id', 'stage_type']);
-        });
+        if (!Schema::hasTable('staged_forms')) {
+
+            Schema::create('staged_forms', function (Blueprint $table) {
+                $table->id();
+                $table->integer('user_id')->nullable();
+                $table->string('stage_id');
+                $table->string('stage_type');
+                // $table->string('step');
+                // $table->json('submitted_form');
+                $table->timestamps();
+                $table->unique(['stage_id', 'stage_type']);
+            });
+        }
     }
 
     /**

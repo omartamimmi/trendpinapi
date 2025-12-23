@@ -1,9 +1,15 @@
 import { router } from '@inertiajs/react';
 import RetailerLayout from '@/Layouts/RetailerLayout';
+import Pagination from '@/Components/Pagination';
+import { useToast } from '@/Components/Toast';
+import { useConfirm } from '@/Components/ConfirmDialog';
 
 export default function Brands({ brands, groups }) {
+    const toast = useToast();
+    const confirm = useConfirm();
+
     // Group brands by group name
-    const groupedBrands = brands.reduce((acc, brand) => {
+    const groupedBrands = (brands.data || brands).reduce((acc, brand) => {
         const groupName = brand.group?.name || 'Ungrouped';
         if (!acc[groupName]) {
             acc[groupName] = [];
@@ -13,9 +19,19 @@ export default function Brands({ brands, groups }) {
     }, {});
 
     const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this brand?')) {
-            router.delete(`/retailer/brands/${id}`);
-        }
+        confirm({
+            title: 'Delete Brand',
+            message: 'Are you sure you want to delete this brand? This will also delete all associated branches and offers.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: () => {
+                router.delete(`/retailer/brands/${id}`, {
+                    onSuccess: () => toast.success('Brand deleted successfully'),
+                    onError: () => toast.error('Failed to delete brand'),
+                });
+            },
+        });
     };
 
     return (
@@ -40,12 +56,12 @@ export default function Brands({ brands, groups }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-xl shadow-sm p-4">
                         <p className="text-sm text-gray-500">Total Brands</p>
-                        <p className="text-2xl font-bold text-gray-900">{brands.length}</p>
+                        <p className="text-2xl font-bold text-gray-900">{brands.total || (brands.data || brands).length}</p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm p-4">
                         <p className="text-sm text-gray-500">Total Branches</p>
                         <p className="text-2xl font-bold text-gray-900">
-                            {brands.reduce((acc, brand) => acc + (brand.branches?.length || 0), 0)}
+                            {(brands.data || brands).reduce((acc, brand) => acc + (brand.branches?.length || 0), 0)}
                         </p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm p-4">
@@ -55,7 +71,7 @@ export default function Brands({ brands, groups }) {
                 </div>
 
                 {/* Brands List */}
-                {brands.length > 0 ? (
+                {(brands.data || brands).length > 0 ? (
                     <div className="space-y-6">
                         {Object.entries(groupedBrands).map(([groupName, groupBrands]) => (
                             <div key={groupName} className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -140,6 +156,11 @@ export default function Brands({ brands, groups }) {
                         </button>
                     </div>
                 )}
+
+                {/* Pagination */}
+                {brands.data && <div className="mt-6">
+                    <Pagination data={brands} />
+                </div>}
             </div>
         </RetailerLayout>
     );

@@ -35,6 +35,11 @@ class UserRepository
         return User::where('appleId',$appleId)->first();
     }
 
+    public function findUserByPhone($phone)
+    {
+        return User::where('phone', $phone)->first();
+    }
+
     public function changePassword($user)
     {
         $user->save();
@@ -53,22 +58,55 @@ class UserRepository
         return User::whereIn('id', $ids['ids'])->delete();
     }
 
-    // public function saveFcmToken($data)
-    // {
-    //     return NotificationBasedLocation::create($data);
-    // }
+    /**
+     * Save FCM token to user_locations table
+     */
+    public function saveFcmToken($data)
+    {
+        return \Illuminate\Support\Facades\DB::table('user_locations')->insert([
+            'user_id' => $data['user_id'],
+            'fcm_token' => $data['fcm_token'],
+            'lat' => $data['lat'] ?? 0,
+            'lng' => $data['lng'] ?? 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 
-    // public function updateFcmToken($id,$data)
-    // {
-    //     $token = NotificationBasedLocation::find($id);
-    //     $token->fill($data);
-    //     return $token->save($data);
-    // }
+    /**
+     * Update FCM token in user_locations table
+     */
+    public function updateFcmToken($id, $data)
+    {
+        return \Illuminate\Support\Facades\DB::table('user_locations')
+            ->where('id', $id)
+            ->update([
+                'fcm_token' => $data['fcm_token'],
+                'lat' => $data['lat'] ?? null,
+                'lng' => $data['lng'] ?? null,
+                'updated_at' => now(),
+            ]);
+    }
 
-    // public function findFcmToken($token)
-    // {
-    //     return NotificationBasedLocation::where('fcm_token',$token)->first();
-    // }
+    /**
+     * Find FCM token in user_locations table
+     */
+    public function findFcmToken($token)
+    {
+        return \Illuminate\Support\Facades\DB::table('user_locations')
+            ->where('fcm_token', $token)
+            ->first();
+    }
+
+    /**
+     * Find user location by user ID
+     */
+    public function findUserLocation($userId)
+    {
+        return \Illuminate\Support\Facades\DB::table('user_locations')
+            ->where('user_id', $userId)
+            ->first();
+    }
 
     public function updatePassword($id, $data, $lang = 'en'): bool
     {

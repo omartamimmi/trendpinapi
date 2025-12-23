@@ -11,13 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staged_form_steps', function (Blueprint $table) {
-            $table->id();
-            $table->integer('staged_form_id');
-            $table->string('step');
-            $table->json('submitted_form');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('staged_form_steps')) {
+
+            Schema::create('staged_form_steps', function (Blueprint $table) {
+                $table->id();
+                $table->integer('staged_form_id');
+                $table->string('step');
+                $table->json('submitted_form');
+                $table->timestamps();
+            });
+        }
     }
 
     /**
