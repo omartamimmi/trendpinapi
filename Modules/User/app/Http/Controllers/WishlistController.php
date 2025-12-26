@@ -70,11 +70,16 @@ class WishlistController extends Controller
                 ->getAllUserWishlist()
                 ->collectOutput('wishlist', $wishlist);
 
-            // Load relationships needed for BrandResource
-            $wishlist->load(['categories', 'branches', 'activeOffers', 'activeBankOfferBrands.bankOffer.bank']);
+            // Get brand IDs from wishlist collection
+            $brandIds = $wishlist->pluck('id')->toArray();
+
+            // Re-fetch brands with all necessary relationships for BrandResource
+            $brands = \Modules\Business\app\Models\Brand::whereIn('id', $brandIds)
+                ->with(['categories', 'branches', 'activeOffers', 'activeBankOfferBrands.bankOffer.bank'])
+                ->get();
 
             return response()->json([
-                'data' => BrandResource::collection($wishlist)
+                'data' => BrandResource::collection($brands)
             ], 200);
 
         } catch (Exception $e) {
