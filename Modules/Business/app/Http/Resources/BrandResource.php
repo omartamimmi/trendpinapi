@@ -42,17 +42,18 @@ class BrandResource extends JsonResource
             'branches' => BranchResource::collection($this->whenLoaded('branches')),
             'offers' => OfferResource::collection($this->whenLoaded('activeOffers')),
             'participating_banks' => $this->whenLoaded('activeBankOfferBrands', function () {
-                $banks = $this->activeBankOfferBrands
+                return $this->activeBankOfferBrands
                     ->map(fn($item) => $item->bankOffer?->bank)
                     ->filter()
                     ->unique('id')
-                    ->values();
-                return $banks->map(fn($bank) => [
-                    'id' => $bank->id,
-                    'name' => $bank->name,
-                    'name_ar' => $bank->name_ar,
-                    'logo' => $bank->logo?->url,
-                ]);
+                    ->values()
+                    ->map(fn($bank) => [
+                        'id' => (int) $bank->id,
+                        'name' => $bank->name,
+                        'name_ar' => $bank->name_ar ?? $bank->name,
+                        'logo' => $bank->logo?->url,
+                    ])
+                    ->toArray();
             }),
             'bank_offers' => $this->whenLoaded('activeBankOfferBrands', function () {
                 return $this->activeBankOfferBrands
@@ -62,21 +63,23 @@ class BrandResource extends JsonResource
                         'name' => $item->bankOffer->title,
                         'description' => $item->bankOffer->description,
                         'discount_type' => $item->bankOffer->offer_type,
-                        'discount_value' => $item->bankOffer->offer_value,
+                        'discount_value' => (float) $item->bankOffer->offer_value,
                         'formatted_discount' => $this->getOfferLabel($item->bankOffer->offer_type, $item->bankOffer->offer_value),
                         'start_date' => $item->bankOffer->start_date?->toIso8601String(),
                         'end_date' => $item->bankOffer->end_date?->toIso8601String(),
                         'terms' => $item->bankOffer->terms,
-                        'bank_id' => $item->bankOffer->bank_id,
+                        'bank_id' => (int) $item->bankOffer->bank_id,
                         'bank' => $item->bankOffer->bank ? [
-                            'id' => $item->bankOffer->bank->id,
+                            'id' => (int) $item->bankOffer->bank->id,
                             'name' => $item->bankOffer->bank->name,
                             'name_ar' => $item->bankOffer->bank->name_ar,
                             'logo' => $item->bankOffer->bank->logo?->url,
                         ] : null,
                         'all_branches' => (bool) $item->all_branches,
                         'branch_ids' => $item->branch_ids,
-                    ]);
+                    ])
+                    ->values()
+                    ->toArray();
             }),
         ];
     }

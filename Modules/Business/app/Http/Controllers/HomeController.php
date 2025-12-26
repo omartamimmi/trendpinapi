@@ -122,7 +122,7 @@ class HomeController extends Controller
                 'branches' => fn($q) => $q->where('status', 'publish'),
                 'categories',
                 'activeOffers',
-                'activeBankOfferBrands.bankOffer.bank'
+                'activeBankOfferBrands.bankOffer.bank.logo'
             ]);
 
         // Search by name/title
@@ -194,6 +194,22 @@ class HomeController extends Controller
 
         // Paginate and format
         $items = $brands->slice($offset, $perPage)->values()->map(function ($brand) {
+            // Get all participating banks from active bank offers
+            $participatingBanks = $brand->activeBankOfferBrands
+                ->map(fn($item) => $item->bankOffer?->bank)
+                ->filter()
+                ->unique('id')
+                ->values()
+                ->map(fn($bank) => [
+                    'id' => $bank->id,
+                    'name' => $bank->name,
+                    'name_ar' => $bank->name_ar ?? $bank->name,
+                    'logo' => $bank->logo?->url ?? $bank->logo_url ?? null,
+                ])
+                ->filter(fn($bank) => $bank['id'] !== null)
+                ->values()
+                ->toArray();
+
             return [
                 'id' => $brand->id,
                 'name' => $brand->name,
@@ -209,21 +225,32 @@ class HomeController extends Controller
                     'name' => $cat->name,
                     'name_ar' => $cat->name_ar ?? null,
                 ]),
+                'branches' => $brand->branches->map(fn($branch) => [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'location' => $branch->location,
+                    'is_main' => (bool) $branch->is_main,
+                ]),
                 'nearest_branch' => $brand->_nearest_branch ? [
                     'id' => $brand->_nearest_branch['branch']->id,
                     'name' => $brand->_nearest_branch['branch']->name,
                     'location' => $brand->_nearest_branch['branch']->location,
                     'distance' => $brand->_nearest_branch['distance'] ? round($brand->_nearest_branch['distance'], 2) : null,
                 ] : null,
+                'participating_banks' => $participatingBanks,
                 'best_offer' => $brand->_best_offer ? [
                     'id' => $brand->_best_offer->id,
                     'name' => $brand->_best_offer->name,
+                    'discount_type' => $brand->_best_offer->discount_type,
+                    'discount_value' => $brand->_best_offer->discount_value,
                     'label' => $this->getOfferLabel($brand->_best_offer->discount_type, $brand->_best_offer->discount_value),
                     'end_date' => $brand->_best_offer->end_date?->toDateString(),
                 ] : null,
                 'best_bank_offer' => $brand->_best_bank_offer ? [
                     'id' => $brand->_best_bank_offer->id,
                     'title' => $brand->_best_bank_offer->title,
+                    'offer_type' => $brand->_best_bank_offer->offer_type,
+                    'offer_value' => $brand->_best_bank_offer->offer_value,
                     'label' => $this->getOfferLabel($brand->_best_bank_offer->offer_type, $brand->_best_bank_offer->offer_value),
                     'end_date' => $brand->_best_bank_offer->end_date?->toDateString(),
                     'bank' => $brand->_best_bank_offer->bank ? [
