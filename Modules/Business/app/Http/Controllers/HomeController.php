@@ -12,6 +12,7 @@ use Modules\Business\app\Models\Branch;
 use Modules\BankOffer\app\Models\Bank;
 use Modules\BankOffer\app\Models\BankOffer;
 use Modules\Category\Models\Category;
+use Modules\Media\Helpers\FileHelper;
 
 class HomeController extends Controller
 {
@@ -200,6 +201,8 @@ class HomeController extends Controller
                 'title_ar' => $brand->title_ar,
                 'slug' => $brand->slug,
                 'logo' => $brand->logo_url,
+                'featured_image' => $this->getBrandFeaturedImage($brand),
+                'gallery' => $brand->gallery_images ?: $brand->getGallery(true) ?: [],
                 'is_wishlisted' => $brand->isWishList() === '-solid',
                 'categories' => $brand->categories->map(fn($cat) => [
                     'id' => $cat->id,
@@ -317,6 +320,34 @@ class HomeController extends Controller
             'bogo' => 'Buy 1 Get 1',
             default => "{$value}% Off",
         };
+    }
+
+    /**
+     * Get brand featured image URL
+     * Returns null instead of false if image not found
+     */
+    private function getBrandFeaturedImage(Brand $brand): ?string
+    {
+        // Try image_id first
+        if ($brand->image_id) {
+            $url = FileHelper::url($brand->image_id, 'full');
+            if ($url && $url !== false) {
+                return $url;
+            }
+        }
+
+        // Try featured_mobile as fallback
+        if (!empty($brand->featured_mobile)) {
+            return $brand->featured_mobile;
+        }
+
+        // Try to get from gallery
+        $gallery = $brand->gallery_images ?: $brand->getGallery(true);
+        if (!empty($gallery) && isset($gallery[0]['large'])) {
+            return $gallery[0]['large'];
+        }
+
+        return null;
     }
 
     /**
