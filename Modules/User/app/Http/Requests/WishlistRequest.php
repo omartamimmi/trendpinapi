@@ -24,7 +24,7 @@ class WishlistRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'shop_id' => ['required', 'integer'],
+            'brand_id' => ['required', 'integer'],
         ];
     }
 
@@ -36,8 +36,8 @@ class WishlistRequest extends FormRequest
     public function messages()
     {
         return [
-            'shop_id.required' => __('validation.shop_id.required'),
-            'shop_id.integer' => __('validation.shop_id.integer'),
+            'brand_id.required' => __('validation.brand_id.required'),
+            'brand_id.integer' => __('validation.brand_id.integer'),
         ];
     }
 
