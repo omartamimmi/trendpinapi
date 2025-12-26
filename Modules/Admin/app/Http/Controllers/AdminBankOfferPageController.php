@@ -10,7 +10,9 @@ use Modules\BankOffer\app\Models\Bank;
 use Modules\BankOffer\app\Models\CardType;
 use Modules\BankOffer\app\Models\BankOffer;
 use Modules\BankOffer\app\Models\BankOfferBrand;
+use Modules\Business\app\Models\Brand;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AdminBankOfferPageController extends Controller
 {
@@ -226,6 +228,185 @@ class AdminBankOfferPageController extends Controller
     }
 
     // ==================== BANK OFFERS ====================
+
+    public function createOffer(): Response
+    {
+        $banks = Bank::where('status', 'active')->with('logo')->get(['id', 'name', 'name_ar', 'logo_id']);
+        $cardTypes = CardType::where('status', 'active')->get(['id', 'bank_id', 'name', 'name_ar', 'card_network']);
+        $brands = Brand::where('status', 'publish')
+            ->with(['branches' => fn($q) => $q->where('status', 'publish')->select('id', 'brand_id', 'name', 'location', 'is_main')])
+            ->get(['id', 'name', 'title', 'title_ar']);
+
+        return Inertia::render('Admin/BankOffer/BankOfferForm', [
+            'offer' => null,
+            'banks' => $banks,
+            'cardTypes' => $cardTypes,
+            'brands' => $brands,
+        ]);
+    }
+
+    public function storeOffer(Request $request)
+    {
+        $validated = $request->validate([
+            'bank_id' => 'required|exists:banks,id',
+            'card_type_id' => 'nullable|exists:card_types,id',
+            'title' => 'required|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+            'offer_type' => 'required|in:percentage,fixed,cashback',
+            'offer_value' => 'required|numeric|min:0',
+            'min_purchase_amount' => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'terms' => 'nullable|string',
+            'terms_ar' => 'nullable|string',
+            'redemption_type' => 'nullable|in:show_only,qr_code,in_app',
+            'max_claims' => 'nullable|integer|min:0',
+            'status' => 'required|in:draft,pending,active,paused',
+            'brand_assignments' => 'nullable|array',
+            'brand_assignments.*.brand_id' => 'required|exists:brands,id',
+            'brand_assignments.*.all_branches' => 'boolean',
+            'brand_assignments.*.branch_ids' => 'nullable|array',
+        ]);
+
+        $brandAssignments = $validated['brand_assignments'] ?? [];
+        unset($validated['brand_assignments']);
+
+        $validated['created_by'] = Auth::id();
+
+        // Auto-approve if admin sets to active
+        if ($validated['status'] === 'active') {
+            $validated['approved_by'] = Auth::id();
+            $validated['approved_at'] = now();
+        }
+
+        DB::transaction(function () use ($validated, $brandAssignments) {
+            $offer = BankOffer::create($validated);
+
+            // Create brand assignments
+            foreach ($brandAssignments as $assignment) {
+                BankOfferBrand::create([
+                    'bank_offer_id' => $offer->id,
+                    'brand_id' => $assignment['brand_id'],
+                    'all_branches' => $assignment['all_branches'] ?? true,
+                    'branch_ids' => $assignment['branch_ids'] ?? null,
+                    'status' => 'approved', // Admin-created assignments are auto-approved
+                    'approved_at' => now(),
+                    'approved_by' => Auth::id(),
+                ]);
+            }
+        });
+
+        return redirect('/admin/bank-offer/offers')->with('success', 'Bank offer created successfully');
+    }
+
+    public function editOffer(int $id): Response
+    {
+        $offer = BankOffer::with(['bank', 'cardType', 'participatingBrands.brand'])->findOrFail($id);
+        $banks = Bank::where('status', 'active')->with('logo')->get(['id', 'name', 'name_ar', 'logo_id']);
+        $cardTypes = CardType::where('status', 'active')->get(['id', 'bank_id', 'name', 'name_ar', 'card_network']);
+        $brands = Brand::where('status', 'publish')
+            ->with(['branches' => fn($q) => $q->where('status', 'publish')->select('id', 'brand_id', 'name', 'location', 'is_main')])
+            ->get(['id', 'name', 'title', 'title_ar']);
+
+        // Transform existing assignments for the form
+        $existingAssignments = $offer->participatingBrands->map(fn($p) => [
+            'brand_id' => $p->brand_id,
+            'all_branches' => $p->all_branches,
+            'branch_ids' => $p->branch_ids ?? [],
+            'status' => $p->status,
+        ])->toArray();
+
+        return Inertia::render('Admin/BankOffer/BankOfferForm', [
+            'offer' => $offer,
+            'banks' => $banks,
+            'cardTypes' => $cardTypes,
+            'brands' => $brands,
+            'existingAssignments' => $existingAssignments,
+        ]);
+    }
+
+    public function updateOffer(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'bank_id' => 'required|exists:banks,id',
+            'card_type_id' => 'nullable|exists:card_types,id',
+            'title' => 'required|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+            'offer_type' => 'required|in:percentage,fixed,cashback',
+            'offer_value' => 'required|numeric|min:0',
+            'min_purchase_amount' => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'terms' => 'nullable|string',
+            'terms_ar' => 'nullable|string',
+            'redemption_type' => 'nullable|in:show_only,qr_code,in_app',
+            'max_claims' => 'nullable|integer|min:0',
+            'status' => 'required|in:draft,pending,active,paused,expired',
+            'brand_assignments' => 'nullable|array',
+            'brand_assignments.*.brand_id' => 'required|exists:brands,id',
+            'brand_assignments.*.all_branches' => 'boolean',
+            'brand_assignments.*.branch_ids' => 'nullable|array',
+        ]);
+
+        $brandAssignments = $validated['brand_assignments'] ?? [];
+        unset($validated['brand_assignments']);
+
+        $offer = BankOffer::findOrFail($id);
+
+        // Track if status changed to active for approval tracking
+        if ($validated['status'] === 'active' && $offer->status !== 'active') {
+            $validated['approved_by'] = Auth::id();
+            $validated['approved_at'] = now();
+        }
+
+        DB::transaction(function () use ($offer, $validated, $brandAssignments) {
+            $offer->update($validated);
+
+            // Get existing brand IDs
+            $existingBrandIds = $offer->participatingBrands->pluck('brand_id')->toArray();
+            $newBrandIds = array_column($brandAssignments, 'brand_id');
+
+            // Remove brands that are no longer assigned
+            $brandsToRemove = array_diff($existingBrandIds, $newBrandIds);
+            if (!empty($brandsToRemove)) {
+                BankOfferBrand::where('bank_offer_id', $offer->id)
+                    ->whereIn('brand_id', $brandsToRemove)
+                    ->delete();
+            }
+
+            // Update or create brand assignments
+            foreach ($brandAssignments as $assignment) {
+                BankOfferBrand::updateOrCreate(
+                    [
+                        'bank_offer_id' => $offer->id,
+                        'brand_id' => $assignment['brand_id'],
+                    ],
+                    [
+                        'all_branches' => $assignment['all_branches'] ?? true,
+                        'branch_ids' => $assignment['branch_ids'] ?? null,
+                        'status' => 'approved',
+                        'approved_at' => now(),
+                        'approved_by' => Auth::id(),
+                    ]
+                );
+            }
+        });
+
+        return redirect('/admin/bank-offer/offers')->with('success', 'Bank offer updated successfully');
+    }
+
+    public function destroyOffer(int $id)
+    {
+        BankOffer::findOrFail($id)->delete();
+
+        return redirect()->back()->with('success', 'Bank offer deleted successfully');
+    }
 
     public function offers(Request $request): Response
     {

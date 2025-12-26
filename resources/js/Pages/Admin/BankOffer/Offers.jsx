@@ -61,6 +61,21 @@ export default function Offers({ offers, banks, stats, filters: initialFilters }
         });
     };
 
+    const handleDelete = (id, title) => {
+        confirm({
+            title: 'Delete Offer',
+            message: `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+            confirmText: 'Delete',
+            type: 'danger',
+            onConfirm: () => {
+                router.delete(`/admin/bank-offer/offers/${id}`, {
+                    onSuccess: () => toast.success('Offer deleted successfully'),
+                    onError: () => toast.error('Failed to delete offer'),
+                });
+            },
+        });
+    };
+
     const statusConfig = {
         draft: { bg: 'bg-gray-100', text: 'text-gray-700', dot: 'bg-gray-400' },
         pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', dot: 'bg-yellow-400' },
@@ -85,6 +100,15 @@ export default function Offers({ offers, banks, stats, filters: initialFilters }
                         <h1 className="text-2xl font-bold text-gray-900">Bank Offers</h1>
                         <p className="text-sm text-gray-500 mt-1">Manage and approve bank card offers</p>
                     </div>
+                    <Link
+                        href="/admin/bank-offer/offers/create"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pink-600 to-pink-500 rounded-xl hover:from-pink-700 hover:to-pink-600 shadow-lg shadow-pink-500/25 transition-all"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create Offer
+                    </Link>
                 </div>
 
                 {/* Stats */}
@@ -292,6 +316,12 @@ export default function Offers({ offers, banks, stats, filters: initialFilters }
                                         >
                                             View Details
                                         </Link>
+                                        <Link
+                                            href={`/admin/bank-offer/offers/${offer.id}/edit`}
+                                            className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            Edit
+                                        </Link>
                                         {offer.status === 'pending' && (
                                             <>
                                                 <button
@@ -308,6 +338,12 @@ export default function Offers({ offers, banks, stats, filters: initialFilters }
                                                 </button>
                                             </>
                                         )}
+                                        <button
+                                            onClick={() => handleDelete(offer.id, offer.title)}
+                                            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             </div>

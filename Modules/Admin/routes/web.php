@@ -123,7 +123,12 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
         // Bank Offers
         Route::get('/offers', [AdminBankOfferPageController::class, 'offers'])->name('admin.bank-offer.offers');
+        Route::get('/offers/create', [AdminBankOfferPageController::class, 'createOffer'])->name('admin.bank-offer.offers.create');
+        Route::post('/offers', [AdminBankOfferPageController::class, 'storeOffer'])->name('admin.bank-offer.offers.store');
         Route::get('/offers/{id}', [AdminBankOfferPageController::class, 'showOffer'])->name('admin.bank-offer.offers.show');
+        Route::get('/offers/{id}/edit', [AdminBankOfferPageController::class, 'editOffer'])->name('admin.bank-offer.offers.edit');
+        Route::put('/offers/{id}', [AdminBankOfferPageController::class, 'updateOffer'])->name('admin.bank-offer.offers.update');
+        Route::delete('/offers/{id}', [AdminBankOfferPageController::class, 'destroyOffer'])->name('admin.bank-offer.offers.destroy');
         Route::put('/offers/{id}/approve', [AdminBankOfferPageController::class, 'approveOffer'])->name('admin.bank-offer.offers.approve');
         Route::put('/offers/{id}/reject', [AdminBankOfferPageController::class, 'rejectOffer'])->name('admin.bank-offer.offers.reject');
         Route::put('/offers/{id}/status', [AdminBankOfferPageController::class, 'updateOfferStatus'])->name('admin.bank-offer.offers.status');
