@@ -4,7 +4,6 @@ namespace Modules\Business\app\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Modules\BankOffer\app\Http\Resources\BankOfferCompactResource;
 
 class BranchResource extends JsonResource
 {
@@ -22,7 +21,6 @@ class BranchResource extends JsonResource
             'phone' => $this->phone,
             'is_main' => (bool) $this->is_main,
             'brand' => new BrandResource($this->whenLoaded('brand')),
-            'bank_offers' => BankOfferCompactResource::collection($this->active_bank_offers),
         ];
     }
 }
