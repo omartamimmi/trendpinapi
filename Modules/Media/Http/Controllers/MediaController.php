@@ -21,11 +21,8 @@ use Modules\Media\Http\Requests\AllMediaRequest;
 
 class MediaController extends Controller
 {
-<<<<<<< HEAD
-=======
     public function __construct(protected MediaService $mediaService) {}
 
->>>>>>> main
     /**
      * Store media files
      *
@@ -144,8 +141,6 @@ class MediaController extends Controller
     {
         return response()->json($data)->setStatusCode(200);
     }
-<<<<<<< HEAD
-=======
 
     /**
      * Upload multiple files at once
@@ -237,5 +232,4 @@ class MediaController extends Controller
             return $this->getErrorResponse($e->getMessage(), 400);
         }
     }
->>>>>>> main
 }
