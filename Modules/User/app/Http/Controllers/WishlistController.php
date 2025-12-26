@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Modules\User\app\Http\Requests\WishlistRequest;
 use Modules\User\Services\UserService;
+use Modules\Business\app\Http\Resources\BrandResource;
 
 class WishlistController extends Controller
 {
@@ -69,8 +70,11 @@ class WishlistController extends Controller
                 ->getAllUserWishlist()
                 ->collectOutput('wishlist', $wishlist);
 
+            // Load relationships needed for BrandResource
+            $wishlist->load(['categories', 'branches', 'activeOffers', 'activeBankOfferBrands.bankOffer.bank']);
+
             return response()->json([
-                'data' => $wishlist
+                'data' => BrandResource::collection($wishlist)
             ], 200);
 
         } catch (Exception $e) {
