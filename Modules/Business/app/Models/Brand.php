@@ -265,18 +265,22 @@ class Brand extends Model
 
     public function isWished()
     {
+        if (!Auth::id()) {
+            return null;
+        }
+
         return DB::table('wishlist')
             ->where('user_id', Auth::id())
+            ->where('model_type', static::class)
             ->where('model_id', $this->id)
             ->first();
     }
 
     public function isWishList()
     {
-        if (Auth::id()) {
-            if (!empty($this->isWished()) and !empty($this->isWished()->id)) {
-                return '-solid';
-            }
+        $wished = $this->isWished();
+        if ($wished && !empty($wished->id)) {
+            return '-solid';
         }
         return '';
     }

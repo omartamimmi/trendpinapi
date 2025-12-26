@@ -5,6 +5,8 @@ namespace Modules\Business\app\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
 use Modules\Business\app\Models\Brand;
 use Modules\Business\app\Models\Branch;
 use Modules\BankOffer\app\Models\Bank;
@@ -30,6 +32,9 @@ class HomeController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Authenticate user from Bearer token if present (for wishlist status)
+        $this->authenticateFromToken($request);
+
         $lat = $request->query('lat');
         $lng = $request->query('lng');
         $sortBy = $request->query('sort_by', 'default');
@@ -312,5 +317,34 @@ class HomeController extends Controller
             'bogo' => 'Buy 1 Get 1',
             default => "{$value}% Off",
         };
+    }
+
+    /**
+     * Authenticate user from Bearer token if present
+     * This allows public routes to access user context for features like wishlist status
+     */
+    private function authenticateFromToken(Request $request): void
+    {
+        if (Auth::check()) {
+            return;
+        }
+
+        $token = $request->bearerToken();
+        if (!$token) {
+            return;
+        }
+
+        // Try to find the token and authenticate the user
+        $accessToken = PersonalAccessToken::findToken($token);
+        if ($accessToken) {
+            // Load the tokenable (user) relationship
+            $user = $accessToken->tokenable;
+            if ($user) {
+                // Check if token is not expired
+                if (!$accessToken->expires_at || $accessToken->expires_at->isFuture()) {
+                    Auth::setUser($user);
+                }
+            }
+        }
     }
 }
