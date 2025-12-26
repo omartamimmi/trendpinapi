@@ -23,8 +23,10 @@ class HomeController extends Controller
      * - lng: User longitude
      * - sort_by: How to sort brands (best_offer, ending_soon, most_popular, nearest, bank, default)
      * - category_ids: Filter by categories (comma-separated, e.g., "1,2,3")
-     * - bank_id: Filter by bank offers
-     * - search: Search brands by name/title
+     * - bank_ids: Filter by bank offers (comma-separated, e.g., "1,2,3")
+     * - discount_types: Filter by discount types (comma-separated, e.g., "bogo,percentage,bank_offer")
+     *   Available types: percentage, fixed, bogo, cashback, bank_offer
+     * - query: Search brands by name/title
      * - per_page: Number of brands per page (default 10)
      * - page: Page number (default 1)
      */
@@ -34,12 +36,13 @@ class HomeController extends Controller
         $lng = $request->query('lng');
         $sortBy = $request->query('sort_by', 'default');
         $categoryIds = $this->parseIds($request->query('category_ids'));
-        $bankId = $request->query('bank_id');
-        $search = $request->query('search');
+        $bankIds = $this->parseIds($request->query('bank_ids'));
+        $discountTypes = $this->parseDiscountTypes($request->query('discount_types'));
+        $search = $request->query('query');
         $perPage = (int) $request->query('per_page', 10);
         $page = (int) $request->query('page', 1);
 
-        $brandsData = $this->getBrands($lat, $lng, $sortBy, $categoryIds, $bankId, $search, $perPage, $page);
+        $brandsData = $this->getBrands($lat, $lng, $sortBy, $categoryIds, $bankIds, $discountTypes, $search, $perPage, $page);
 
         return response()->json([
             'success' => true,
@@ -107,9 +110,25 @@ class HomeController extends Controller
     }
 
     /**
+     * Parse comma-separated discount types into array
+     * Valid types: percentage, fixed, bogo, cashback, bank_offer
+     */
+    private function parseDiscountTypes(?string $types): array
+    {
+        if (!$types) {
+            return [];
+        }
+
+        $validTypes = ['percentage', 'fixed', 'bogo', 'cashback', 'bank_offer'];
+        $parsed = array_map('trim', explode(',', strtolower($types)));
+
+        return array_values(array_intersect($parsed, $validTypes));
+    }
+
+    /**
      * Get brands with filtering and sorting
      */
-    private function getBrands(?string $lat, ?string $lng, string $sortBy, array $categoryIds, ?string $bankId, ?string $search, int $perPage, int $page): array
+    private function getBrands(?string $lat, ?string $lng, string $sortBy, array $categoryIds, array $bankIds, array $discountTypes, ?string $search, int $perPage, int $page): array
     {
         $query = Brand::where('status', 'publish')
             ->with([
@@ -133,9 +152,41 @@ class HomeController extends Controller
             $query->whereHas('categories', fn($q) => $q->whereIn('categories.id', $categoryIds));
         }
 
-        // Filter by bank (brands that have offers from this bank)
-        if ($bankId) {
-            $query->whereHas('activeBankOfferBrands.bankOffer', fn($q) => $q->where('bank_id', $bankId));
+        // Filter by banks (brands that have offers from these banks)
+        if (!empty($bankIds)) {
+            $query->whereHas('activeBankOfferBrands.bankOffer', fn($q) => $q->whereIn('bank_id', $bankIds));
+        }
+
+        // Filter by discount types
+        if (!empty($discountTypes)) {
+            $hasBankOfferFilter = in_array('bank_offer', $discountTypes);
+            $offerTypes = array_diff($discountTypes, ['bank_offer']);
+
+            // Split types into regular offer types and bank offer types
+            $regularOfferTypes = array_intersect($offerTypes, ['percentage', 'fixed', 'bogo']);
+            $bankOfferTypes = array_intersect($offerTypes, ['percentage', 'fixed', 'cashback']);
+
+            $query->where(function ($q) use ($regularOfferTypes, $bankOfferTypes, $hasBankOfferFilter) {
+                // Filter by regular offer discount types
+                if (!empty($regularOfferTypes)) {
+                    $q->orWhereHas('activeOffers', fn($subQ) => $subQ->whereIn('discount_type', $regularOfferTypes));
+                }
+
+                // Filter by bank offer types
+                if (!empty($bankOfferTypes)) {
+                    $q->orWhereHas('activeBankOfferBrands.bankOffer', function ($subQ) use ($bankOfferTypes) {
+                        $subQ->whereIn('offer_type', $bankOfferTypes)
+                            ->where('status', 'active')
+                            ->where('start_date', '<=', now())
+                            ->where('end_date', '>=', now());
+                    });
+                }
+
+                // Filter by any bank offer
+                if ($hasBankOfferFilter) {
+                    $q->orWhereHas('activeBankOfferBrands');
+                }
+            });
         }
 
         // Filter to only brands with bank offers when sort_by=bank
