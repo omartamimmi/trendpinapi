@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Modules\User\Repositories\UserRepository;
 use LamaLama\Wishlist\Wishlistable;
+use Modules\Business\app\Models\Brand;
 
 class UserService extends Service
 {
@@ -109,6 +110,32 @@ class UserService extends Service
         }
 
         $user->wish($shop);
+        return $this;
+    }
+
+    public function addBrandToWishlist():static
+    {
+        $this->collectOutput('user', $user);
+        $brand = Brand::find($this->getInput('brand_id'));
+
+        if (!$brand) {
+            throw new Exception(__('validation.brand_not_found'), 404);
+        }
+
+        $user->wish($brand);
+        return $this;
+    }
+
+    public function removeBrandFromWishlist():static
+    {
+        $this->collectOutput('user', $user);
+        $brand = Brand::find($this->getInput('brand_id'));
+
+        if (!$brand) {
+            throw new Exception(__('validation.brand_not_found'), 404);
+        }
+
+        $user->unwish($brand);
         return $this;
     }
 

@@ -20,7 +20,7 @@ class WishlistController extends Controller
             $userService
                 ->setInputs($request->validated())
                 ->setAuthUser(Auth::user())
-                ->addShopToWishlist()
+                ->addBrandToWishlist()
                 ->collectOutput('data', $data);
 
             return response()->json([
@@ -38,13 +38,13 @@ class WishlistController extends Controller
     /**
      * Remove shop from user wishlist
      */
-    public function removeShopFromWishlist(WishlistRequest $request, UserService $userService)
+    public function removeFromWishlist(WishlistRequest $request, UserService $userService)
     {
         try {
             $userService
                 ->setInputs($request->validated())
                 ->setAuthUser(Auth::user())
-                ->removeShopFromWishlist();
+                ->removeBrandFromWishlist();
 
             return response()->json([
                 'message' => __('validation.removed shop from wishlist')

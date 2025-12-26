@@ -56,8 +56,8 @@ Route::prefix('v1')
             ->group(function () {
                 Route::post('add-to-wishlist', 'addToWishlist')
                     ->name('addToWishlist');
-                Route::post('remove-from-wishlist', 'removeShopFromWishlist')
-                    ->name('removeShopFromWishlist');
+                Route::post('remove-from-wishlist', 'removeFromWishlist')
+                    ->name('removeFromWishlist');
                 Route::get('get-user-wishlist', 'getAllUserWishlist')
                     ->name('getAllUserWishlist');
             });

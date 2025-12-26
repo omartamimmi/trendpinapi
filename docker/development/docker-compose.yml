@@ -11,6 +11,7 @@ services:
       - "../development/nginx/conf.d/api.conf:/etc/nginx/conf.d/api.conf"
     ports:
       - "5173:5173"
+      - "5174:5174"
     privileged: true
     depends_on:
       - db
