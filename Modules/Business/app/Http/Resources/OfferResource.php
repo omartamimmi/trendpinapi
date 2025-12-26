@@ -25,6 +25,7 @@ class OfferResource extends JsonResource
             'claims_count' => $this->claims_count,
             'terms' => $this->terms,
             'all_branches' => (bool) $this->all_branches,
+            'branch_ids' => $this->branch_ids,
             'is_active' => $this->isActive(),
             'brand' => new BrandResource($this->whenLoaded('brand')),
         ];

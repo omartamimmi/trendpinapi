@@ -54,6 +54,30 @@ class BrandResource extends JsonResource
                     'logo' => $bank->logo?->url,
                 ]);
             }),
+            'bank_offers' => $this->whenLoaded('activeBankOfferBrands', function () {
+                return $this->activeBankOfferBrands
+                    ->filter(fn($item) => $item->bankOffer)
+                    ->map(fn($item) => [
+                        'id' => $item->bankOffer->id,
+                        'name' => $item->bankOffer->title,
+                        'description' => $item->bankOffer->description,
+                        'discount_type' => $item->bankOffer->offer_type,
+                        'discount_value' => $item->bankOffer->offer_value,
+                        'formatted_discount' => $this->getOfferLabel($item->bankOffer->offer_type, $item->bankOffer->offer_value),
+                        'start_date' => $item->bankOffer->start_date?->toIso8601String(),
+                        'end_date' => $item->bankOffer->end_date?->toIso8601String(),
+                        'terms' => $item->bankOffer->terms,
+                        'bank_id' => $item->bankOffer->bank_id,
+                        'bank' => $item->bankOffer->bank ? [
+                            'id' => $item->bankOffer->bank->id,
+                            'name' => $item->bankOffer->bank->name,
+                            'name_ar' => $item->bankOffer->bank->name_ar,
+                            'logo' => $item->bankOffer->bank->logo?->url,
+                        ] : null,
+                        'all_branches' => (bool) $item->all_branches,
+                        'branch_ids' => $item->branch_ids,
+                    ]);
+            }),
         ];
     }
 
